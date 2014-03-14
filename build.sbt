@@ -1,6 +1,6 @@
 import play.Project._
 
-name := """XML versioning Test"""
+name := """XML versioning common API"""
 
 version := "1.0-SNAPSHOT"
 
