@@ -8,9 +8,6 @@ public class BackendInterface {
 	public static boolean init(){
 		throw new UnsupportedOperationException();
 	}
-	public static TempFile createFile(String url){
-		throw new UnsupportedOperationException();
-	}
 	public static String commitAFile(TempFile tf) {
 		throw new UnsupportedOperationException();
 	}
@@ -29,7 +26,7 @@ public class BackendInterface {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	 
+		
 	    BufferedReader reader = 
 	         new BufferedReader(new InputStreamReader(p.getInputStream()));
 	 

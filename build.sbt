@@ -7,8 +7,10 @@ version := "1.0-SNAPSHOT"
 libraryDependencies ++= Seq(
 	"org.webjars" %% "webjars-play" % "2.2.0", 
 	"org.webjars" % "bootstrap" % "2.3.1",
-	"mysql" % "mysql-connector-java" % "5.1.27"
+	"mysql" % "mysql-connector-java" % "5.1.27",
+	"org.eclipse.jgit" % "org.eclipse.jgit" % "3.3.0.201403021825-r"
 	)
+
 
 libraryDependencies += javaEbean
 

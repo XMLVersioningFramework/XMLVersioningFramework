@@ -18,9 +18,7 @@ public class Application extends Controller {
 		Git.init();
 		return ok(views.html.index.render("Hello my framwork"));
 	}
-	public static Result addFile() {
-		return ok(views.html.index.render("Hello my framwork"));
-	}
+	
 	public static Result CommitFile() {
 		return ok(views.html.index.render("Hello my framwork"));
 	}
