@@ -13,20 +13,24 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.*;
 
 public class Application extends Controller {
-    
+
 	public static Result initRepo() {
 		Git.init();
 		return ok(views.html.index.render("Hello my framwork"));
 	}
-	
-	public static Result CommitFile() {
+
+	public static Result addFile() {
 		return ok(views.html.index.render("Hello my framwork"));
 	}
+
+	public static Result commitFile() {
+		return ok(views.html.index.render("Hello my framwork"));
+	}
+
 	@BodyParser.Of(BodyParser.Json.class)
 	public static Result getFile(String url) {
-		TempFile tf=Git.getFile(url);
+		TempFile tf = Git.getFile(url);
 		return ok(Json.toJson(tf));
 	}
-    
-    
+
 }
