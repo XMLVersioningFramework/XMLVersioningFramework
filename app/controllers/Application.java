@@ -2,7 +2,7 @@ package controllers;
 
 import play.mvc.Controller;
 import play.mvc.Result;
-import models.Git;
+import models.GitHandler;
 import models.TempFile;
 import play.libs.Json;
 import play.mvc.BodyParser;
@@ -15,8 +15,11 @@ import java.util.*;
 public class Application extends Controller {
 
 	public static Result initRepo() {
-		Git.init();
-		return ok(views.html.index.render("Hello my framwork"));
+		if (GitHandler.init()) {
+			return ok(views.html.index.render("Success creating"));
+		} else {
+			return ok(views.html.index.render("Failed to create"));
+		}
 	}
 
 	public static Result addFile() {
@@ -29,7 +32,7 @@ public class Application extends Controller {
 
 	@BodyParser.Of(BodyParser.Json.class)
 	public static Result getFile(String url) {
-		TempFile tf = Git.getFile(url);
+		TempFile tf = GitHandler.getFile(url);
 		return ok(Json.toJson(tf));
 	}
 
