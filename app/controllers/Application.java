@@ -1,33 +1,34 @@
 package controllers;
 
-import play.mvc.Controller;
-import play.mvc.Result;
 import models.GitHandler;
 import models.TempFile;
 import play.libs.Json;
 import play.mvc.BodyParser;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import java.util.*;
+import play.mvc.Controller;
+import play.mvc.Result;
 
 public class Application extends Controller {
+	
+	public static Result index(){
+		return ok("this is just the index, you should be looking somewhere else");
+	}
 
-	public static Result initRepo() {
+	public static Result initRepository() {
 		if (GitHandler.init()) {
-			return ok(views.html.index.render("Success creating"));
+			return ok("Success creating repository");
 		} else {
-			return ok(views.html.index.render("Failed to create"));
+			return ok("Failed to create repository");
 		}
 	}
 
-	public static Result addFile() {
-		return ok(views.html.index.render("Hello my framwork"));
+	public static Result add(String filepattern) {
+		if(GitHandler.add(filepattern))
+			return ok("Success adding the pattern: " + filepattern);
+		return ok("Failed to add the pattern: " + filepattern);
 	}
 
-	public static Result commitFile() {
-		return ok(views.html.index.render("Hello my framwork"));
+	public static Result commit() {
+		return ok("Commit");
 	}
 
 	@BodyParser.Of(BodyParser.Json.class)
