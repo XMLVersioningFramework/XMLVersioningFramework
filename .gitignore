@@ -25,3 +25,6 @@ project/plugins.sbt
 
 #Ignore Linux
 *~
+
+#Ignore backends repositories
+backends/git/repo
