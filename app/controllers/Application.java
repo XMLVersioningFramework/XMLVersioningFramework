@@ -27,8 +27,10 @@ public class Application extends Controller {
 		return ok("Failed to add the pattern: " + filepattern);
 	}
 
-	public static Result commit() {
-		return ok("Commit");
+	public static Result commit(String message) {
+		if(GitHandler.commit(message))
+			return ok("Success commiting changes");
+		return ok("Failed to commit changes, check log for details");
 	}
 
 	@BodyParser.Of(BodyParser.Json.class)

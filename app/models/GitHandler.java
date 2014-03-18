@@ -4,10 +4,16 @@ import java.io.File;
 import java.io.IOException;
 
 import org.eclipse.jgit.api.AddCommand;
+import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
+import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
+import org.eclipse.jgit.api.errors.NoHeadException;
+import org.eclipse.jgit.api.errors.NoMessageException;
+import org.eclipse.jgit.api.errors.UnmergedPathsException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.Repository;
 
 public class GitHandler extends BackendHandlerInterface {
@@ -75,7 +81,7 @@ public class GitHandler extends BackendHandlerInterface {
 	 * @return
 	 */
 	public static boolean add(String filepattern) {
-		if (add(getGitRepository().getRepository(), filepattern, false))
+		if (add(GitHandler.getGitRepository().getRepository(), filepattern, false))
 			return true;
 		return false;
 	}
@@ -125,8 +131,35 @@ public class GitHandler extends BackendHandlerInterface {
 		return true;
 	}
 
-	public static boolean commit() {
-		return false;
+	public static boolean commit(String message) {
+		try {
+			GitHandler.getGitRepository().commit().setMessage(message).call();
+		} catch (NoHeadException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (NoMessageException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (UnmergedPathsException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (ConcurrentRefUpdateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (WrongRepositoryStateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (GitAPIException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 
 	/**

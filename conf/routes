@@ -5,7 +5,7 @@
 GET     /                               controllers.Application.index()
 GET     /initRepository                 controllers.Application.initRepository()
 GET     /add/:filepattern               controllers.Application.add(filepattern: String)
-GET     /commit                         controllers.Application.commit()
+GET     /commit/:message                controllers.Application.commit(message: String)
 #GET     /addDataPoint/:id           controllers.Application.addDataPoint(id: String)
 
 # Map static resources from the /public folder to the /assets URL path
