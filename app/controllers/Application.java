@@ -14,6 +14,7 @@ import play.mvc.Result;
 import utils.FileManager;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Application extends Controller {
@@ -23,20 +24,16 @@ public class Application extends Controller {
 
 	}
 
-	public static Result initRepository(String repositoryName) {
-		if (GitHandler.init(repositoryName)) {
-			return ok("Success creating repository");
-		} else {
-			return ok("Failed to create repository");
-		}
-	}
-
 	public static Result initRepository() {
+		ObjectNode returnJson=Json.newObject();
 		if (GitHandler.init()) {
-			return ok("Success creating repository");
+			returnJson.put("answer", "success");
 		} else {
-			return ok("Failed to create repository");
+			returnJson.put("answer", "success");
 		}
+		
+		response().setHeader("Access-Control-Allow-Origin", "*");
+		return ok(returnJson);
 	}
 
 	@BodyParser.Of(BodyParser.Json.class)
@@ -63,6 +60,7 @@ public class Application extends Controller {
 		/**
 		 * Fetch content
 		 */
+		long start = System.nanoTime(); 
 		final Map<String, String[]> postInput = request().body()
 				.asFormUrlEncoded();
 
@@ -99,7 +97,13 @@ public class Application extends Controller {
 
 		// return new ActionWrapper(super.onRequest(request, actionMethod));
 		response().setHeader("Access-Control-Allow-Origin", "*");
-		return ok("Success");
+		long elapsedTime = System.nanoTime() - start;
+		ObjectNode returnJson=Json.newObject();
+		returnJson.put("timme", elapsedTime);
+		returnJson.put("answer", "success");
+		
+		
+		return ok(returnJson);
 
 		/*
 		 * JsonNode json = request().body().asJson(); if (json == null) { return
@@ -125,9 +129,10 @@ public class Application extends Controller {
 		return ok("Failed to add the pattern: " + filepattern);
 	}
 
-	private static Result commit(String message) {
-		if (GitHandler.commit(message))
+	public static Result commit(String message) {
+		if(GitHandler.commit(message)){
 			return ok("Success commiting changes");
+		}
 		return ok("Failed to commit changes, check log for details");
 	}
 
@@ -142,5 +147,6 @@ public class Application extends Controller {
 		response().setHeader("Access-Control-Allow-Headers",
 				"Origin, X-Requested-With, Content-Type, Accept");
 		return ok();
+
 	}
 }
