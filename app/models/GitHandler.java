@@ -9,6 +9,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
 import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.NoMessageException;
@@ -81,6 +82,11 @@ public class GitHandler extends BackendHandlerInterface {
 	 * @return
 	 */
 	public static boolean add(String filepattern) {
+		if(GitHandler.getGitRepository()==null){
+			System.err.println("Have not init repo: "
+					+ filepattern);
+			return false;
+		}
 		if (add(GitHandler.getGitRepository().getRepository(), filepattern, false))
 			return true;
 		return false;
@@ -110,24 +116,28 @@ public class GitHandler extends BackendHandlerInterface {
 	 */
 	public static boolean add(Repository repo, String filepattern,
 			boolean update) {
-		AddCommand addCommand = new AddCommand(repo);
-		addCommand.addFilepattern(filepattern);
-		addCommand.setUpdate(update);
-
-		try {
-			addCommand.call();
-		} catch (NoFilepatternException e) {
-			System.err
-					.println("Failed to add file, did not include a file pattern? File pattern received was: "
-							+ filepattern);
-			e.printStackTrace();
-			return false;
-		} catch (GitAPIException e) {
-			System.err.println("Fail to add the file to the repository:");
-			e.printStackTrace();
+		try{
+			AddCommand addCommand = new AddCommand(repo);
+			addCommand.addFilepattern(filepattern);
+			addCommand.setUpdate(update);
+	
+			try {
+				addCommand.call();
+			} catch (NoFilepatternException e) {
+				System.err.println("Failed to add file, did not include a file pattern? File pattern received was: "
+								+ filepattern);
+				//e.printStackTrace();
+				return false;
+			} catch (GitAPIException e) {
+				System.err.println("Fail to add the file to the repository:");
+				//e.printStackTrace();
+				return false;
+			}
+		}catch (JGitInternalException e) {
+			System.err.println("Fail to add the file to the repository internal error");
+			//e.printStackTrace();
 			return false;
 		}
-
 		return true;
 	}
 
@@ -157,6 +167,10 @@ public class GitHandler extends BackendHandlerInterface {
 		} catch (GitAPIException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return false;
+		}catch (JGitInternalException e) {
+			System.err.println("Fail to add the file to the repository internal error");
+			//e.printStackTrace();
 			return false;
 		}
 		return true;
