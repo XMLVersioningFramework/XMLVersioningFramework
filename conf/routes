@@ -4,10 +4,14 @@
 
 GET     /                               controllers.Application.index()
 POST    /                               controllers.Application.index()
+POST    /commit                         controllers.Application.commit()
 OPTIONS /								controllers.Application.checkPreFlight()
 GET     /initRepository                 controllers.Application.initRepository()
-GET     /add/:filepattern               controllers.Application.add(filepattern: String)
-GET     /commit/:message                controllers.Application.commit(message: String)
+#GET     /initRepository/:repositoryName controllers.Application.initRepository(repositoryName: String)
+POST    /initRepository                 controllers.Application.initRepository()
+#POST    /initRepository/:repositoryName controllers.Application.initRepository(repositoryName: String)
+#GET     /add/:filepattern               controllers.Application.add(filepattern: String)
+#GET     /commit/:message                controllers.Application.commit(message: String)
 
 #POST    /sayHello                       controllers.Application.sayHello()
 

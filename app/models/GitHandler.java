@@ -18,7 +18,7 @@ import org.eclipse.jgit.lib.Repository;
 
 public class GitHandler extends BackendHandlerInterface {
 	static final String BASE_URL = "./backends/git/";
-	static final String REPOSITORY_URL = BASE_URL + "repo";
+	public static final String REPOSITORY_URL = BASE_URL + "repo/";
 	static Git gitRepository = null;
 
 	/**
@@ -175,5 +175,14 @@ public class GitHandler extends BackendHandlerInterface {
 	 */
 	public static Git getGitRepository() {
 		return gitRepository;
+	}
+	
+	/**
+	 * 
+	 * @return The git repository cannonical path
+	 * @throws IOException
+	 */
+	public static String getGitRepositoryCanonicalPath() throws IOException {
+		return GitHandler.getGitRepository().getRepository().getDirectory().getCanonicalPath();
 	}
 }
