@@ -2,9 +2,9 @@ package models;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.eclipse.jgit.api.AddCommand;
-import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
 import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
@@ -15,6 +15,7 @@ import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.NoMessageException;
 import org.eclipse.jgit.api.errors.UnmergedPathsException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.lib.Repository;
 
 public class GitHandler extends BackendHandlerInterface {
@@ -82,12 +83,12 @@ public class GitHandler extends BackendHandlerInterface {
 	 * @return
 	 */
 	public static boolean add(String filepattern) {
-		if(GitHandler.getGitRepository()==null){
-			System.err.println("Have not init repo: "
-					+ filepattern);
+		if (GitHandler.getGitRepository() == null) {
+			System.err.println("Have not init repo: " + filepattern);
 			return false;
 		}
-		if (add(GitHandler.getGitRepository().getRepository(), filepattern, false))
+		if (add(GitHandler.getGitRepository().getRepository(), filepattern,
+				false))
 			return true;
 		return false;
 	}
@@ -116,26 +117,28 @@ public class GitHandler extends BackendHandlerInterface {
 	 */
 	public static boolean add(Repository repo, String filepattern,
 			boolean update) {
-		try{
+		try {
 			AddCommand addCommand = new AddCommand(repo);
 			addCommand.addFilepattern(filepattern);
 			addCommand.setUpdate(update);
-	
+
 			try {
 				addCommand.call();
 			} catch (NoFilepatternException e) {
-				System.err.println("Failed to add file, did not include a file pattern? File pattern received was: "
+				System.err
+						.println("Failed to add file, did not include a file pattern? File pattern received was: "
 								+ filepattern);
-				//e.printStackTrace();
+				// e.printStackTrace();
 				return false;
 			} catch (GitAPIException e) {
 				System.err.println("Fail to add the file to the repository:");
-				//e.printStackTrace();
+				// e.printStackTrace();
 				return false;
 			}
-		}catch (JGitInternalException e) {
-			System.err.println("Fail to add the file to the repository internal error");
-			//e.printStackTrace();
+		} catch (JGitInternalException e) {
+			System.err
+					.println("Fail to add the file to the repository internal error");
+			// e.printStackTrace();
 			return false;
 		}
 		return true;
@@ -168,9 +171,10 @@ public class GitHandler extends BackendHandlerInterface {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return false;
-		}catch (JGitInternalException e) {
-			System.err.println("Fail to add the file to the repository internal error");
-			//e.printStackTrace();
+		} catch (JGitInternalException e) {
+			System.err
+					.println("Fail to add the file to the repository internal error");
+			// e.printStackTrace();
 			return false;
 		}
 		return true;
@@ -190,13 +194,53 @@ public class GitHandler extends BackendHandlerInterface {
 	public static Git getGitRepository() {
 		return gitRepository;
 	}
-	
+
 	/**
 	 * 
-	 * @return The git repository cannonical path
+	 * @return The working directory path
 	 * @throws IOException
 	 */
-	public static String getGitRepositoryCanonicalPath() throws IOException {
-		return GitHandler.getGitRepository().getRepository().getDirectory().getCanonicalPath();
+	public static String getWorkingDirectoryPath() {
+		return GitHandler.getGitRepository().getRepository().getWorkTree()
+				.getPath();
+	}
+
+	public static ArrayList<String> getWorkingDirFiles() {
+
+		// TODO: check if working dir is up to date
+		ArrayList<String> workingDirFiles = null;
+		File workingDir;
+		try {
+			workingDir = GitHandler.getGitRepository().getRepository()
+					.getWorkTree();
+			workingDirFiles = getWorkingDirFilesPath(workingDir);
+		} catch (NoWorkTreeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return workingDirFiles;
+	}
+
+	private static ArrayList<String> getWorkingDirFilesPath(File workingDir) {
+		ArrayList<String> workingDirFiles = new ArrayList<String>();
+		for (final File fileEntry : workingDir.listFiles()) {
+			if (fileEntry.isDirectory()) {
+				// TODO: go recursive
+			} else {
+				workingDirFiles.add(fileEntry.getPath());
+			}
+		}
+		return workingDirFiles;
+	}
+
+	/**
+	 * removes the relative path to the working directory and replaces with '.'
+	 * 
+	 * @param fileURL
+	 * @return
+	 */
+	public static String stripFileURL(String fileURL) {
+		return fileURL.replaceFirst(GitHandler.getWorkingDirectoryPath(), ".");
 	}
 }

@@ -1,16 +1,27 @@
 package controllers;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 
 import models.GitHandler;
+
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.NoHeadException;
+import org.eclipse.jgit.errors.AmbiguousObjectException;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.MissingObjectException;
+import org.eclipse.jgit.errors.RevisionSyntaxException;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+
 import play.libs.Json;
-import play.mvc.BodyParser;
 //import play.mvc.BodyParser.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import utils.FileManager;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Application extends Controller {
@@ -21,34 +32,73 @@ public class Application extends Controller {
 	}
 
 	public static Result initRepository() {
-		ObjectNode returnJson=Json.newObject();
+		ObjectNode returnJson = Json.newObject();
 		if (GitHandler.init()) {
 			returnJson.put("answer", "success");
 		} else {
 			returnJson.put("answer", "fail");
 		}
-		
+
 		response().setHeader("Access-Control-Allow-Origin", "*");
 		return ok(returnJson);
 	}
 
-	@BodyParser.Of(BodyParser.Json.class)
-	public static Result sayHello() {
-		JsonNode json = request().body().asJson();
-		if (json == null) {
-			return badRequest("Expecting Json data");
-		} else {
-			ObjectNode result = Json.newObject();
-			String name = result.findPath("name").textValue();
-			if (name == null) {
-				result.put("status", "KO");
-				result.put("message", "Missing parameter [name]");
-				return badRequest(result);
-			} else {
-				result.put("status", "OK");
-				result.put("message", "Hello " + name);
-				return ok(result);
-			}
+	public static Result getHEAD() {
+		if (GitHandler.getGitRepository() == null) {
+			System.out
+					.println("Git repo was not initialized in the system, starting it now...");
+			GitHandler.init();
+		}
+		ObjectNode head = Json.newObject();
+		/**
+		 * { status: OK | KO, files:[fileURL:fileURL,content:content],
+		 * timestamp: timestamp, commit: commit commit: message }
+		 */
+
+		long startTime = System.nanoTime();
+		ArrayList<String> workingDirFiles = GitHandler.getWorkingDirFiles();
+
+		long elapsedTime = System.nanoTime() - startTime;
+		addFilesToJSONArray(head.putArray("Files"), workingDirFiles);
+		head.put("elapsedTime", elapsedTime);
+
+		String lastCommit = "-";
+		String lastCommitMessage = "-";
+		String lastCommitAuthor = "-";
+		ObjectId headObject;
+		try {
+			headObject = GitHandler.getGitRepository().getRepository()
+					.resolve(Constants.HEAD);
+
+			lastCommit = GitHandler.getGitRepository().log().add(headObject)
+					.call().iterator().next().getId().getName();
+			lastCommitMessage = GitHandler.getGitRepository().log()
+					.add(headObject).call().iterator().next().getShortMessage();
+			lastCommitAuthor = GitHandler.getGitRepository().log()
+					.add(headObject).call().iterator().next().getAuthorIdent()
+					.getName();
+
+		} catch (RevisionSyntaxException | IOException | GitAPIException | NullPointerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return badRequest(head);
+		}
+		head.put("lastCommit", lastCommit);
+		head.put("lastCommitMessage", lastCommitMessage);
+		head.put("lastCommitAuthor", lastCommitAuthor);
+
+		return ok(head);
+	}
+
+	private static void addFilesToJSONArray(ArrayNode array,
+			ArrayList<String> workingDirFiles) {
+		for (String fileURL : workingDirFiles) {
+			String fileContents = FileManager.readFileToString(fileURL);
+
+			String strippedFileURL = GitHandler.stripFileURL(fileURL);
+			ObjectNode tempObjectNode = array.addObject();
+			tempObjectNode.put("fileURL", strippedFileURL);
+			tempObjectNode.put("fileContent", fileContents);
 		}
 	}
 
@@ -56,7 +106,7 @@ public class Application extends Controller {
 		/**
 		 * Fetch content
 		 */
-		long start = System.nanoTime(); 
+		long start = System.nanoTime();
 		final Map<String, String[]> postInput = request().body()
 				.asFormUrlEncoded();
 
@@ -80,59 +130,41 @@ public class Application extends Controller {
 		String fileContent = content;
 		String filePath = GitHandler.REPOSITORY_URL;
 		FileManager.createFile(fileContent, fileName, filePath);
-		
+
 		/**
 		 * Add to repository
 		 */
-		while(!GitHandler.add(url)){
+		while (!GitHandler.add(url)) {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		} 
+		}
 		System.out.println("success adding file");
+
 		/**
 		 * Commit changes
 		 */
-		
-		while(!GitHandler.commit(message)){
+		while (!GitHandler.commit(message)) {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		} 
+		}
 
 		// return new ActionWrapper(super.onRequest(request, actionMethod));
 		response().setHeader("Access-Control-Allow-Origin", "*");
-		
+
 		long elapsedTime = System.nanoTime() - start;
-		ObjectNode returnJson=Json.newObject();
+		ObjectNode returnJson = Json.newObject();
 		returnJson.put("time", elapsedTime);
 		returnJson.put("answer", "success");
-		
-		
-		return ok(returnJson);
 
-		/*
-		 * JsonNode json = request().body().asJson(); if (json == null) { return
-		 * badRequest("Expecting Json data"); } else { ObjectNode result =
-		 * Json.newObject(); String name = result.findPath("name").textValue();
-		 * if (name == null) { result.put("status", "KO"); result.put("message",
-		 * "Missing parameter [name]"); return badRequest(result); } else {
-		 * result.put("status", "OK"); result.put("message", "Hello " + name);
-		 * return ok(result); } }
-		 * 
-		 * //fetch file String fileName ="";
-		 * 
-		 * 
-		 * //stage info add(fileName);
-		 * 
-		 * //commit commit("message"); return ok();
-		 */
+		return ok(returnJson);
 	}
 
 	private static Result add(String filepattern) {
@@ -142,7 +174,7 @@ public class Application extends Controller {
 	}
 
 	public static Result commit(String message) {
-		if(GitHandler.commit(message)){
+		if (GitHandler.commit(message)) {
 			return ok("Success commiting changes");
 		}
 		return ok("Failed to commit changes, check log for details");

@@ -4,14 +4,16 @@
 
 GET     /                               controllers.Application.index()
 POST    /                               controllers.Application.index()
-POST    /commit                         controllers.Application.commit()
 OPTIONS /								controllers.Application.checkPreFlight()
 
 GET     /initRepository                 controllers.Application.initRepository()
 POST    /initRepository                 controllers.Application.initRepository()
 OPTIONS /initRepository					controllers.Application.checkPreFlight()
 
+POST    /commit                         controllers.Application.commit()
 
+GET     /getHEAD                        controllers.Application.getHEAD()
+POST    /getHEAD                        controllers.Application.getHEAD()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

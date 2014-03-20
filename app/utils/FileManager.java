@@ -3,6 +3,7 @@ package utils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.Scanner;
 
 public class FileManager {
 	public FileManager() {
@@ -33,15 +34,33 @@ public class FileManager {
 			String filePath) {
 		PrintWriter out;
 		try {
-			out = new PrintWriter(filePath+fileName);
+			out = new PrintWriter(filePath + fileName);
 			out.write(fileContent);
 			out.flush();
 			out.close();
 		} catch (FileNotFoundException e) {
-			System.err.println("Couldn't write to the file, reason File Not found:");
+			System.err
+					.println("Couldn't write to the file, reason File Not found:");
 			e.printStackTrace();
 		}
 
+	}
+
+	public static String readFileToString(String fileURL) {
+		String fileContents = "";
+		try {
+			Scanner tempFile = new Scanner(new File(fileURL));
+			while (tempFile.hasNext()) {
+				fileContents += tempFile.next();
+			}
+			tempFile.close();
+		} catch (FileNotFoundException e) {
+			System.err
+					.println("Failed to find a file in the working dir, file url: "
+							+ fileURL);
+			e.printStackTrace();
+		}
+		return fileContents;
 	}
 
 }
