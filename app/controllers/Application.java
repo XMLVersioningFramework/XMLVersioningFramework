@@ -1,9 +1,6 @@
 package controllers;
 
-import java.io.IOException;
 import java.util.Map;
-
-import org.eclipse.jgit.api.Git;
 
 import models.GitHandler;
 import play.libs.Json;
@@ -14,7 +11,6 @@ import play.mvc.Result;
 import utils.FileManager;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Application extends Controller {
@@ -29,7 +25,7 @@ public class Application extends Controller {
 		if (GitHandler.init()) {
 			returnJson.put("answer", "success");
 		} else {
-			returnJson.put("answer", "success");
+			returnJson.put("answer", "fail");
 		}
 		
 		response().setHeader("Access-Control-Allow-Origin", "*");
@@ -88,7 +84,11 @@ public class Application extends Controller {
 		/**
 		 * Add to repository
 		 */
-		add(url);
+		if(GitHandler.add(url)){
+			System.out.println("success adding file");
+		} else{
+			System.err.println("fail to add the file");
+		}
 		
 		/**
 		 * Commit changes
@@ -97,9 +97,10 @@ public class Application extends Controller {
 
 		// return new ActionWrapper(super.onRequest(request, actionMethod));
 		response().setHeader("Access-Control-Allow-Origin", "*");
+		
 		long elapsedTime = System.nanoTime() - start;
 		ObjectNode returnJson=Json.newObject();
-		returnJson.put("timme", elapsedTime);
+		returnJson.put("time", elapsedTime);
 		returnJson.put("answer", "success");
 		
 		
