@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class Application extends Controller {
 
 	public static Result index() {
+		System.out.println(FileManager.readFileToString(GitHandler.REPOSITORY_URL + "a.txt"));
 		return ok("this is just the index, you should be looking somewhere else");
 
 	}
@@ -116,12 +117,12 @@ public class Application extends Controller {
 		String user = postInput.get("user")[0];
 		String backend = postInput.get("backend")[0];
 
-		System.out.println("Commit message:");
+		/*System.out.println("Commit message:");
 		System.out.println("\tUrl: " + url);
 		System.out.println("\tContent: " + content);
 		System.out.println("\tMessage: " + message);
 		System.out.println("\tUser: " + user);
-		System.out.println("\tBackend: " + backend);
+		System.out.println("\tBackend: " + backend);*/
 
 		/**
 		 * Create File

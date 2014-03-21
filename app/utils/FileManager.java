@@ -50,8 +50,8 @@ public class FileManager {
 		String fileContents = "";
 		try {
 			Scanner tempFile = new Scanner(new File(fileURL));
-			while (tempFile.hasNext()) {
-				fileContents += tempFile.next();
+			while (tempFile.hasNextLine()) {
+				fileContents += tempFile.nextLine();
 			}
 			tempFile.close();
 		} catch (FileNotFoundException e) {
