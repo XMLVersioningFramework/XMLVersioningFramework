@@ -59,7 +59,7 @@ public class Application extends Controller {
 		ArrayList<String> workingDirFiles = GitHandler.getWorkingDirFiles();
 
 		long elapsedTime = System.nanoTime() - startTime;
-		addFilesToJSONArray(head.putArray("Files"), workingDirFiles);
+		addFilesToJSONArray(head.putArray("files"), workingDirFiles);
 		head.put("elapsedTime", elapsedTime);
 
 		String lastCommit = "-";
@@ -86,7 +86,7 @@ public class Application extends Controller {
 		head.put("lastCommit", lastCommit);
 		head.put("lastCommitMessage", lastCommitMessage);
 		head.put("lastCommitAuthor", lastCommitAuthor);
-
+		response().setHeader("Access-Control-Allow-Origin", "*");
 		return ok(head);
 	}
 
