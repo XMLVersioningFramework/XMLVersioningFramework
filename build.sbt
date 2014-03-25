@@ -14,4 +14,9 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += javaEbean
 
+resolvers += "Repos Open Repository" at "http://reposserver.sourceforge.net/maven/"
+
+resolvers += "local" at "file:///"+Path.userHome.absolutePath+"/.m2/repository"
+
+
 playJavaSettings

@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
+import models.BackendHandlerInterface;
 import models.GitHandler;
+import models.XChroniclerHandler;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
@@ -31,8 +33,21 @@ public class Application extends Controller {
 		return ok("this is just the index, you should be looking somewhere else");
 
 	}
+	private static BackendHandlerInterface getBackend(String name){
+		if(name=="git"){
+			return GitHandler.getInstance();
+		}else if(name=="XChronicler"){
+			return XChroniclerHandler.getInstance();
+		}else{
+			return null;
+		}
+		
+	}
 
 	public static Result initRepository() {
+		final Map<String, String[]> postInput = request().body().asFormUrlEncoded();
+		String backendName = postInput.get("backend")[0];
+		BackendHandlerInterface backend=getBackend(backendName);
 		ObjectNode returnJson = Json.newObject();
 		if (GitHandler.init()) {
 			returnJson.put("answer", "success");

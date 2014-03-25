@@ -22,7 +22,18 @@ public class GitHandler extends BackendHandlerInterface {
 	static final String BASE_URL = "./backends/git/";
 	public static final String REPOSITORY_URL = BASE_URL + "repo/";
 	static Git gitRepository = null;
+	private static GitHandler instance=null;
 
+	private GitHandler(){
+		
+	}
+	
+	public static BackendHandlerInterface getInstance(){
+		if(instance==null){
+			instance=new GitHandler();
+		}
+		return instance;
+	}
 	/**
 	 * 
 	 * @deprecated This method used the command line and is deprecated, use
