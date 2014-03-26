@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class BackendHandlerInterface {
-	public static boolean init(){
+	
+	public boolean init(){
 		throw new UnsupportedOperationException();
 	}
 	public static String commitAFile(TempFile tf) {

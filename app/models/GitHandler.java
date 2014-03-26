@@ -53,7 +53,7 @@ public class GitHandler extends BackendHandlerInterface {
 		return true;
 	}
 
-	public static boolean init() {
+	public boolean init() {
 		return init(REPOSITORY_URL);
 	}
 
@@ -202,7 +202,7 @@ public class GitHandler extends BackendHandlerInterface {
 	/**
 	 * @return the gitRepository
 	 */
-	public static Git getGitRepository() {
+	private static Git getGitRepository() {
 		return gitRepository;
 	}
 

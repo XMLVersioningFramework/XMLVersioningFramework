@@ -34,9 +34,9 @@ public class Application extends Controller {
 
 	}
 	private static BackendHandlerInterface getBackend(String name){
-		if(name=="git"){
+		if(name.equals("git")){
 			return GitHandler.getInstance();
-		}else if(name=="XChronicler"){
+		}else if(name.equals("XChronicler")){
 			return XChroniclerHandler.getInstance();
 		}else{
 			return null;
@@ -49,7 +49,7 @@ public class Application extends Controller {
 		String backendName = postInput.get("backend")[0];
 		BackendHandlerInterface backend=getBackend(backendName);
 		ObjectNode returnJson = Json.newObject();
-		if (GitHandler.init()) {
+		if (backend.init()) {
 			returnJson.put("answer", "success");
 		} else {
 			returnJson.put("answer", "fail");
@@ -60,11 +60,13 @@ public class Application extends Controller {
 	}
 
 	public static Result getHEAD() {
-		if (GitHandler.getGitRepository() == null) {
-			System.out
-					.println("Git repo was not initialized in the system, starting it now...");
-			GitHandler.init();
-		}
+		final Map<String, String[]> postInput = request().body().asFormUrlEncoded();
+		String backendName = postInput.get("backend")[0];
+		BackendHandlerInterface backend=getBackend(backendName);
+		//if (backend.getGitRepository() == null) {
+	//		System.out.println("Git repo was not initialized in the system, starting it now...");
+			backend.init();
+		//}
 		ObjectNode head = Json.newObject();
 		/**
 		 * { status: OK | KO, files:[fileURL:fileURL,content:content],
@@ -72,7 +74,7 @@ public class Application extends Controller {
 		 */
 
 		long startTime = System.nanoTime();
-		ArrayList<String> workingDirFiles = GitHandler.getWorkingDirFiles();
+		ArrayList<String> workingDirFiles = backend.getWorkingDirFiles();
 
 		long elapsedTime = System.nanoTime() - startTime;
 		addFilesToJSONArray(head.putArray("files"), workingDirFiles);
@@ -83,14 +85,14 @@ public class Application extends Controller {
 		String lastCommitAuthor = "-";
 		ObjectId headObject;
 		try {
-			headObject = GitHandler.getGitRepository().getRepository()
+			headObject = backend.getGitRepository().getRepository()
 					.resolve(Constants.HEAD);
 
-			lastCommit = GitHandler.getGitRepository().log().add(headObject)
+			lastCommit = backend.getGitRepository().log().add(headObject)
 					.call().iterator().next().getId().getName();
-			lastCommitMessage = GitHandler.getGitRepository().log()
+			lastCommitMessage = backend.getGitRepository().log()
 					.add(headObject).call().iterator().next().getShortMessage();
-			lastCommitAuthor = GitHandler.getGitRepository().log()
+			lastCommitAuthor = backend.getGitRepository().log()
 					.add(headObject).call().iterator().next().getAuthorIdent()
 					.getName();
 
