@@ -1,21 +1,56 @@
 package models;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+
+import javax.inject.Provider;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.apache.commons.io.FileUtils;
+import org.custommonkey.xmlunit.XMLUnit;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
+import org.w3c.dom.Document;
+
+import se.repos.vfile.VFileCalculatorImpl;
+import se.repos.vfile.VFileCommitHandler;
+import se.repos.vfile.VFileCommitItemHandler;
+import se.repos.vfile.VFileDocumentBuilderFactory;
+import se.repos.vfile.gen.VFile;
+import se.repos.vfile.store.VFileStore;
+import se.repos.vfile.store.VFileStoreDisk;
+import se.simonsoft.cms.backend.svnkit.CmsRepositorySvn;
+import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
+import se.simonsoft.cms.backend.svnkit.svnlook.CmsContentsReaderSvnkitLook;
+import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
+import se.simonsoft.cms.item.CmsItemId;
+import se.simonsoft.cms.item.CmsItemPath;
+import se.simonsoft.cms.item.CmsRepository;
+import se.simonsoft.cms.item.RepoRevision;
+import se.simonsoft.cms.item.impl.CmsItemIdUrl;
 
 public class XChroniclerHandler extends BackendHandlerInterface {
-	
-	private static XChroniclerHandler instance=null;
-	
-	private XChroniclerHandler(){
-		
-	}
-	
-	public static BackendHandlerInterface getInstance(){
-		if(instance==null){
-			instance=new XChroniclerHandler();
-		}
-		return instance;
-	}
-	/*private boolean doCleanup = false;
+		private boolean doCleanup = false;
 		private File testDir = null;
 		private File repoDir = null;
 		private SVNURL repoUrl;
@@ -23,8 +58,18 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		
 		private SVNClientManager clientManager = null;
 		private Provider<SVNLookClient> svnlookProvider = new SvnlookClientProviderStateless();
+		private static XChroniclerHandler instance=null;
 		
+		private XChroniclerHandler(){
+			
+		}
 		
+		public static BackendHandlerInterface getInstance(){
+			if(instance==null){
+				instance=new XChroniclerHandler();
+			}
+			return instance;
+		}
 	  public void setup(){
 		  try {
 			this.testDir = File.createTempFile("test-" + this.getClass().getName(), "");
@@ -68,6 +113,10 @@ public class XChroniclerHandler extends BackendHandlerInterface {
     
     
 
+    /*
+     * Takes a series of file paths, runs unit test that asserts they can be
+     * v-filed.
+     */
     private VFileStore testVFiling(CmsItemId testID, File folder, String... filePaths)
             throws Exception {
 
@@ -119,7 +168,10 @@ public class XChroniclerHandler extends BackendHandlerInterface {
         VFileCommitHandler commitHandler = new VFileCommitHandler(repository, itemHandler)
                 .setCmsChangesetReader(changesetReader);
 
-       
+        /*
+         * For each revision, call V-Filing on the new file version, and assert
+         * that the V-File is equal to the saved document.
+         */
         for (int i = 0; i < documents.size(); i++) {
             commitHandler.onCommit(revisions.get(i));
             VFile v = new VFile(store.get(testID));
@@ -138,7 +190,11 @@ public class XChroniclerHandler extends BackendHandlerInterface {
         this.clientManager.getWCClient().doAdd(paths, true, false, false,
                 SVNDepth.INFINITY, true, true, true);
     }
-    
+    /**
+     * @param comment
+     * @return revision if committed, null if nothing to commit
+     * @throws SVNException
+     */
     private RepoRevision svncommit(String comment) throws SVNException {
         SVNCommitInfo info = this.clientManager.getCommitClient().doCommit(
                 new File[] { this.wc }, false, comment, null, null, false, false,
@@ -157,6 +213,5 @@ public class XChroniclerHandler extends BackendHandlerInterface {
     
     
 
-	*/
 	
 }

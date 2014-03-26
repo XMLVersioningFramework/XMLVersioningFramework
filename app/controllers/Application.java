@@ -34,11 +34,9 @@ public class Application extends Controller {
 
 	}
 	private static BackendHandlerInterface getBackend(String name){
-		System.out.println("backend name is|"+name+"|");
-		if(name.equals("git")){
-			System.out.println("is git");
+		if(name=="git"){
 			return GitHandler.getInstance();
-		}else if(name.equals("XChronicler")){
+		}else if(name=="XChronicler"){
 			return XChroniclerHandler.getInstance();
 		}else{
 			return null;
@@ -51,7 +49,7 @@ public class Application extends Controller {
 		String backendName = postInput.get("backend")[0];
 		BackendHandlerInterface backend=getBackend(backendName);
 		ObjectNode returnJson = Json.newObject();
-		if (backend.init()) {
+		if (GitHandler.init()) {
 			returnJson.put("answer", "success");
 		} else {
 			returnJson.put("answer", "fail");
@@ -62,16 +60,10 @@ public class Application extends Controller {
 	}
 
 	public static Result getHEAD() {
-		final Map<String, String[]> postInput = request().body().asFormUrlEncoded();
-		String backendName = postInput.get("backend")[0];
-		BackendHandlerInterface backend=getBackend(backendName);
-		System.out.println(backendName);
-		System.out.println(backend);
-		
 		if (GitHandler.getGitRepository() == null) {
 			System.out
 					.println("Git repo was not initialized in the system, starting it now...");
-			backend.init();
+			GitHandler.init();
 		}
 		ObjectNode head = Json.newObject();
 		/**

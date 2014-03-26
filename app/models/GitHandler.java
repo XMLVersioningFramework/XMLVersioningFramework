@@ -53,24 +53,14 @@ public class GitHandler extends BackendHandlerInterface {
 		return true;
 	}
 
-	public boolean init() {
+	public static boolean init() {
 		return init(REPOSITORY_URL);
 	}
-	public void removeOldRepo(){
-		String remmove = "rm -rf " + REPOSITORY_URL;
-		System.out.println(remmove);
-		System.out.println(runCommand(remmove));
-		String mkdir = "mkdir " + REPOSITORY_URL;
-		System.out.println(mkdir);
-		System.out.println(runCommand(mkdir));
-	}
 
-	public boolean init(String repositoryURL) {
+	public static boolean init(String repositoryURL) {
 		try {
-			removeOldRepo();
 			InitCommand initCommand = new InitCommand().setBare(false)
 					.setDirectory(new File(repositoryURL));
-			
 			gitRepository = initCommand.call();
 
 			System.out.println("Success initializing the repository");
@@ -105,7 +95,7 @@ public class GitHandler extends BackendHandlerInterface {
 	 */
 	public static boolean add(String filepattern) {
 		if (GitHandler.getGitRepository() == null) {
-			//System.err.println("Have not init repo: " + filepattern);
+			System.err.println("Have not init repo: " + filepattern);
 			return false;
 		}
 		if (add(GitHandler.getGitRepository().getRepository(), filepattern,
