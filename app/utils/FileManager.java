@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.Scanner;
 
+import org.apache.commons.io.FileUtils;
+
 public class FileManager {
 	public FileManager() {
 	}
@@ -63,4 +65,15 @@ public class FileManager {
 		return fileContents;
 	}
 
+	public static boolean removeFolder(String fullPath) {
+		File theDir = new File(fullPath);
+
+		if (theDir.exists()) {
+			if (theDir.isDirectory()) {
+				if (theDir.canRead())
+					theDir.delete();
+			}
+		}
+		return false;
+	}
 }

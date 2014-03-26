@@ -18,22 +18,25 @@ import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.lib.Repository;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 public class GitHandler extends BackendHandlerInterface {
 	static final String BASE_URL = "./backends/git/";
 	public static final String REPOSITORY_URL = BASE_URL + "repo/";
 	static Git gitRepository = null;
-	private static GitHandler instance=null;
+	private static GitHandler instance = null;
 
-	private GitHandler(){
-		
+	private GitHandler() {
+
 	}
-	
-	public static BackendHandlerInterface getInstance(){
-		if(instance==null){
-			instance=new GitHandler();
+
+	public static BackendHandlerInterface getInstance() {
+		if (instance == null) {
+			instance = new GitHandler();
 		}
 		return instance;
 	}
+
 	/**
 	 * 
 	 * @deprecated This method used the command line and is deprecated, use
@@ -58,30 +61,56 @@ public class GitHandler extends BackendHandlerInterface {
 	}
 
 	public static boolean init(String repositoryURL) {
-		try {
-			InitCommand initCommand = new InitCommand().setBare(false)
-					.setDirectory(new File(repositoryURL));
-			gitRepository = initCommand.call();
+		if (removeExistingRepository(repositoryURL)) {
+			try {
+				InitCommand initCommand = new InitCommand().setBare(false)
+						.setDirectory(new File(repositoryURL));
+				gitRepository = initCommand.call();
 
-			System.out.println("Success initializing the repository");
-			System.out.println("Repository directory: "
-					+ gitRepository.getRepository().getDirectory()
-							.getCanonicalPath());
-		} catch (NullPointerException e) {
-			System.err.println("Error creating the directory for repository:");
-			e.printStackTrace();
-			return false;
-		} catch (GitAPIException e) {
-			System.err.println("Error initializing the repository:");
-			e.printStackTrace();
-			return false;
-		} catch (IOException e) {
-			System.err
-					.println("Error fetching the cannonical path of the repository:");
-			e.printStackTrace();
+				System.out.println("Success initializing the repository");
+				System.out.println("Repository directory: "
+						+ gitRepository.getRepository().getDirectory()
+								.getCanonicalPath());
+			} catch (NullPointerException e) {
+				System.err
+						.println("Error creating the directory for repository:");
+				e.printStackTrace();
+				return false;
+			} catch (GitAPIException e) {
+				System.err.println("Error initializing the repository:");
+				e.printStackTrace();
+				return false;
+			} catch (IOException e) {
+				System.err
+						.println("Error fetching the cannonical path of the repository:");
+				e.printStackTrace();
+				return false;
+			}
+			return true;
+		} else {
 			return false;
 		}
-		return true;
+	}
+
+	/**
+	 * @param repositoryURL
+	 *            the repository URL
+	 * @return true if able to remove or repository inexistent; false if
+	 *         existent but unable to remove.
+	 */
+	private static boolean removeExistingRepository(String repositoryURL) {
+		/**
+		 * if repository exists then remove it
+		 */
+
+		/**
+		 * if fails to remove return false
+		 */
+
+		/**
+		 * else its not required to
+		 */
+		return false;
 	}
 
 	/**
@@ -199,6 +228,10 @@ public class GitHandler extends BackendHandlerInterface {
 		GitHandler.gitRepository = gitRepository;
 	}
 
+	public Object getRepository(){
+		return getGitRepository();
+	}
+		
 	/**
 	 * @return the gitRepository
 	 */
@@ -216,7 +249,7 @@ public class GitHandler extends BackendHandlerInterface {
 				.getPath();
 	}
 
-	public static ArrayList<String> getWorkingDirFiles() {
+	public ArrayList<String> getWorkingDirFiles() {
 
 		// TODO: check if working dir is up to date
 		ArrayList<String> workingDirFiles = null;
@@ -253,5 +286,17 @@ public class GitHandler extends BackendHandlerInterface {
 	 */
 	public static String stripFileURL(String fileURL) {
 		return fileURL.replaceFirst(GitHandler.getWorkingDirectoryPath(), ".");
+	}
+
+	@Override
+	public String commitAFile(TempFile tf) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public TempFile getFile(String url) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
 	}
 }

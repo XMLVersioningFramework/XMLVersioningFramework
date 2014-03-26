@@ -16,6 +16,8 @@ import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.Repository;
 
 import play.libs.Json;
 //import play.mvc.BodyParser.Json;
@@ -59,6 +61,7 @@ public class Application extends Controller {
 		return ok(returnJson);
 	}
 
+	//TODO: Generalize this from git to other systems, most likely move it to the githandler and backendhandler
 	public static Result getHEAD() {
 		final Map<String, String[]> postInput = request().body().asFormUrlEncoded();
 		String backendName = postInput.get("backend")[0];
@@ -85,14 +88,15 @@ public class Application extends Controller {
 		String lastCommitAuthor = "-";
 		ObjectId headObject;
 		try {
-			headObject = backend.getGitRepository().getRepository()
-					.resolve(Constants.HEAD);
+			Git git = (Git) backend.getRepository();
+			Repository repository = git.getRepository();
+			headObject = git.getRepository().resolve(Constants.HEAD);
 
-			lastCommit = backend.getGitRepository().log().add(headObject)
+			lastCommit = git.log().add(headObject)
 					.call().iterator().next().getId().getName();
-			lastCommitMessage = backend.getGitRepository().log()
+			lastCommitMessage = git.log()
 					.add(headObject).call().iterator().next().getShortMessage();
-			lastCommitAuthor = backend.getGitRepository().log()
+			lastCommitAuthor = git.log()
 					.add(headObject).call().iterator().next().getAuthorIdent()
 					.getName();
 
@@ -120,6 +124,7 @@ public class Application extends Controller {
 		}
 	}
 
+	//TODO: Generalize this from git to other systems, most likely move it to the githandler and backendhandler
 	public static Result commit() {
 		/**
 		 * Fetch content
@@ -185,12 +190,14 @@ public class Application extends Controller {
 		return ok(returnJson);
 	}
 
+	//TODO: Generalize this from git to different backends
 	private static Result add(String filepattern) {
 		if (GitHandler.add(filepattern))
 			return ok("Success adding the pattern: " + filepattern);
 		return ok("Failed to add the pattern: " + filepattern);
 	}
 
+	//TODO: Generalize this from git to different backends
 	public static Result commit(String message) {
 		if (GitHandler.commit(message)) {
 			return ok("Success commiting changes");
