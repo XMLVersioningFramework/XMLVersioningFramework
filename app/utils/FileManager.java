@@ -31,25 +31,29 @@ public class FileManager {
 					+ " already exists, skipped creation");
 	}
 
+	/**
+	 * @deprecated use org.apache.commons.io.FileUtils class instead
+	 */
+	@Deprecated
 	public static void createFile(String fileContent, String fileName) {
 		String filePath = "./";
 		createFile(fileContent, fileName, filePath);
 	}
 
-	public static void createFile(String fileContent, String fileName,
+	/**
+	 * @deprecated use org.apache.commons.io.FileUtils class instead
+	 */
+	@Deprecated
+	public static void createFile(String data, String fileName,
 			String filePath) {
-		PrintWriter out;
+		String fileURL = filePath + fileName;
+		File file = new File(fileURL);
 		try {
-			out = new PrintWriter(filePath + fileName);
-			out.write(fileContent);
-			out.flush();
-			out.close();
-		} catch (FileNotFoundException e) {
-			System.err
-					.println("Couldn't write to the file, reason File Not found:");
+			FileUtils.writeStringToFile(file, data);
+		} catch (IOException e) {
+			System.err.println("Couldn't write to the file :" + fileURL);
 			e.printStackTrace();
 		}
-
 	}
 
 	/**
