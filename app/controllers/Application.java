@@ -9,15 +9,11 @@ import models.GitHandler;
 import models.UserHandler;
 import models.XChroniclerHandler;
 
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.NoHeadException;
-import org.eclipse.jgit.errors.AmbiguousObjectException;
-import org.eclipse.jgit.errors.IncorrectObjectTypeException;
-import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 
 import play.libs.Json;
@@ -33,8 +29,6 @@ public class Application extends Controller {
 
 	// TODO: Generalize this from git to other systems
 	public static Result index() {
-		System.out.println(FileManager
-				.readFileToString(GitHandler.REPOSITORY_URL + "a.txt"));
 		return ok("this is just the index, you should be looking somewhere else");
 
 	}
