@@ -21,7 +21,7 @@ import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import utils.FileManager;
-import utils.JSONHandler;
+import utils.JSONConstants;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -65,14 +65,14 @@ public class Application extends Controller {
 	 */
 	public static Result initRepository() {
 		final Map<String, String[]> postInput = getPOSTData();
-		String backendName = postInput.get(utils.JSONHandler.BACKEND)[0];
+		String backendName = postInput.get(utils.JSONConstants.BACKEND)[0];
 		BackendHandlerInterface backend = getBackend(backendName);
 		ObjectNode returnJson = Json.newObject();
 
 		if (backend.init()) {
-			returnJson.put(JSONHandler.ANSWER, JSONHandler.SUCCESS);
+			returnJson.put(JSONConstants.ANSWER, JSONConstants.SUCCESS);
 		} else {
-			returnJson.put(JSONHandler.ANSWER, JSONHandler.FAIL);
+			returnJson.put(JSONConstants.ANSWER, JSONConstants.FAIL);
 		}
 		response().setHeader("Access-Control-Allow-Origin", "*");
 
@@ -97,7 +97,7 @@ public class Application extends Controller {
 	 */
 	public static Result getHEAD() {
 		final Map<String, String[]> postInput = getPOSTData();
-		String backendName = postInput.get(JSONHandler.BACKEND)[0];
+		String backendName = postInput.get(JSONConstants.BACKEND)[0];
 		BackendHandlerInterface backend = getBackend(backendName);
 		// if (backend.getGitRepository() == null) {
 		// System.out.println("Git repo was not initialized in the system, starting it now...");
@@ -113,8 +113,8 @@ public class Application extends Controller {
 		ArrayList<String> workingDirFiles = backend.getWorkingDirFiles();
 
 		long elapsedTime = System.nanoTime() - startTime;
-		addFilesToJSONArray(head.putArray(JSONHandler.FILES), workingDirFiles);
-		head.put(JSONHandler.ELAPSED_TIME, elapsedTime);
+		addFilesToJSONArray(head.putArray(JSONConstants.FILES), workingDirFiles);
+		head.put(JSONConstants.ELAPSED_TIME, elapsedTime);
 
 		String lastCommit = "-";
 		String lastCommitMessage = "-";
@@ -138,9 +138,9 @@ public class Application extends Controller {
 			e.printStackTrace();
 			return badRequest(head);
 		}
-		head.put(JSONHandler.LAST_COMMIT, lastCommit);
-		head.put(JSONHandler.LAST_COMMIT_MESSAGE, lastCommitMessage);
-		head.put(JSONHandler.LAST_COMMIT_AUTHOR, lastCommitAuthor);
+		head.put(JSONConstants.LAST_COMMIT, lastCommit);
+		head.put(JSONConstants.LAST_COMMIT_MESSAGE, lastCommitMessage);
+		head.put(JSONConstants.LAST_COMMIT_AUTHOR, lastCommitAuthor);
 		response().setHeader("Access-Control-Allow-Origin", "*");
 		return ok(head);
 	}
@@ -153,16 +153,16 @@ public class Application extends Controller {
 
 			String strippedFileURL = GitHandler.stripFileURL(fileURL);
 			ObjectNode tempObjectNode = array.addObject();
-			tempObjectNode.put(JSONHandler.FILE_URL, strippedFileURL);
-			tempObjectNode.put(JSONHandler.FILE_CONTENT, fileContents);
+			tempObjectNode.put(JSONConstants.FILE_URL, strippedFileURL);
+			tempObjectNode.put(JSONConstants.FILE_CONTENT, fileContents);
 		}
 	}
 
 	// TODO: Generalize this from git to other systems
 	public static Result removeRepository() {
 		if (GitHandler.removeExistingRepository())
-			return ok(JSONHandler.SUCCESS);
-		return ok(JSONHandler.FAIL);
+			return ok(JSONConstants.SUCCESS);
+		return ok(JSONConstants.FAIL);
 	}
 
 	// TODO: Generalize this from git to other systems
@@ -173,11 +173,11 @@ public class Application extends Controller {
 		long start = System.nanoTime();
 		final Map<String, String[]> postInput = getPOSTData();
 
-		String url = postInput.get(JSONHandler.URL)[0];
-		String content = postInput.get(JSONHandler.CONTENT)[0];
-		String message = postInput.get(JSONHandler.MESSAGE)[0];
-		String userId = postInput.get(JSONHandler.USER)[0];
-		String backend = postInput.get(JSONHandler.BACKEND)[0];
+		String url = postInput.get(JSONConstants.URL)[0];
+		String content = postInput.get(JSONConstants.CONTENT)[0];
+		String message = postInput.get(JSONConstants.MESSAGE)[0];
+		String userId = postInput.get(JSONConstants.USER)[0];
+		String backend = postInput.get(JSONConstants.BACKEND)[0];
 
 		/*
 		 * System.out.println("Commit message:"); System.out.println("\tUrl: " +
@@ -228,8 +228,8 @@ public class Application extends Controller {
 
 		long elapsedTime = System.nanoTime() - start;
 		ObjectNode returnJson = Json.newObject();
-		returnJson.put(JSONHandler.TIME, elapsedTime);
-		returnJson.put(JSONHandler.ANSWER, JSONHandler.SUCCESS);
+		returnJson.put(JSONConstants.TIME, elapsedTime);
+		returnJson.put(JSONConstants.ANSWER, JSONConstants.SUCCESS);
 
 		return ok(returnJson);
 	}

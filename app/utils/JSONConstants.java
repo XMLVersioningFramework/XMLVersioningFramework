@@ -7,7 +7,7 @@ package utils;
 /**
  * Util class to help and normalize with json requests
  */
-public final class JSONHandler {
+public final class JSONConstants {
 
 	// Files
 	public static final String FILES = "files";
@@ -54,7 +54,7 @@ public final class JSONHandler {
 	 * , and so on. Thus, the caller should be prevented from constructing
 	 * objects of this class, by declaring this private constructor.
 	 */
-	private JSONHandler() {
+	private JSONConstants() {
 		// this prevents even the native class from calling this ctor as well :
 		throw new AssertionError();
 	}
