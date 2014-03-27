@@ -21,28 +21,33 @@ import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import utils.FileManager;
+import utils.JSONHandler;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Application extends Controller {
 
-	// TODO: Generalize this from git to other systems
 	public static Result index() {
 		return ok("this is just the index, you should be looking somewhere else");
-
 	}
 
 	private static BackendHandlerInterface getBackend(String name) {
-		if (name.equals("git")) {
+		if (name.equals(BackendHandlerInterface.GIT)) {
 			return GitHandler.getInstance();
-		} else if (name.equals("XChronicler")) {
+		} else if (name.equals(BackendHandlerInterface.XCHRONICLER)) {
 			return XChroniclerHandler.getInstance();
 		} else {
 			return null;
 		}
 	}
 
+	/**
+	 * Used for testing, allows to initialize a repository with HTTP/GET
+	 * 
+	 * @param backendName
+	 * @return
+	 */
 	public static Result initRepositoryWithGET(String backendName) {
 		BackendHandlerInterface backend = getBackend(backendName);
 		if (backend.init()) {
@@ -52,33 +57,51 @@ public class Application extends Controller {
 		}
 	}
 
+	/**
+	 * Initializes the repositories, should clean existing ones if they exist
+	 * Uses HTTP/POST
+	 * 
+	 * @return
+	 */
 	public static Result initRepository() {
-		final Map<String, String[]> postInput = request().body()
-				.asFormUrlEncoded();
-		String backendName = postInput.get("backend")[0];
+		final Map<String, String[]> postInput = getPOSTData();
+		String backendName = postInput.get(utils.JSONHandler.BACKEND)[0];
 		BackendHandlerInterface backend = getBackend(backendName);
 		ObjectNode returnJson = Json.newObject();
 
 		if (backend.init()) {
-			returnJson.put("answer", "success");
+			returnJson.put(JSONHandler.ANSWER, JSONHandler.SUCCESS);
 		} else {
-			returnJson.put("answer", "fail");
+			returnJson.put(JSONHandler.ANSWER, JSONHandler.FAIL);
 		}
 		response().setHeader("Access-Control-Allow-Origin", "*");
 
 		return ok(returnJson);
 	}
 
+	/**
+	 * Collects the data submitted on a HTTP/POST request
+	 * 
+	 * @return
+	 */
+	private static Map<String, String[]> getPOSTData() {
+		return request().body().asFormUrlEncoded();
+	}
+
 	// TODO: Generalize this from git to other systems, most likely move it to
 	// the githandler and backendhandler
+	/**
+	 * Uses HTTP/POST
+	 * 
+	 * @return
+	 */
 	public static Result getHEAD() {
-		final Map<String, String[]> postInput = request().body()
-				.asFormUrlEncoded();
-		String backendName = postInput.get("backend")[0];
+		final Map<String, String[]> postInput = getPOSTData();
+		String backendName = postInput.get(JSONHandler.BACKEND)[0];
 		BackendHandlerInterface backend = getBackend(backendName);
 		// if (backend.getGitRepository() == null) {
 		// System.out.println("Git repo was not initialized in the system, starting it now...");
-		//backend.init();
+		// backend.init();
 		// }
 		ObjectNode head = Json.newObject();
 		/**
@@ -90,8 +113,8 @@ public class Application extends Controller {
 		ArrayList<String> workingDirFiles = backend.getWorkingDirFiles();
 
 		long elapsedTime = System.nanoTime() - startTime;
-		addFilesToJSONArray(head.putArray("files"), workingDirFiles);
-		head.put("elapsedTime", elapsedTime);
+		addFilesToJSONArray(head.putArray(JSONHandler.FILES), workingDirFiles);
+		head.put(JSONHandler.ELAPSED_TIME, elapsedTime);
 
 		String lastCommit = "-";
 		String lastCommitMessage = "-";
@@ -115,9 +138,9 @@ public class Application extends Controller {
 			e.printStackTrace();
 			return badRequest(head);
 		}
-		head.put("lastCommit", lastCommit);
-		head.put("lastCommitMessage", lastCommitMessage);
-		head.put("lastCommitAuthor", lastCommitAuthor);
+		head.put(JSONHandler.LAST_COMMIT, lastCommit);
+		head.put(JSONHandler.LAST_COMMIT_MESSAGE, lastCommitMessage);
+		head.put(JSONHandler.LAST_COMMIT_AUTHOR, lastCommitAuthor);
 		response().setHeader("Access-Control-Allow-Origin", "*");
 		return ok(head);
 	}
@@ -130,16 +153,16 @@ public class Application extends Controller {
 
 			String strippedFileURL = GitHandler.stripFileURL(fileURL);
 			ObjectNode tempObjectNode = array.addObject();
-			tempObjectNode.put("fileURL", strippedFileURL);
-			tempObjectNode.put("fileContent", fileContents);
+			tempObjectNode.put(JSONHandler.FILE_URL, strippedFileURL);
+			tempObjectNode.put(JSONHandler.FILE_CONTENT, fileContents);
 		}
 	}
 
 	// TODO: Generalize this from git to other systems
 	public static Result removeRepository() {
 		if (GitHandler.removeExistingRepository())
-			return ok("success");
-		return ok("fail");
+			return ok(JSONHandler.SUCCESS);
+		return ok(JSONHandler.FAIL);
 	}
 
 	// TODO: Generalize this from git to other systems
@@ -148,14 +171,13 @@ public class Application extends Controller {
 		 * Fetch content
 		 */
 		long start = System.nanoTime();
-		final Map<String, String[]> postInput = request().body()
-				.asFormUrlEncoded();
+		final Map<String, String[]> postInput = getPOSTData();
 
-		String url = postInput.get("url")[0];
-		String content = postInput.get("content")[0];
-		String message = postInput.get("message")[0];
-		String userId = postInput.get("user")[0];
-		String backend = postInput.get("backend")[0];
+		String url = postInput.get(JSONHandler.URL)[0];
+		String content = postInput.get(JSONHandler.CONTENT)[0];
+		String message = postInput.get(JSONHandler.MESSAGE)[0];
+		String userId = postInput.get(JSONHandler.USER)[0];
+		String backend = postInput.get(JSONHandler.BACKEND)[0];
 
 		/*
 		 * System.out.println("Commit message:"); System.out.println("\tUrl: " +
@@ -189,10 +211,10 @@ public class Application extends Controller {
 		/**
 		 * Commit changes
 		 */
-		String userName=UserHandler.getUserName(Integer.parseInt(userId));
-		String userEmail=UserHandler.getUserEmail(Integer.parseInt(userId));
-		
-		while (!GitHandler.commit(message,userName,userEmail)) {
+		String userName = UserHandler.getUserName(Integer.parseInt(userId));
+		String userEmail = UserHandler.getUserEmail(Integer.parseInt(userId));
+
+		while (!GitHandler.commit(message, userName, userEmail)) {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
@@ -206,8 +228,8 @@ public class Application extends Controller {
 
 		long elapsedTime = System.nanoTime() - start;
 		ObjectNode returnJson = Json.newObject();
-		returnJson.put("time", elapsedTime);
-		returnJson.put("answer", "success");
+		returnJson.put(JSONHandler.TIME, elapsedTime);
+		returnJson.put(JSONHandler.ANSWER, JSONHandler.SUCCESS);
 
 		return ok(returnJson);
 	}

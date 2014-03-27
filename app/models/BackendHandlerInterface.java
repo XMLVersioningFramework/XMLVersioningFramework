@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 public abstract class BackendHandlerInterface {
+	public static final String GIT = "git";
+	public static final String XCHRONICLER = "XChronicler";
 	
 	public abstract Object getRepository();
 
