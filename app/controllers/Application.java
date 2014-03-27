@@ -31,25 +31,33 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class Application extends Controller {
 
 	public static Result index() {
-		System.out.println(FileManager.readFileToString(GitHandler.REPOSITORY_URL + "a.txt"));
+		System.out.println(FileManager
+				.readFileToString(GitHandler.REPOSITORY_URL + "a.txt"));
 		return ok("this is just the index, you should be looking somewhere else");
 
 	}
-	private static BackendHandlerInterface getBackend(String name){
-		if(name.equals("git")){
+
+	private static BackendHandlerInterface getBackend(String name) {
+		if (name.equals("git")) {
 			return GitHandler.getInstance();
-		}else if(name.equals("XChronicler")){
+		} else if (name.equals("XChronicler")) {
 			return XChroniclerHandler.getInstance();
-		}else{
+		} else {
 			return null;
 		}
-		
+
+	}
+	
+	public static Result initRepositoryWithGET(){
+		GitHandler.getInstance().init();
+		return ok();
 	}
 
 	public static Result initRepository() {
-		final Map<String, String[]> postInput = request().body().asFormUrlEncoded();
+		final Map<String, String[]> postInput = request().body()
+				.asFormUrlEncoded();
 		String backendName = postInput.get("backend")[0];
-		BackendHandlerInterface backend=getBackend(backendName);
+		BackendHandlerInterface backend = getBackend(backendName);
 		ObjectNode returnJson = Json.newObject();
 		if (backend.init()) {
 			returnJson.put("answer", "success");
@@ -61,15 +69,17 @@ public class Application extends Controller {
 		return ok(returnJson);
 	}
 
-	//TODO: Generalize this from git to other systems, most likely move it to the githandler and backendhandler
+	// TODO: Generalize this from git to other systems, most likely move it to
+	// the githandler and backendhandler
 	public static Result getHEAD() {
-		final Map<String, String[]> postInput = request().body().asFormUrlEncoded();
+		final Map<String, String[]> postInput = request().body()
+				.asFormUrlEncoded();
 		String backendName = postInput.get("backend")[0];
-		BackendHandlerInterface backend=getBackend(backendName);
-		//if (backend.getGitRepository() == null) {
-	//		System.out.println("Git repo was not initialized in the system, starting it now...");
-			backend.init();
-		//}
+		BackendHandlerInterface backend = getBackend(backendName);
+		// if (backend.getGitRepository() == null) {
+		// System.out.println("Git repo was not initialized in the system, starting it now...");
+		backend.init();
+		// }
 		ObjectNode head = Json.newObject();
 		/**
 		 * { status: OK | KO, files:[fileURL:fileURL,content:content],
@@ -92,15 +102,15 @@ public class Application extends Controller {
 			Repository repository = git.getRepository();
 			headObject = git.getRepository().resolve(Constants.HEAD);
 
-			lastCommit = git.log().add(headObject)
-					.call().iterator().next().getId().getName();
-			lastCommitMessage = git.log()
-					.add(headObject).call().iterator().next().getShortMessage();
-			lastCommitAuthor = git.log()
-					.add(headObject).call().iterator().next().getAuthorIdent()
-					.getName();
+			lastCommit = git.log().add(headObject).call().iterator().next()
+					.getId().getName();
+			lastCommitMessage = git.log().add(headObject).call().iterator()
+					.next().getShortMessage();
+			lastCommitAuthor = git.log().add(headObject).call().iterator()
+					.next().getAuthorIdent().getName();
 
-		} catch (RevisionSyntaxException | IOException | GitAPIException | NullPointerException e) {
+		} catch (RevisionSyntaxException | IOException | GitAPIException
+				| NullPointerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return badRequest(head);
@@ -124,7 +134,14 @@ public class Application extends Controller {
 		}
 	}
 
-	//TODO: Generalize this from git to other systems, most likely move it to the githandler and backendhandler
+	public static Result removeRepository() {
+		if (GitHandler.removeExistingRepository())
+			return ok("success");
+		return ok("fail");
+	}
+
+	// TODO: Generalize this from git to other systems, most likely move it to
+	// the githandler and backendhandler
 	public static Result commit() {
 		/**
 		 * Fetch content
@@ -139,12 +156,13 @@ public class Application extends Controller {
 		String user = postInput.get("user")[0];
 		String backend = postInput.get("backend")[0];
 
-		/*System.out.println("Commit message:");
-		System.out.println("\tUrl: " + url);
-		System.out.println("\tContent: " + content);
-		System.out.println("\tMessage: " + message);
-		System.out.println("\tUser: " + user);
-		System.out.println("\tBackend: " + backend);*/
+		/*
+		 * System.out.println("Commit message:"); System.out.println("\tUrl: " +
+		 * url); System.out.println("\tContent: " + content);
+		 * System.out.println("\tMessage: " + message);
+		 * System.out.println("\tUser: " + user);
+		 * System.out.println("\tBackend: " + backend);
+		 */
 
 		/**
 		 * Create File
@@ -190,14 +208,14 @@ public class Application extends Controller {
 		return ok(returnJson);
 	}
 
-	//TODO: Generalize this from git to different backends
+	// TODO: Generalize this from git to different backends
 	private static Result add(String filepattern) {
 		if (GitHandler.add(filepattern))
 			return ok("Success adding the pattern: " + filepattern);
 		return ok("Failed to add the pattern: " + filepattern);
 	}
 
-	//TODO: Generalize this from git to different backends
+	// TODO: Generalize this from git to different backends
 	public static Result commit(String message) {
 		if (GitHandler.commit(message)) {
 			return ok("Success commiting changes");

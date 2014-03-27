@@ -2,6 +2,7 @@ package utils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Scanner;
 
@@ -65,13 +66,11 @@ public class FileManager {
 		return fileContents;
 	}
 
-	public static boolean removeFolder(String fullPath) {
-		File theDir = new File(fullPath);
-
-		if (theDir.exists()) {
-			if (theDir.isDirectory()) {
-				if (theDir.canRead())
-					theDir.delete();
+	public static boolean removeFolder(String fullPath) throws IOException {
+		File directory = new File(fullPath);
+		if (directory.exists()) {
+			if (directory.isDirectory()) {
+				FileUtils.deleteDirectory(directory);
 			}
 		}
 		return false;

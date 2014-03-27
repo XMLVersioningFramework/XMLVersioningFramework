@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
@@ -18,7 +19,7 @@ import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.lib.Repository;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import utils.FileManager;
 
 public class GitHandler extends BackendHandlerInterface {
 	static final String BASE_URL = "./backends/git/";
@@ -93,24 +94,45 @@ public class GitHandler extends BackendHandlerInterface {
 	}
 
 	/**
+	 * overloads removeExistingRepository(String repositoryURL)
+	 * with default repository name
+	 * @return true if succeeded, false if not
+	 */
+	public static boolean removeExistingRepository(){
+		if (removeExistingRepository(REPOSITORY_URL))
+			return true;
+		return false;
+		
+	}
+	/**
 	 * @param repositoryURL
 	 *            the repository URL
 	 * @return true if able to remove or repository inexistent; false if
 	 *         existent but unable to remove.
 	 */
-	private static boolean removeExistingRepository(String repositoryURL) {
+	public static boolean removeExistingRepository(String repositoryURL) {
+		final String gitRepositorySuffix = "/.git";
+		File directory = new File(repositoryURL);
+		File gitRepository = new File(repositoryURL + gitRepositorySuffix);
 		/**
 		 * if repository exists then remove it
 		 */
-
-		/**
-		 * if fails to remove return false
-		 */
-
-		/**
-		 * else its not required to
-		 */
-		return false;
+		if (gitRepository.exists()) {
+			try {
+				FileUtils.deleteDirectory(gitRepository);
+				FileUtils.cleanDirectory(directory);
+			} catch (IOException e) {
+				System.out.println("Failed to remove the repository: " + repositoryURL);
+				e.printStackTrace();
+				return false;
+			}
+			return true;
+		} else {
+			/**
+			 * else its not required to
+			 */
+			return true;
+		}
 	}
 
 	/**
@@ -228,10 +250,10 @@ public class GitHandler extends BackendHandlerInterface {
 		GitHandler.gitRepository = gitRepository;
 	}
 
-	public Object getRepository(){
+	public Object getRepository() {
 		return getGitRepository();
 	}
-		
+
 	/**
 	 * @return the gitRepository
 	 */
