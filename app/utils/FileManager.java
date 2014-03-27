@@ -15,16 +15,29 @@ public class FileManager {
 	public FileManager() {
 	}
 
+	/**
+	 * 
+	 * @param fullPath
+	 * @deprecated use org.apache.commons.io.FileUtils.forceMkdir(File
+	 *             directory) instead
+	 */
 	public static void createFolder(String fullPath) {
 
-		File theDir = new File(fullPath);
+		File directory = new File(fullPath);
 
-		// if the directory does not exist, create it
-		if (!theDir.exists()) {
-			boolean result = theDir.mkdir();
-
+		if (!directory.exists()) {
+			try {
+				FileUtils.forceMkdir(directory);
+			} catch (IOException e) {
+				System.out.println("Failed to create the directory: "
+						+ fullPath);
+				e.printStackTrace();
+			}
+			boolean result = directory.exists();
 			if (result) {
 				System.out.println("Dir: " + fullPath + " created");
+			} else {
+				System.out.println("Failed to create the directory, check above for details.");
 			}
 		} else
 			System.out.println("Dir: " + fullPath
@@ -44,8 +57,7 @@ public class FileManager {
 	 * @deprecated use org.apache.commons.io.FileUtils class instead
 	 */
 	@Deprecated
-	public static void createFile(String data, String fileName,
-			String filePath) {
+	public static void createFile(String data, String fileName, String filePath) {
 		String fileURL = filePath + fileName;
 		System.out.println(fileURL);
 		File file = new File(fileURL);
