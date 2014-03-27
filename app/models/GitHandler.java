@@ -41,7 +41,6 @@ public class GitHandler extends BackendHandlerInterface {
 	public static BackendHandlerInterface getInstance() {
 		return SingletonHolder.INSTANCE;
 	}
-	
 
 	/**
 	 * 
@@ -108,7 +107,6 @@ public class GitHandler extends BackendHandlerInterface {
 		if (removeExistingRepository(REPOSITORY_URL))
 			return true;
 		return false;
-
 	}
 
 	/**
@@ -297,7 +295,7 @@ public class GitHandler extends BackendHandlerInterface {
 		return workingDirFiles;
 	}
 
-	//TODO: use commons.io.FileUtils to fetch those
+	// TODO: use commons.io.FileUtils to fetch those
 	private static ArrayList<String> getWorkingDirFilesPath(File workingDir) {
 		ArrayList<String> workingDirFiles = new ArrayList<String>();
 		for (final File fileEntry : workingDir.listFiles()) {

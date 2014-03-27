@@ -3,7 +3,6 @@
  */
 package utils;
 
-import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Util class to help and normalize with json requests

@@ -252,6 +252,5 @@ public class Application extends Controller {
 		response().setHeader("Access-Control-Allow-Headers",
 				"Origin, X-Requested-With, Content-Type, Accept");
 		return ok();
-
 	}
 }
