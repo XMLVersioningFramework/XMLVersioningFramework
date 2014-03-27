@@ -6,7 +6,7 @@ GET     /                               controllers.Application.index()
 POST    /                               controllers.Application.index()
 OPTIONS /								controllers.Application.checkPreFlight()
 
-GET     /initRepository                 controllers.Application.initRepositoryWithGET()
+GET     /initRepository/:backendName    controllers.Application.initRepositoryWithGET(backendName: String)
 POST    /initRepository                 controllers.Application.initRepository()
 OPTIONS /initRepository					controllers.Application.checkPreFlight()
 

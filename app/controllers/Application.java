@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Application extends Controller {
 
+	// TODO: Generalize this from git to other systems
 	public static Result index() {
 		System.out.println(FileManager
 				.readFileToString(GitHandler.REPOSITORY_URL + "a.txt"));
@@ -45,12 +46,15 @@ public class Application extends Controller {
 		} else {
 			return null;
 		}
-
 	}
-	
-	public static Result initRepositoryWithGET(){
-		GitHandler.getInstance().init();
-		return ok();
+
+	public static Result initRepositoryWithGET(String backendName) {
+		BackendHandlerInterface backend = getBackend(backendName);
+		if (backend.init()) {
+			return ok("Success initializing repository");
+		} else {
+			return ok("Failure to initialize repository");
+		}
 	}
 
 	public static Result initRepository() {
@@ -59,13 +63,14 @@ public class Application extends Controller {
 		String backendName = postInput.get("backend")[0];
 		BackendHandlerInterface backend = getBackend(backendName);
 		ObjectNode returnJson = Json.newObject();
+
 		if (backend.init()) {
 			returnJson.put("answer", "success");
 		} else {
 			returnJson.put("answer", "fail");
 		}
-
 		response().setHeader("Access-Control-Allow-Origin", "*");
+
 		return ok(returnJson);
 	}
 
@@ -122,6 +127,7 @@ public class Application extends Controller {
 		return ok(head);
 	}
 
+	// TODO: Generalize this from git to other systems
 	private static void addFilesToJSONArray(ArrayNode array,
 			ArrayList<String> workingDirFiles) {
 		for (String fileURL : workingDirFiles) {
@@ -134,14 +140,14 @@ public class Application extends Controller {
 		}
 	}
 
+	// TODO: Generalize this from git to other systems
 	public static Result removeRepository() {
 		if (GitHandler.removeExistingRepository())
 			return ok("success");
 		return ok("fail");
 	}
 
-	// TODO: Generalize this from git to other systems, most likely move it to
-	// the githandler and backendhandler
+	// TODO: Generalize this from git to other systems
 	public static Result commit() {
 		/**
 		 * Fetch content
