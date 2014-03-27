@@ -4,10 +4,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Scanner;
 
 import org.apache.commons.io.FileUtils;
 
+/**
+ * @deprecated use org.apache.commons.io.FileUtils class instead
+ */
+@Deprecated
 public class FileManager {
 	public FileManager() {
 	}
@@ -49,23 +52,27 @@ public class FileManager {
 
 	}
 
+	/**
+	 * @deprecated use org.apache.commons.io.FileUtils class instead
+	 */
+	@Deprecated
 	public static String readFileToString(String fileURL) {
+		File file = new File(fileURL);
+
 		String fileContents = "";
 		try {
-			Scanner tempFile = new Scanner(new File(fileURL));
-			while (tempFile.hasNextLine()) {
-				fileContents += tempFile.nextLine();
-			}
-			tempFile.close();
-		} catch (FileNotFoundException e) {
-			System.err
-					.println("Failed to find a file in the working dir, file url: "
-							+ fileURL);
+			fileContents += FileUtils.readFileToString(file);
+		} catch (IOException e) {
+			System.err.println("Failed read from file, file url: " + fileURL);
 			e.printStackTrace();
 		}
 		return fileContents;
 	}
 
+	/**
+	 * @deprecated use org.apache.commons.io.FileUtils class instead
+	 */
+	@Deprecated
 	public static boolean removeFolder(String fullPath) throws IOException {
 		File directory = new File(fullPath);
 		if (directory.exists()) {
