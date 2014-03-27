@@ -83,7 +83,7 @@ public class Application extends Controller {
 		BackendHandlerInterface backend = getBackend(backendName);
 		// if (backend.getGitRepository() == null) {
 		// System.out.println("Git repo was not initialized in the system, starting it now...");
-		backend.init();
+		//backend.init();
 		// }
 		ObjectNode head = Json.newObject();
 		/**

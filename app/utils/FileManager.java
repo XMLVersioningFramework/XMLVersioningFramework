@@ -47,6 +47,7 @@ public class FileManager {
 	public static void createFile(String data, String fileName,
 			String filePath) {
 		String fileURL = filePath + fileName;
+		System.out.println(fileURL);
 		File file = new File(fileURL);
 		try {
 			FileUtils.writeStringToFile(file, data);
