@@ -6,7 +6,6 @@ import java.util.ArrayList;
 
 import javax.inject.Provider;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -14,18 +13,10 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.io.FileUtils;
-import org.custommonkey.xmlunit.XMLUnit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -64,11 +55,17 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	}
 
+	/**
+	 * SingletonHolder is loaded on the first execution of
+	 * Singleton.getInstance() or the first access to SingletonHolder.INSTANCE,
+	 * not before.
+	 */
+	private static class SingletonHolder {
+		private static final XChroniclerHandler INSTANCE = new XChroniclerHandler();
+	}
+
 	public static BackendHandlerInterface getInstance() {
-		if (instance == null) {
-			instance = new XChroniclerHandler();
-		}
-		return instance;
+		return SingletonHolder.INSTANCE;
 	}
 
 	public void setup() {

@@ -19,8 +19,6 @@ import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.lib.Repository;
 
-import utils.FileManager;
-
 public class GitHandler extends BackendHandlerInterface {
 	static final String BASE_URL = "./backends/git/";
 	public static final String REPOSITORY_URL = BASE_URL + "repo/";
@@ -31,12 +29,19 @@ public class GitHandler extends BackendHandlerInterface {
 
 	}
 
-	public static BackendHandlerInterface getInstance() {
-		if (instance == null) {
-			instance = new GitHandler();
-		}
-		return instance;
+	/**
+	 * SingletonHolder is loaded on the first execution of
+	 * Singleton.getInstance() or the first access to SingletonHolder.INSTANCE,
+	 * not before.
+	 */
+	private static class SingletonHolder {
+		private static final GitHandler INSTANCE = new GitHandler();
 	}
+
+	public static BackendHandlerInterface getInstance() {
+		return SingletonHolder.INSTANCE;
+	}
+	
 
 	/**
 	 * 
@@ -94,16 +99,18 @@ public class GitHandler extends BackendHandlerInterface {
 	}
 
 	/**
-	 * overloads removeExistingRepository(String repositoryURL)
-	 * with default repository name
+	 * overloads removeExistingRepository(String repositoryURL) with default
+	 * repository name
+	 * 
 	 * @return true if succeeded, false if not
 	 */
-	public static boolean removeExistingRepository(){
+	public static boolean removeExistingRepository() {
 		if (removeExistingRepository(REPOSITORY_URL))
 			return true;
 		return false;
-		
+
 	}
+
 	/**
 	 * @param repositoryURL
 	 *            the repository URL
@@ -122,7 +129,8 @@ public class GitHandler extends BackendHandlerInterface {
 				FileUtils.deleteDirectory(gitRepository);
 				FileUtils.cleanDirectory(directory);
 			} catch (IOException e) {
-				System.out.println("Failed to remove the repository: " + repositoryURL);
+				System.out.println("Failed to remove the repository: "
+						+ repositoryURL);
 				e.printStackTrace();
 				return false;
 			}
@@ -206,9 +214,10 @@ public class GitHandler extends BackendHandlerInterface {
 		return true;
 	}
 
-	public static boolean commit(String message,String name,String email) {
+	public static boolean commit(String message, String name, String email) {
 		try {
-			GitHandler.getGitRepository().commit().setAuthor(name, email).setMessage(message).call();
+			GitHandler.getGitRepository().commit().setAuthor(name, email)
+					.setMessage(message).call();
 		} catch (NoHeadException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -288,6 +297,7 @@ public class GitHandler extends BackendHandlerInterface {
 		return workingDirFiles;
 	}
 
+	//TODO: use commons.io.FileUtils to fetch those
 	private static ArrayList<String> getWorkingDirFilesPath(File workingDir) {
 		ArrayList<String> workingDirFiles = new ArrayList<String>();
 		for (final File fileEntry : workingDir.listFiles()) {
