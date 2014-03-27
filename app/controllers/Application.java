@@ -6,6 +6,7 @@ import java.util.Map;
 
 import models.BackendHandlerInterface;
 import models.GitHandler;
+import models.UserHandler;
 import models.XChroniclerHandler;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -159,7 +160,7 @@ public class Application extends Controller {
 		String url = postInput.get("url")[0];
 		String content = postInput.get("content")[0];
 		String message = postInput.get("message")[0];
-		String user = postInput.get("user")[0];
+		String userId = postInput.get("user")[0];
 		String backend = postInput.get("backend")[0];
 
 		/*
@@ -194,7 +195,10 @@ public class Application extends Controller {
 		/**
 		 * Commit changes
 		 */
-		while (!GitHandler.commit(message)) {
+		String userName=UserHandler.getUserName(Integer.parseInt(userId));
+		String userEmail=UserHandler.getUserEmail(Integer.parseInt(userId));
+		
+		while (!GitHandler.commit(message,userName,userEmail)) {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
@@ -219,14 +223,6 @@ public class Application extends Controller {
 		if (GitHandler.add(filepattern))
 			return ok("Success adding the pattern: " + filepattern);
 		return ok("Failed to add the pattern: " + filepattern);
-	}
-
-	// TODO: Generalize this from git to different backends
-	public static Result commit(String message) {
-		if (GitHandler.commit(message)) {
-			return ok("Success commiting changes");
-		}
-		return ok("Failed to commit changes, check log for details");
 	}
 
 	public static Result checkPreFlight() {

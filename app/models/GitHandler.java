@@ -206,9 +206,9 @@ public class GitHandler extends BackendHandlerInterface {
 		return true;
 	}
 
-	public static boolean commit(String message) {
+	public static boolean commit(String message,String name,String email) {
 		try {
-			GitHandler.getGitRepository().commit().setMessage(message).call();
+			GitHandler.getGitRepository().commit().setAuthor(name, email).setMessage(message).call();
 		} catch (NoHeadException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
