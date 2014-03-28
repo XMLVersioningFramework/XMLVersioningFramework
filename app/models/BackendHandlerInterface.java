@@ -14,6 +14,8 @@ public abstract class BackendHandlerInterface {
 
 	public abstract boolean init();
 
+	public abstract boolean removeExistingRepository();
+
 	public abstract boolean commit(String url, String content, String message,
 			User user);
 

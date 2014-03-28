@@ -100,7 +100,7 @@ public class GitHandler extends BackendHandlerInterface {
 	 * 
 	 * @return true if succeeded, false if not
 	 */
-	public static boolean removeExistingRepository() {
+	public boolean removeExistingRepository() {
 		if (removeExistingRepository(REPOSITORY_URL))
 			return true;
 		return false;

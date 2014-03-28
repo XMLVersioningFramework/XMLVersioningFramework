@@ -10,7 +10,7 @@ GET     /initRepository/:backendName    controllers.Application.initRepositoryWi
 POST    /initRepository                 controllers.Application.initRepository()
 OPTIONS /initRepository					controllers.Application.checkPreFlight()
 
-GET     /removeRepository               controllers.Application.removeRepository()
+GET     /removeRepository/:backendName  controllers.Application.removeRepository(backendName: String)
 
 POST    /commit                         controllers.Application.commit()
 

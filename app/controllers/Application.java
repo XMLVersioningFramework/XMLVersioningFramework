@@ -155,9 +155,9 @@ public class Application extends Controller {
 		}
 	}
 
-	// TODO: Generalize this from git to other systems
-	public static Result removeRepository() {
-		if (GitHandler.removeExistingRepository())
+	public static Result removeRepository(String backendName) {
+		BackendHandlerInterface backend = getBackend(backendName);
+		if (backend.removeExistingRepository())
 			return ok(JSONConstants.SUCCESS);
 		return ok(JSONConstants.FAIL);
 	}
