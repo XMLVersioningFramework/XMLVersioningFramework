@@ -38,7 +38,7 @@ public class Application extends Controller {
 		} else if (name.equals(BackendHandlerInterface.XCHRONICLER)) {
 			return XChroniclerHandler.getInstance();
 		} else {
-			return null;
+			throw new UnsupportedOperationException();
 		}
 	}
 
@@ -198,22 +198,20 @@ public class Application extends Controller {
 		/**
 		 * Add to repository
 		 */
-		while (!GitHandler.add(url)) {
+		GitHandler.add(url);
+		/*while (!) {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
+		}*/
 		System.out.println("success adding file");
 
 		/**
 		 * Commit changes
 		 */
-		String userName = UserHandler.getUserName(Integer.parseInt(userId));
-		String userEmail = UserHandler.getUserEmail(Integer.parseInt(userId));
-
 		while (!GitHandler.commit(message, userName, userEmail)) {
 			try {
 				Thread.sleep(100);

@@ -8,40 +8,27 @@ package models;
  */
 public class User {
 
-	private String userName;
-	private String userEmail;
+	private String name;
+	private String email;
 	
-	public User(int userId) {
-		this.userName = UserHandler.getUserName(userId);
-		this.userEmail = UserHandler.getUserEmail(userId);
+	public User(String tname,String temail) {
+		this.name=tname;
+		this.email=temail;
 	}
 
 	/**
 	 * @return the userName
 	 */
 	public String getUserName() {
-		return userName;
-	}
-
-	/**
-	 * @param userName the userName to set
-	 */
-	public void setUserName(String userName) {
-		this.userName = userName;
+		return name;
 	}
 
 	/**
 	 * @return the userEmail
 	 */
-	public String getUserEmail() {
-		return userEmail;
+	public String getEmail() {
+		return email;
 	}
 
-	/**
-	 * @param userEmail the userEmail to set
-	 */
-	public void setUserEmail(String userEmail) {
-		this.userEmail = userEmail;
-	}
 
 }

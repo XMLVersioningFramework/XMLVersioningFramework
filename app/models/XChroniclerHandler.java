@@ -46,7 +46,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	private File repoDir = null;
 	private SVNURL repoUrl;
 	private File wc = null;
-
+	final String BASE_URL = rootBackendFolder+"XChronicler/";
 	private SVNClientManager clientManager = null;
 	private Provider<SVNLookClient> svnlookProvider = new SvnlookClientProviderStateless();
 	private static XChroniclerHandler instance = null;
@@ -66,30 +66,6 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	public static BackendHandlerInterface getInstance() {
 		return SingletonHolder.INSTANCE;
-	}
-
-	public void setup() {
-		try {
-			this.testDir = File.createTempFile("test-"
-					+ this.getClass().getName(), "");
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		this.testDir.delete();
-		this.repoDir = new File(this.testDir, "repo");
-		try {
-			this.repoUrl = SVNRepositoryFactory.createLocalRepository(
-					this.repoDir, true, false);
-		} catch (SVNException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		// for low level operations
-		// SVNRepository repo = SVNRepositoryFactory.create(repoUrl);
-		this.wc = new File(this.testDir, "wc");
-		System.out.println("Running local fs repository " + this.repoUrl);
-		this.clientManager = SVNClientManager.newInstance();
 	}
 
 	public void oldTest() {
@@ -219,8 +195,23 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean init() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		this.testDir =  new File(BASE_URL);
+		
+		this.testDir.delete();
+		this.repoDir = new File(this.testDir, "repo");
+		try {
+			this.repoUrl = SVNRepositoryFactory.createLocalRepository(
+					this.repoDir, true, false);
+		} catch (SVNException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// for low level operations
+		// SVNRepository repo = SVNRepositoryFactory.create(repoUrl);
+		this.wc = new File(this.testDir, "wc");
+		System.out.println("Running local fs repository " + this.repoUrl);
+		this.clientManager = SVNClientManager.newInstance();
+		return true;
 	}
 
 	@Override

@@ -20,7 +20,7 @@ import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.lib.Repository;
 
 public class GitHandler extends BackendHandlerInterface {
-	static final String BASE_URL = "./backends/git/";
+	static final String BASE_URL = rootBackendFolder+"git/";
 	public static final String REPOSITORY_URL = BASE_URL + "repo/";
 	static Git gitRepository = null;
 	private static GitHandler instance = null;

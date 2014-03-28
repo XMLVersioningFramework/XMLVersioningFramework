@@ -1,22 +1,16 @@
 package models;
 
+import java.util.ArrayList;
+
 public class UserHandler {
-
-	public static String getUserName(int userId) {
-		String[] userArray = new String[3];
-		userArray[0] = "Alice";
-		userArray[1] = "Bob";
-		userArray[2] = "Charly";
-
-		return userArray[userId];
+	static ArrayList<User> users =new ArrayList<User>();
+	public UserHandler(){
+		users =new ArrayList<User>();
+		users.add(new User("Alice","Alice@company.com"));
+		users.add(new User("Bob","Bob@company.com"));
+		users.add(new User("Charly","Charly@company.com"));
 	}
-
-	public static String getUserEmail(int userId) {
-		String[] userArray = new String[3];
-		userArray[0] = "Alice@company.com";
-		userArray[1] = "Bob@company.com";
-		userArray[2] = "Charly@company.com";
-
-		return userArray[userId];
+	public static User getUser(int i){
+		return users.get(i);
 	}
 }
