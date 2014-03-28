@@ -4,7 +4,6 @@ import java.util.Map;
 
 import models.BackendHandlerInterface;
 import models.GitHandler;
-import models.RepositoryHead;
 import models.User;
 import models.UserHandler;
 import models.XChroniclerHandler;
@@ -78,8 +77,6 @@ public class Application extends Controller {
 		return request().body().asFormUrlEncoded();
 	}
 
-	// TODO: Generalize this from git to other systems, most likely move it to
-	// the githandler and backendhandler
 	/**
 	 * Uses HTTP/POST
 	 * 
@@ -90,11 +87,19 @@ public class Application extends Controller {
 		BackendHandlerInterface backend = getBackend(postInput
 				.get(JSONConstants.BACKEND)[0]);
 
-		RepositoryHead head = backend.getRepositoryHEAD();
-		ObjectNode headJSON = head.toJSON();
-
 		response().setHeader("Access-Control-Allow-Origin", "*");
-		return ok(headJSON);
+		return ok(backend.getRepositoryHEAD().toJSON());
+	}
+
+	/**
+	 * Uses HTTP/GET
+	 * 
+	 * @return
+	 */
+	public static Result getHEADWithGET(String backendName) {
+		BackendHandlerInterface backend = getBackend(backendName);
+
+		return ok(backend.getRepositoryHEAD().toJSON());
 	}
 
 	public static Result removeRepository(String backendName) {
