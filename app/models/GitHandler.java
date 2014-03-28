@@ -19,6 +19,8 @@ import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.lib.Repository;
 
+import utils.FileManager;
+
 public class GitHandler extends BackendHandlerInterface {
 	static final String BASE_URL = rootBackendFolder+"git/";
 	public static final String REPOSITORY_URL = BASE_URL + "repo/";
@@ -328,5 +330,52 @@ public class GitHandler extends BackendHandlerInterface {
 	public TempFile getFile(String url) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean commit(String url, String content, String message, User user) {
+		
+		
+		buildFile(url, content);
+
+		/**
+		 * Add to repository
+		 */
+		while (!GitHandler.add(url)) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		System.out.println("success adding file");
+
+		/**
+		 * Commit changes
+		 */
+		while (!GitHandler.commit(message, user.getName(), user.getEmail())) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Creates a File on the repository directory
+	 * @param url
+	 * @param content
+	 */
+	//TODO: Should be moved away from here
+	private static void buildFile(String url, String content) {
+		String fileName = url;
+		String fileContent = content;
+		String filePath = GitHandler.REPOSITORY_URL;
+		FileManager.createFile(fileContent, fileName, filePath);
 	}
 }

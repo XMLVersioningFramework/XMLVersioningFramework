@@ -13,13 +13,15 @@ public abstract class BackendHandlerInterface {
 	public abstract Object getRepository();
 
 	public abstract boolean init();
+	
+	public abstract boolean commit(String url, String content, String message, User user);
 
 	public abstract String commitAFile(TempFile tf);
 
 	public abstract TempFile getFile(String url);
 	
 	public abstract ArrayList<String> getWorkingDirFiles();
-
+	
 	public static String runCommand(String s) {
 		String returnMsg = "";
 		Process p = null;
@@ -45,6 +47,8 @@ public abstract class BackendHandlerInterface {
 		}
 		return returnMsg;
 	}
+
+
 
 
 }

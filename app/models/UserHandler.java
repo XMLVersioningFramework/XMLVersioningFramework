@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class UserHandler {
 	static ArrayList<User> users =new ArrayList<User>();
+	
 	public UserHandler(){
 		users =new ArrayList<User>();
 		users.add(new User("Alice","Alice@company.com"));
