@@ -1,7 +1,6 @@
 package models;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.inject.Provider;
@@ -46,7 +45,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	private File repoDir = null;
 	private SVNURL repoUrl;
 	private File wc = null;
-	final String BASE_URL = rootBackendFolder+"XChronicler/";
+	final String BASE_URL = rootBackendFolder + "XChronicler/";
 	private SVNClientManager clientManager = null;
 	private Provider<SVNLookClient> svnlookProvider = new SvnlookClientProviderStateless();
 	private static XChroniclerHandler instance = null;
@@ -195,8 +194,8 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean init() {
-		this.testDir =  new File(BASE_URL);
-		
+		this.testDir = new File(BASE_URL);
+
 		this.testDir.delete();
 		this.repoDir = new File(this.testDir, "repo");
 		try {
@@ -227,7 +226,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	}
 
 	@Override
-	public ArrayList<String> getWorkingDirFiles() {
+	public ArrayList<RepositoryFile> getWorkingDirFiles() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
@@ -240,6 +239,18 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean removeExistingRepository() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String getRepositoryPath() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public RepositoryHead getRepositoryHEAD() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
