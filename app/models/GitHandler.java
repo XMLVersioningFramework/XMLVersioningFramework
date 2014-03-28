@@ -8,24 +8,19 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
-import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
-import org.eclipse.jgit.api.errors.NoHeadException;
-import org.eclipse.jgit.api.errors.NoMessageException;
-import org.eclipse.jgit.api.errors.UnmergedPathsException;
-import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
 
 import utils.FileManager;
 
 public class GitHandler extends BackendHandlerInterface {
-	static final String BASE_URL = rootBackendFolder+"git/";
+	static final String BASE_URL = rootBackendFolder + "git/";
 	public static final String REPOSITORY_URL = BASE_URL + "repo/";
 	static Git gitRepository = null;
-	private static GitHandler instance = null;
 
 	private GitHandler() {
 
@@ -105,7 +100,7 @@ public class GitHandler extends BackendHandlerInterface {
 	 * 
 	 * @return true if succeeded, false if not
 	 */
-	public static boolean removeExistingRepository() {
+	public boolean removeExistingRepository() {
 		if (removeExistingRepository(REPOSITORY_URL))
 			return true;
 		return false;
@@ -214,51 +209,6 @@ public class GitHandler extends BackendHandlerInterface {
 		return true;
 	}
 
-	public static boolean commit(String message, String name, String email) {
-		try {
-			GitHandler.getGitRepository().commit().setAuthor(name, email)
-					.setMessage(message).call();
-		} catch (NoHeadException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
-		} catch (NoMessageException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
-		} catch (UnmergedPathsException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
-		} catch (ConcurrentRefUpdateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
-		} catch (WrongRepositoryStateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
-		} catch (GitAPIException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
-		} catch (JGitInternalException e) {
-			System.err
-					.println("Fail to add the file to the repository internal error");
-			// e.printStackTrace();
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * @param gitRepository
-	 *            the gitRepository to set
-	 */
-	private static void setGitRepository(Git gitRepository) {
-		GitHandler.gitRepository = gitRepository;
-	}
-
 	public Object getRepository() {
 		return getGitRepository();
 	}
@@ -334,8 +284,7 @@ public class GitHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		
-		
+
 		buildFile(url, content);
 
 		/**
@@ -354,24 +303,44 @@ public class GitHandler extends BackendHandlerInterface {
 		/**
 		 * Commit changes
 		 */
-		while (!GitHandler.commit(message, user.getName(), user.getEmail())) {
-			try {
+		RevCommit commit;
+		boolean committed = false;
+		try {
+			commit = GitHandler.getGitRepository().commit()
+					.setAuthor(user.getName(), user.getEmail())
+					.setMessage(message).call();
+			/**
+			 * Is this really still necessary?
+			 */
+			int commitTime = Integer.MIN_VALUE;
+			while (commitTime == Integer.MIN_VALUE) {
+				/**
+				 * wait for the commit to be successful
+				 */
 				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				commitTime = commit.getCommitTime();
 			}
+			committed = true;
+
+		} catch (GitAPIException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			return committed;
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return committed;
 		}
-		
-		return false;
+		return committed;
 	}
-	
+
 	/**
 	 * Creates a File on the repository directory
+	 * 
 	 * @param url
 	 * @param content
 	 */
-	//TODO: Should be moved away from here
+	// TODO: Should be moved away from here
 	private static void buildFile(String url, String content) {
 		String fileName = url;
 		String fileContent = content;

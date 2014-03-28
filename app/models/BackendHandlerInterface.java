@@ -8,20 +8,23 @@ import java.util.ArrayList;
 public abstract class BackendHandlerInterface {
 	public static final String GIT = "git";
 	public static final String XCHRONICLER = "XChronicler";
-	public static final String rootBackendFolder="./backends/";
-	
+	public static final String rootBackendFolder = "./backends/";
+
 	public abstract Object getRepository();
 
 	public abstract boolean init();
-	
-	public abstract boolean commit(String url, String content, String message, User user);
+
+	public abstract boolean removeExistingRepository();
+
+	public abstract boolean commit(String url, String content, String message,
+			User user);
 
 	public abstract String commitAFile(TempFile tf);
 
 	public abstract TempFile getFile(String url);
-	
+
 	public abstract ArrayList<String> getWorkingDirFiles();
-	
+
 	public static String runCommand(String s) {
 		String returnMsg = "";
 		Process p = null;
@@ -47,8 +50,5 @@ public abstract class BackendHandlerInterface {
 		}
 		return returnMsg;
 	}
-
-
-
 
 }

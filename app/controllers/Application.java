@@ -155,9 +155,9 @@ public class Application extends Controller {
 		}
 	}
 
-	// TODO: Generalize this from git to other systems
-	public static Result removeRepository() {
-		if (GitHandler.removeExistingRepository())
+	public static Result removeRepository(String backendName) {
+		BackendHandlerInterface backend = getBackend(backendName);
+		if (backend.removeExistingRepository())
 			return ok(JSONConstants.SUCCESS);
 		return ok(JSONConstants.FAIL);
 	}
@@ -205,13 +205,6 @@ public class Application extends Controller {
 		returnJson.put(JSONConstants.ANSWER, answer);
 
 		return ok(returnJson);
-	}
-
-	// TODO: Generalize this from git to different backends
-	private static Result add(String filepattern) {
-		if (GitHandler.add(filepattern))
-			return ok("Success adding the pattern: " + filepattern);
-		return ok("Failed to add the pattern: " + filepattern);
 	}
 
 	public static Result checkPreFlight() {

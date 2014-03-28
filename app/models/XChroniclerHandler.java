@@ -271,4 +271,10 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		
 	}
 
+	@Override
+	public boolean removeExistingRepository() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
 }
