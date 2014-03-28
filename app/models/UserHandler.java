@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class UserHandler {
 	static ArrayList<User> users =new ArrayList<User>();
-	public UserHandler(){
+	public static void addUsers(){
 		users =new ArrayList<User>();
 		users.add(new User("Alice","Alice@company.com"));
 		users.add(new User("Bob","Bob@company.com"));

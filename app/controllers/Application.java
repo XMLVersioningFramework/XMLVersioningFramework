@@ -212,14 +212,14 @@ public class Application extends Controller {
 		/**
 		 * Commit changes
 		 */
-		while (!GitHandler.commit(message, userName, userEmail)) {
+		/*while (!GitHandler.commit(message, userName, userEmail)) {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
+		}*/
 
 		// return new ActionWrapper(super.onRequest(request, actionMethod));
 		response().setHeader("Access-Control-Allow-Origin", "*");
