@@ -207,13 +207,6 @@ public class Application extends Controller {
 		return ok(returnJson);
 	}
 
-	// TODO: Generalize this from git to different backends
-	private static Result add(String filepattern) {
-		if (GitHandler.add(filepattern))
-			return ok("Success adding the pattern: " + filepattern);
-		return ok("Failed to add the pattern: " + filepattern);
-	}
-
 	public static Result checkPreFlight() {
 		// Need to add the correct domain in here!!
 		response().setHeader("Access-Control-Allow-Origin", "*");
