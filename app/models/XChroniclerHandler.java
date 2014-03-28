@@ -9,10 +9,13 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.io.FileUtils;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -22,6 +25,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import se.repos.vfile.VFileCalculatorImpl;
 import se.repos.vfile.VFileCommitHandler;
@@ -197,8 +201,15 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	public boolean init() {
 		this.testDir =  new File(BASE_URL);
 		
-		this.testDir.delete();
+		//this.testDir.delete();
 		this.repoDir = new File(this.testDir, "repo");
+		try {
+			FileUtils.cleanDirectory(this.repoDir);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		try {
 			this.repoUrl = SVNRepositoryFactory.createLocalRepository(
 					this.repoDir, true, false);
@@ -209,6 +220,12 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		// for low level operations
 		// SVNRepository repo = SVNRepositoryFactory.create(repoUrl);
 		this.wc = new File(this.testDir, "wc");
+		try {
+			FileUtils.cleanDirectory(this.wc);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		System.out.println("Running local fs repository " + this.repoUrl);
 		this.clientManager = SVNClientManager.newInstance();
 		return true;
@@ -234,8 +251,24 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		CmsRepository repository = new CmsRepository("/anyparent", "anyname");
+		CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
+				"/basic.xml"));
+		VFileStore store = null;
+		try {
+			store = this.testVFiling(testID, new File(
+					"./backends/XChronicler/testdata"), "/basic_1.xml",
+					"basic_2.xml", "basic_3.xml");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//store ==null
+		Document document = store.get(testID);
+		return true;
+		
+		
+		
 	}
 
 }
