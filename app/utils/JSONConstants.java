@@ -37,7 +37,7 @@ public final class JSONConstants {
 	public static final String BACKEND = "backend";
 	public static final String ELAPSED_TIME = "elapsedTime";
 	/**
-	 * TODO: IS this equal to {@link #FILE_URL}? if so, unify here, in the
+	 * TODO: IS this equal to {@link #ELAPSED_TIME}? if so, unify here, in the
 	 * caller and in the js
 	 */
 	public static final String TIME = "time";
