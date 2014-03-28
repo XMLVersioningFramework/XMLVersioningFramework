@@ -1,30 +1,19 @@
 package controllers;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 
 import models.BackendHandlerInterface;
 import models.GitHandler;
+import models.RepositoryHead;
 import models.User;
 import models.UserHandler;
 import models.XChroniclerHandler;
-
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.errors.RevisionSyntaxException;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Repository;
-
 import play.libs.Json;
 //import play.mvc.BodyParser.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
-import utils.FileManager;
 import utils.JSONConstants;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Application extends Controller {
@@ -98,56 +87,14 @@ public class Application extends Controller {
 	 */
 	public static Result getHEAD() {
 		final Map<String, String[]> postInput = getPOSTData();
-		String backendName = postInput.get(JSONConstants.BACKEND)[0];
-		BackendHandlerInterface backend = getBackend(backendName);
-		// if (backend.getGitRepository() == null) {
-		// System.out.println("Git repo was not initialized in the system, starting it now...");
-		// backend.init();
-		// }
-		ObjectNode head = Json.newObject();
+		BackendHandlerInterface backend = getBackend(postInput
+				.get(JSONConstants.BACKEND)[0]);
 
-		long startTime = System.nanoTime();
-		ArrayList<String> workingDirFiles = backend.getWorkingDirFiles();
+		RepositoryHead head = backend.getRepositoryHEAD();
+		ObjectNode headJSON = head.toJSON();
 
-		long elapsedTime = System.nanoTime() - startTime;
-				
-		for (String fileURL : workingDirFiles) {
-			String fileContents = FileManager.readFileToString(fileURL);
-			
-			String strippedFileURL = ((GitHandler) backend).getStrippedFileURL(fileURL);
-			ObjectNode tempObjectNode = head.putArray(JSONConstants.FILES).addObject();
-			tempObjectNode.put(JSONConstants.FILE_URL, strippedFileURL);
-			tempObjectNode.put(JSONConstants.FILE_CONTENT, fileContents);
-		}
-		head.put(JSONConstants.ELAPSED_TIME, elapsedTime);
-
-		String lastCommit = "-";
-		String lastCommitMessage = "-";
-		String lastCommitAuthor = "-";
-		ObjectId headObject;
-		try {
-			Git git = (Git) backend.getRepository();
-			Repository repository = git.getRepository();
-			headObject = git.getRepository().resolve(Constants.HEAD);
-
-			lastCommit = git.log().add(headObject).call().iterator().next()
-					.getId().getName();
-			lastCommitMessage = git.log().add(headObject).call().iterator()
-					.next().getShortMessage();
-			lastCommitAuthor = git.log().add(headObject).call().iterator()
-					.next().getAuthorIdent().getName();
-
-		} catch (RevisionSyntaxException | IOException | GitAPIException
-				| NullPointerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return badRequest(head);
-		}
-		head.put(JSONConstants.LAST_COMMIT, lastCommit);
-		head.put(JSONConstants.LAST_COMMIT_MESSAGE, lastCommitMessage);
-		head.put(JSONConstants.LAST_COMMIT_AUTHOR, lastCommitAuthor);
 		response().setHeader("Access-Control-Allow-Origin", "*");
-		return ok(head);
+		return ok(headJSON);
 	}
 
 	public static Result removeRepository(String backendName) {

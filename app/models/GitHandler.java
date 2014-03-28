@@ -12,6 +12,9 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.errors.NoWorkTreeException;
+import org.eclipse.jgit.errors.RevisionSyntaxException;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 
@@ -148,12 +151,11 @@ public class GitHandler extends BackendHandlerInterface {
 	 * @return
 	 */
 	public static boolean add(String filepattern) {
-		if (GitHandler.getGitRepository() == null) {
+		if (GitHandler.gitRepository == null) {
 			System.err.println("Have not init repo: " + filepattern);
 			return false;
 		}
-		if (add(GitHandler.getGitRepository().getRepository(), filepattern,
-				false))
+		if (add(GitHandler.gitRepository.getRepository(), filepattern, false))
 			return true;
 		return false;
 	}
@@ -210,13 +212,6 @@ public class GitHandler extends BackendHandlerInterface {
 	}
 
 	public Object getRepository() {
-		return getGitRepository();
-	}
-
-	/**
-	 * @return the gitRepository
-	 */
-	private static Git getGitRepository() {
 		return gitRepository;
 	}
 
@@ -225,19 +220,17 @@ public class GitHandler extends BackendHandlerInterface {
 	 * @return The working directory path
 	 * @throws IOException
 	 */
-	public static String getWorkingDirectoryPath() {
-		return GitHandler.getGitRepository().getRepository().getWorkTree()
-				.getPath();
+	public String getRepositoryPath() {
+		return GitHandler.gitRepository.getRepository().getWorkTree().getPath();
 	}
 
-	public ArrayList<String> getWorkingDirFiles() {
+	public ArrayList<RepositoryFile> getWorkingDirFiles() {
 
 		// TODO: check if working dir is up to date
-		ArrayList<String> workingDirFiles = null;
+		ArrayList<RepositoryFile> workingDirFiles = null;
 		File workingDir;
 		try {
-			workingDir = GitHandler.getGitRepository().getRepository()
-					.getWorkTree();
+			workingDir = GitHandler.gitRepository.getRepository().getWorkTree();
 			workingDirFiles = getWorkingDirFilesPath(workingDir);
 		} catch (NoWorkTreeException e) {
 			// TODO Auto-generated catch block
@@ -248,26 +241,17 @@ public class GitHandler extends BackendHandlerInterface {
 	}
 
 	// TODO: use commons.io.FileUtils to fetch those
-	private static ArrayList<String> getWorkingDirFilesPath(File workingDir) {
-		ArrayList<String> workingDirFiles = new ArrayList<String>();
+	private static ArrayList<RepositoryFile> getWorkingDirFilesPath(
+			File workingDir) {
+		ArrayList<RepositoryFile> workingDirFiles = new ArrayList<RepositoryFile>();
 		for (final File fileEntry : workingDir.listFiles()) {
 			if (fileEntry.isDirectory()) {
 				// TODO: go recursive
 			} else {
-				workingDirFiles.add(fileEntry.getPath());
+				workingDirFiles.add(new RepositoryFile(fileEntry.getPath()));
 			}
 		}
 		return workingDirFiles;
-	}
-
-	/**
-	 * removes the relative path to the working directory and replaces with '.'
-	 * 
-	 * @param fileURL
-	 * @return
-	 */
-	public String getStrippedFileURL(String fileURL) {
-		return fileURL.replaceFirst(GitHandler.getWorkingDirectoryPath(), ".");
 	}
 
 	@Override
@@ -306,7 +290,7 @@ public class GitHandler extends BackendHandlerInterface {
 		RevCommit commit;
 		boolean committed = false;
 		try {
-			commit = GitHandler.getGitRepository().commit()
+			commit = GitHandler.gitRepository.commit()
 					.setAuthor(user.getName(), user.getEmail())
 					.setMessage(message).call();
 			/**
@@ -347,4 +331,47 @@ public class GitHandler extends BackendHandlerInterface {
 		String filePath = GitHandler.REPOSITORY_URL;
 		FileManager.createFile(fileContent, fileName, filePath);
 	}
+
+	@Override
+	public RepositoryHead getRepositoryHEAD() {
+		RepositoryHead head = new RepositoryHead();
+		long startTime = System.nanoTime();
+
+		populateHEADRepositoryFiles(head);
+		populateHEADGeneralData(head);
+
+		head.setElapsedTime(System.nanoTime() - startTime);
+
+		return head;
+	}
+
+	private void populateHEADGeneralData(RepositoryHead head) {
+		try {
+			Git git = (Git) this.getRepository();
+			Repository repository = git.getRepository();
+			ObjectId headObject = git.getRepository().resolve(Constants.HEAD);
+
+			head.setLastCommit(git.log().add(headObject).call().iterator()
+					.next().getId().getName());
+			head.setLastCommitMessage(git.log().add(headObject).call()
+					.iterator().next().getShortMessage());
+			head.setLastCommitAuthor(git.log().add(headObject).call()
+					.iterator().next().getAuthorIdent().getName());
+
+		} catch (RevisionSyntaxException | IOException | GitAPIException
+				| NullPointerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private void populateHEADRepositoryFiles(RepositoryHead head) {
+		head.setRepositoryFiles(this.getWorkingDirFiles());
+		for (RepositoryFile repoFile : head.getRepositoryFiles()) {
+			repoFile.setFileContent(FileManager.readFileToString(repoFile
+					.getFileURL()));
+			repoFile.setFileURL(this.getStrippedFileURL(repoFile.getFileURL()));
+		}
+	}
+
 }
