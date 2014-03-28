@@ -6,6 +6,7 @@ import java.util.Map;
 
 import models.BackendHandlerInterface;
 import models.GitHandler;
+import models.User;
 import models.UserHandler;
 import models.XChroniclerHandler;
 
@@ -32,10 +33,10 @@ public class Application extends Controller {
 		return ok("this is just the index, you should be looking somewhere else");
 	}
 
-	private static BackendHandlerInterface getBackend(String name) {
-		if (name.equals(BackendHandlerInterface.GIT)) {
+	private static BackendHandlerInterface getBackend(String backendName) {
+		if (backendName.equals(BackendHandlerInterface.GIT)) {
 			return GitHandler.getInstance();
-		} else if (name.equals(BackendHandlerInterface.XCHRONICLER)) {
+		} else if (backendName.equals(BackendHandlerInterface.XCHRONICLER)) {
 			return XChroniclerHandler.getInstance();
 		} else {
 			throw new UnsupportedOperationException();
@@ -104,10 +105,6 @@ public class Application extends Controller {
 		// backend.init();
 		// }
 		ObjectNode head = Json.newObject();
-		/**
-		 * { status: OK | KO, files:[fileURL:fileURL,content:content],
-		 * timestamp: timestamp, commit: commit commit: message }
-		 */
 
 		long startTime = System.nanoTime();
 		ArrayList<String> workingDirFiles = backend.getWorkingDirFiles();
@@ -165,69 +162,47 @@ public class Application extends Controller {
 		return ok(JSONConstants.FAIL);
 	}
 
-	// TODO: Generalize this from git to other systems
 	public static Result commit() {
 		/**
 		 * Fetch content
 		 */
-		long start = System.nanoTime();
 		final Map<String, String[]> postInput = getPOSTData();
 
 		String url = postInput.get(JSONConstants.URL)[0];
 		String content = postInput.get(JSONConstants.CONTENT)[0];
 		String message = postInput.get(JSONConstants.MESSAGE)[0];
 		String userId = postInput.get(JSONConstants.USER)[0];
-		String backend = postInput.get(JSONConstants.BACKEND)[0];
-
-		/*
-		 * System.out.println("Commit message:"); System.out.println("\tUrl: " +
-		 * url); System.out.println("\tContent: " + content);
-		 * System.out.println("\tMessage: " + message);
-		 * System.out.println("\tUser: " + user);
-		 * System.out.println("\tBackend: " + backend);
-		 */
+		String backendName = postInput.get(JSONConstants.BACKEND)[0];
 
 		/**
-		 * Create File
+		 * Pre-processes the POST contents
 		 */
-		String fileName = url;
-		String fileContent = content;
-		String filePath = GitHandler.REPOSITORY_URL;
-		FileManager.createFile(fileContent, fileName, filePath);
+		BackendHandlerInterface backend = getBackend(backendName);
+		User user = UserHandler.getUser(Integer.parseInt(userId));
 
 		/**
-		 * Add to repository
+		 * Tries to perform the Commit
 		 */
-		GitHandler.add(url);
-		/*while (!) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}*/
-		System.out.println("success adding file");
+		String answer = "";
+		long elapsedTime = Long.MAX_VALUE;
+		long start = System.nanoTime();
+		if (backend.commit(url, content, message, user)) {
+			answer = JSONConstants.SUCCESS;
+			elapsedTime = System.nanoTime() - start;
+		} else {
+			answer = JSONConstants.FAIL;
+		}
 
 		/**
-		 * Commit changes
+		 * Creates the response
 		 */
-		/*while (!GitHandler.commit(message, userName, userEmail)) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}*/
 
 		// return new ActionWrapper(super.onRequest(request, actionMethod));
 		response().setHeader("Access-Control-Allow-Origin", "*");
 
-		long elapsedTime = System.nanoTime() - start;
 		ObjectNode returnJson = Json.newObject();
 		returnJson.put(JSONConstants.TIME, elapsedTime);
-		returnJson.put(JSONConstants.ANSWER, JSONConstants.SUCCESS);
+		returnJson.put(JSONConstants.ANSWER, answer);
 
 		return ok(returnJson);
 	}

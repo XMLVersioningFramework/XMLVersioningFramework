@@ -232,4 +232,10 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public boolean commit(String url, String content, String message, User user) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
 }

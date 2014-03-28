@@ -19,7 +19,7 @@ public class User {
 	/**
 	 * @return the userName
 	 */
-	public String getUserName() {
+	public String getName() {
 		return name;
 	}
 
