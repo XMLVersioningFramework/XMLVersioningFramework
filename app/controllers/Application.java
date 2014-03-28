@@ -110,7 +110,15 @@ public class Application extends Controller {
 		ArrayList<String> workingDirFiles = backend.getWorkingDirFiles();
 
 		long elapsedTime = System.nanoTime() - startTime;
-		addFilesToJSONArray(head.putArray(JSONConstants.FILES), workingDirFiles);
+				
+		for (String fileURL : workingDirFiles) {
+			String fileContents = FileManager.readFileToString(fileURL);
+			
+			String strippedFileURL = ((GitHandler) backend).getStrippedFileURL(fileURL);
+			ObjectNode tempObjectNode = head.putArray(JSONConstants.FILES).addObject();
+			tempObjectNode.put(JSONConstants.FILE_URL, strippedFileURL);
+			tempObjectNode.put(JSONConstants.FILE_CONTENT, fileContents);
+		}
 		head.put(JSONConstants.ELAPSED_TIME, elapsedTime);
 
 		String lastCommit = "-";
@@ -140,19 +148,6 @@ public class Application extends Controller {
 		head.put(JSONConstants.LAST_COMMIT_AUTHOR, lastCommitAuthor);
 		response().setHeader("Access-Control-Allow-Origin", "*");
 		return ok(head);
-	}
-
-	// TODO: Generalize this from git to other systems
-	private static void addFilesToJSONArray(ArrayNode array,
-			ArrayList<String> workingDirFiles) {
-		for (String fileURL : workingDirFiles) {
-			String fileContents = FileManager.readFileToString(fileURL);
-
-			String strippedFileURL = GitHandler.stripFileURL(fileURL);
-			ObjectNode tempObjectNode = array.addObject();
-			tempObjectNode.put(JSONConstants.FILE_URL, strippedFileURL);
-			tempObjectNode.put(JSONConstants.FILE_CONTENT, fileContents);
-		}
 	}
 
 	public static Result removeRepository(String backendName) {

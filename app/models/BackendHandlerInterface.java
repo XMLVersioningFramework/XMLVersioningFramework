@@ -51,4 +51,9 @@ public abstract class BackendHandlerInterface {
 		return returnMsg;
 	}
 
+	public String getStrippedFileURL(String fileURL) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

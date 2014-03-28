@@ -266,7 +266,7 @@ public class GitHandler extends BackendHandlerInterface {
 	 * @param fileURL
 	 * @return
 	 */
-	public static String stripFileURL(String fileURL) {
+	public String getStrippedFileURL(String fileURL) {
 		return fileURL.replaceFirst(GitHandler.getWorkingDirectoryPath(), ".");
 	}
 
