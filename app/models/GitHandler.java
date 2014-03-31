@@ -266,6 +266,10 @@ public class GitHandler extends BackendHandlerInterface {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * Only prepared for a single file
+	 * TODO: Needs to be able to receive more than one
+	 */
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
 
@@ -333,8 +337,8 @@ public class GitHandler extends BackendHandlerInterface {
 	}
 
 	@Override
-	public RepositoryHead getRepositoryHEAD() {
-		RepositoryHead head = new RepositoryHead();
+	public RepositoryRevision getRepositoryHEAD() {
+		RepositoryRevision head = new RepositoryRevision();
 		long startTime = System.nanoTime();
 
 		populateHEADRepositoryFiles(head);
@@ -345,7 +349,7 @@ public class GitHandler extends BackendHandlerInterface {
 		return head;
 	}
 
-	private void populateHEADGeneralData(RepositoryHead head) {
+	private void populateHEADGeneralData(RepositoryRevision head) {
 		try {
 			Git git = (Git) this.getRepository();
 			Repository repository = git.getRepository();
@@ -365,7 +369,7 @@ public class GitHandler extends BackendHandlerInterface {
 		}
 	}
 
-	private void populateHEADRepositoryFiles(RepositoryHead head) {
+	private void populateHEADRepositoryFiles(RepositoryRevision head) {
 		head.setRepositoryFiles(this.getWorkingDirFiles());
 		for (RepositoryFile repoFile : head.getRepositoryFiles()) {
 			repoFile.setFileContent(FileManager.readFileToString(repoFile

@@ -250,7 +250,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	}
 
 	@Override
-	public RepositoryHead getRepositoryHEAD() {
+	public RepositoryRevision getRepositoryHEAD() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}

@@ -27,7 +27,7 @@ public abstract class BackendHandlerInterface {
 
 	public abstract String getRepositoryPath();
 
-	public abstract RepositoryHead getRepositoryHEAD();
+	public abstract RepositoryRevision getRepositoryHEAD();
 
 	/**
 	 * removes the relative path to the working directory and replaces with '.'
