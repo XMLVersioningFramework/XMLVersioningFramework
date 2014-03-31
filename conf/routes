@@ -14,7 +14,7 @@ GET     /removeRepository/:backendName  controllers.Application.removeRepository
 
 POST    /commit                         controllers.Application.commit()
 
-GET     /getHEAD                        controllers.Application.getHEAD()
+GET     /getHEAD/:backendName           controllers.Application.getHEADWithGET(backendName: String)
 POST    /getHEAD                        controllers.Application.getHEAD()
 
 # Map static resources from the /public folder to the /assets URL path

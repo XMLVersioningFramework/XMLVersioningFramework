@@ -23,7 +23,21 @@ public abstract class BackendHandlerInterface {
 
 	public abstract TempFile getFile(String url);
 
-	public abstract ArrayList<String> getWorkingDirFiles();
+	public abstract ArrayList<RepositoryFile> getWorkingDirFiles();
+
+	public abstract String getRepositoryPath();
+
+	public abstract RepositoryHead getRepositoryHEAD();
+
+	/**
+	 * removes the relative path to the working directory and replaces with '.'
+	 * 
+	 * @param fileURL
+	 * @return
+	 */
+	public String getStrippedFileURL(String fileURL) {
+		return fileURL.replaceFirst(this.getRepositoryPath(), ".");
+	}
 
 	public static String runCommand(String s) {
 		String returnMsg = "";
