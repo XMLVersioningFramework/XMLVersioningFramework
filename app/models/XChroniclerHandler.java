@@ -1,14 +1,20 @@
 package models;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+
 import java.util.ArrayList;
 
 import javax.inject.Provider;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
@@ -25,6 +31,8 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
+
+import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 
 import se.repos.vfile.VFileCalculatorImpl;
 import se.repos.vfile.VFileCommitHandler;
@@ -150,12 +158,12 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		 * For each revision, call V-Filing on the new file version, and assert
 		 * that the V-File is equal to the saved document.
 		 */
-		for (int i = 0; i < documents.size(); i++) {
+	/*	for (int i = 0; i < documents.size(); i++) {
 			commitHandler.onCommit(revisions.get(i));
 			VFile v = new VFile(store.get(testID));
 			Document d = documents.get(i);
 			v.matchDocument(d);
-		}
+		}*/
 
 		return store;
 	}
@@ -265,10 +273,36 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		}
 		//store ==null
 		Document document = store.get(testID);
+		
+		/*System.out.println(document);
+		VFile v = new VFile(store.get(testID));
+		v.*/
+		
+		try {
+			printDocument(document, System.out);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		return true;
 		
 		
-		
+	}
+	public static void printDocument(Document doc, OutputStream out) throws IOException, TransformerException {
+	    TransformerFactory tf = TransformerFactory.newInstance();
+	    Transformer transformer = tf.newTransformer();
+	    transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+	    transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+	    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+	    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+	    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+	    transformer.transform(new DOMSource(doc), 
+	         new StreamResult(new OutputStreamWriter(out, "UTF-8")));
 	}
 
 	@Override
