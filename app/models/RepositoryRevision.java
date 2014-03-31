@@ -6,8 +6,11 @@ import play.libs.Json;
 import utils.JSONConstants;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-public class RepositoryHead {
+/**
+ * Encapsulates a revision of a repository. Contains its files, along with the revision commit contents.
+ *
+ */
+public class RepositoryRevision {
 	private long elapsedTime;
 
 	private ArrayList<RepositoryFile> repositoryFiles;
