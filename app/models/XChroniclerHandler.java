@@ -374,8 +374,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	    XQConnection conn = xqs.getConnection();
 
-	    XQPreparedExpression xqpe =
-	      conn.prepareExpression("declare variable $x as xs:string external; $x");
+	    XQPreparedExpression xqpe = conn.prepareExpression("declare variable $x as xs:string external; $x");
 
 	    xqpe.bindString(new QName("x"), "Hello World!", null);
 
