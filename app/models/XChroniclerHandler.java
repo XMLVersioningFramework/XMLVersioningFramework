@@ -1,11 +1,19 @@
 package models;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import javax.inject.Provider;
@@ -40,6 +48,16 @@ import org.xml.sax.SAXException;
 
 
 
+
+
+
+
+
+
+
+
+
+
 import se.repos.vfile.VFileCalculatorImpl;
 import se.repos.vfile.VFileCommitHandler;
 import se.repos.vfile.VFileCommitItemHandler;
@@ -66,6 +84,7 @@ import javax.xml.transform.OutputKeys;
 //import org.exist.*;
 import javax.xml.xquery.*;
 import javax.xml.namespace.QName;
+
 import net.xqj.exist.ExistXQDataSource;
 
 
@@ -268,34 +287,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		/*
-		 * CmsRepository repository = new CmsRepository("/anyparent",
-		 * "anyname"); CmsItemId testID = new CmsItemIdUrl(repository, new
-		 * CmsItemPath( "/basic.xml")); VFileStore store = null; try { store =
-		 * this.testVFiling(testID, new File(
-		 * "./backends/XChronicler/testdata"), "/basic_1.xml", "basic_2.xml",
-		 * "basic_3.xml"); } catch (Exception e) { // TODO Auto-generated catch
-		 * block e.printStackTrace(); } //store ==null Document document =
-		 * store.get(testID);
-		 */
-		/*
-		 * System.out.println(document); VFile v = new VFile(store.get(testID));
-		 * v.
-		 *//*
-			 * 
-			 * try { printDocument(document, System.out); } catch (IOException
-			 * e) { // TODO Auto-generated catch block e.printStackTrace(); }
-			 * catch (TransformerException e) { // TODO Auto-generated catch
-			 * block e.printStackTrace(); }
-			 */
-		//tryXSLT();
-		try {
-			tryExistDB();
-		} catch (ClassNotFoundException | InstantiationException
-				| IllegalAccessException | XMLDBException |XQException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
 		return true;
 
 	}
@@ -330,7 +322,14 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	@Override
 	public RepositoryRevision getRepositoryHEAD() {
 		// TODO Auto-generated method stub
+		try {
+			System.out.println(getHeadPrivate("/db/movies/movies2.xml"));
+		} catch (XQException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		throw new UnsupportedOperationException();
+		 
 	}
 
 	/*public void tryXSLT() {
@@ -366,23 +365,79 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		System.out.println(xmlResultResource.getBuffer().toString());
 	}
 	 */
-	public void tryExistDB() throws ClassNotFoundException, InstantiationException, IllegalAccessException, XMLDBException,XQException {
 
-		 XQDataSource xqs = new ExistXQDataSource();
+	
+	
+	private boolean saveToExist(String fileUrl,String content){
+		 	fileUrl="/db/movies/"+fileUrl;
+		   	
+		    URL url;
+			try {
+				String putUrl="http://localhost:8080/exist/rest/"+fileUrl;
+				url = new URL(putUrl);
+				
+				HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
+				String userPassword = "admin" + ":" + "monraket";
+				String encoding = new sun.misc.BASE64Encoder().encode(userPassword.getBytes());
+			   
+				httpCon.setDoOutput(true);
+				httpCon.setRequestMethod("PUT");
+				httpCon.setRequestProperty("content-type", "application/xml; charset=utf-8");
+				
+				httpCon.setRequestProperty("Authorization", "Basic " + encoding);
+				httpCon.connect();
+				OutputStreamWriter out = new OutputStreamWriter(
+					    httpCon.getOutputStream());
+				
+				out.write(content);
+				out.close();
+				httpCon.getInputStream();
+				return true;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return false;
+			}
+		
+	}
+	private String getHeadPrivate(String url) throws XQException{
+		XQDataSource xqs = new ExistXQDataSource();
 	    xqs.setProperty("serverName", "localhost");
 	    xqs.setProperty("port", "8080");
 
 	    XQConnection conn = xqs.getConnection();
-
-	    XQPreparedExpression xqpe = conn.prepareExpression("declare variable $x as xs:string external; $x");
-
-	    xqpe.bindString(new QName("x"), "Hello World!", null);
+	   
+	  
+	    String query="xquery version '3.0';"
+	    		+ "declare namespace v='http://www.repos.se/namespace/v';"
+	    		+ "declare function v:getAttr($e)"
+	    		+ "{"
+	    		+ "    for $a in $e/v:attr"
+	    		+ "          return attribute {string($a/@v:name)}{$a}"
+	    		+ "};"
+	    		+ "    declare function v:snapshot($e, $v){"
+	    		+ "    if (($e/@v:end) = ($v) and name($e) != 'v:text' and name($e) != 'v:attr') then"
+				+ "        element { name($e) } {"
+				+ "            v:getAttr($e),"
+				+ "            $e/v:text/text(),"
+				+ "for $child in $e/*  return v:snapshot($child, $v)"
+				+ "        }"
+				+ "    else"
+				+ "        ()"
+				+ "};"
+				+ "v:snapshot(doc('"+url+"')/v:file/body,'NOW')";
+				
+	    
+	    XQPreparedExpression xqpe = conn.prepareExpression(query);
 
 	    XQResultSequence rs = xqpe.executeQuery();
-
-	    while(rs.next())
-	      System.out.println(rs.getItemAsString(null));
-
-	    conn.close();
+	    String returnString="";
+	    while(rs.next()){
+	    	returnString+=rs.getItemAsString(null).replace("xmlns=\"\"", "");
+	    } 
+	   return returnString;
 	}
+	
+	
+	
 }
