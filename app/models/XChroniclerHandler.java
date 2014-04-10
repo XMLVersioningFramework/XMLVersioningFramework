@@ -61,6 +61,10 @@ import org.xml.sax.SAXException;
 
 
 
+
+
+
+
 import se.repos.vfile.VFileCalculatorImpl;
 import se.repos.vfile.VFileCommitHandler;
 import se.repos.vfile.VFileCommitItemHandler;
@@ -323,7 +327,13 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		String[] files=getFilesFromExist(collectionPath);
 		RepositoryRevision repo=new RepositoryRevision();
 		for (String file : files) {
-			RepositoryFile repositoryFile=new RepositoryFile(file,getHeadFile(collectionPath+file));
+			RepositoryFile repositoryFile=null;
+			try {
+				repositoryFile = new RepositoryFile(file,getHeadFile(collectionPath+file));
+			} catch (XQException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			repo.addRepositoryFile(repositoryFile);
 		}
 		return repo;
@@ -423,7 +433,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		con.setRequestProperty("Authorization", "Basic " + encoding);
 	}
 	
-	private String getHeadFile(String url){
+	private String getHeadFile(String url) throws XQException{
 		
 	  
 	    String query="xquery version '3.0';"
@@ -452,7 +462,13 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		updateFilelist(url);
 		String queryAfterNameOfFiles="for $files in doc('"+url+"filelist.xml')//exist:resource"
 		+ "		 return string($files/@name)";
-		String queryReturnString=runQuery(queryAfterNameOfFiles);
+		String queryReturnString=null;
+		try {
+			queryReturnString = runQuery(queryAfterNameOfFiles);
+		} catch (XQException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.out.println(queryReturnString);
 		return queryReturnString.split("\n");
 		
@@ -480,29 +496,32 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 			e.printStackTrace();
 		}
 	}
-	private String runQuery(String query){
+	private String runQuery(String query) throws XQException {
 		XQDataSource xqs = new ExistXQDataSource();
 		String returnString="";
-	    try {
-			xqs.setProperty("serverName", "localhost");
-		
-		    xqs.setProperty("port", "8080");
+ 		xqs.setProperty("serverName", "localhost");
 	
-		    XQConnection conn = xqs.getConnection();
-		    XQPreparedExpression xqpe = conn.prepareExpression(query);
-	
-		    XQResultSequence rs = xqpe.executeQuery();
-		    
-		    while(rs.next()){
-		    	returnString+=rs.getItemAsString(null).replace("xmlns=\"\"", "")+"\n";
-		    } 
-	    } catch (XQException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	    xqs.setProperty("port", "8080");
+
+	    XQConnection conn = xqs.getConnection();
+	    XQPreparedExpression xqpe = conn.prepareExpression(query);
+
+	    XQResultSequence rs = xqpe.executeQuery();
+	    
+	    while(rs.next()){
+	    	returnString+=rs.getItemAsString(null).replace("xmlns=\"\"", "")+"\n";
+	    } 
+	    
 	   return returnString;
 	   
 	}
+
+	@Override
+	public String getLog() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	
 	
 	

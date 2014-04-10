@@ -13,6 +13,7 @@ import play.mvc.Controller;
 import play.mvc.Result;
 import utils.JSONConstants;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Application extends Controller {
@@ -89,6 +90,19 @@ public class Application extends Controller {
 
 		response().setHeader("Access-Control-Allow-Origin", "*");
 		return ok(backend.getRepositoryHEAD().toJSON());
+	}
+	/**
+	 * Uses HTTP/POST
+	 * 
+	 * @return
+	 */
+	public static Result getLog() {
+		final Map<String, String[]> postInput = getPOSTData();
+		BackendHandlerInterface backend = getBackend(postInput
+				.get(JSONConstants.BACKEND)[0]);
+
+		response().setHeader("Access-Control-Allow-Origin", "*");
+		return ok(Json.parse((backend.getLog())));
 	}
 
 	/**
