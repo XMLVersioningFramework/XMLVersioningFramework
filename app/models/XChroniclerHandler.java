@@ -4,20 +4,27 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 import javax.xml.xquery.XQConnection;
 import javax.xml.xquery.XQDataSource;
-//import org.exist.xmldb.EXistResource;
-//import org.exist.*;
 import javax.xml.xquery.XQException;
 import javax.xml.xquery.XQPreparedExpression;
 import javax.xml.xquery.XQResultSequence;
@@ -25,6 +32,7 @@ import javax.xml.xquery.XQResultSequence;
 import net.xqj.exist.ExistXQDataSource;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -33,34 +41,48 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
+import se.repos.vfile.VFileDocumentBuilderFactory;
+import se.repos.vfile.gen.VFile;
 import se.repos.vfile.store.VFileStore;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.CmsItemPath;
 import se.simonsoft.cms.item.CmsRepository;
 import se.simonsoft.cms.item.RepoRevision;
 import se.simonsoft.cms.item.impl.CmsItemIdUrl;
-//import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-
-
 
 public class XChroniclerHandler extends BackendHandlerInterface {
-	
-	protected static String DRIVER = "org.exist.xmldb.DatabaseImpl"; 
-    protected static String DBURI = "xmldb:exist://localhost:8080/exist/xmlrpc"; 
-    protected static String collectionPath = "/db/movies"; 
-    protected static String resourceName = "movies.xml"; 
-	
+	private static XChroniclerHandler instance = null;
+
+	/**
+	 * Test folders related
+	 */
+	final String BASE_URL = rootBackendFolder + "XChronicler/";
+
+	/**
+	 * eXist related
+	 */
+	protected static String DRIVER = "org.exist.xmldb.DatabaseImpl";
+	protected static String DBURI = "xmldb:exist://localhost:8080/exist/xmlrpc";
+	protected static String collectionPath = "/db/movies";
+	protected static String resourceName = "movies.xml";
+	protected static final String DBUSERPASSWORD = "user" + ":" + "pass";
+
+	/**
+	 * VFile generation
+	 */
+	DocumentBuilder docBuilder = new VFileDocumentBuilderFactory()
+			.newDocumentBuilder();
+	/**
+	 * XChronicler artifacts
+	 */
 	private boolean doCleanup = false;
 	private File testDir = null;
 	private File repoDir = null;
 	private SVNURL repoUrl;
 	private File wc = null;
-	final String BASE_URL = rootBackendFolder + "XChronicler/";
 	private SVNClientManager clientManager = null;
-	// private Provider<SVNLookClient> svnlookProvider = new
-	// SvnlookClientProviderStateless();
-	private static XChroniclerHandler instance = null;
 
 	private XChroniclerHandler() {
 
@@ -77,108 +99,6 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	public static BackendHandlerInterface getInstance() {
 		return SingletonHolder.INSTANCE;
-	}
-
-	public void oldTest() {
-		CmsRepository repository = new CmsRepository("/anyparent", "anyname");
-		CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
-				"/basic.xml"));
-		VFileStore store = null;
-		try {
-			/*
-			 * store = this.testVFiling(testID, new File(
-			 * "src/test/resources/se/repos/vfile"), "/basic_1.xml",
-			 * "basic_2.xml", "basic_3.xml");
-			 */
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		Document document = store.get(testID);
-	}
-
-	/*
-	 * Takes a series of file paths, runs unit test that asserts they can be
-	 * v-filed.
-	 *//*
-		 * private VFileStore testVFiling(CmsItemId testID, File folder,
-		 * String... filePaths) throws Exception {
-		 * 
-		 * // Parse the files as Documents for data integrity checking.
-		 * DocumentBuilder db = new VFileDocumentBuilderFactory()
-		 * .newDocumentBuilder(); ArrayList<Document> documents = new
-		 * ArrayList<Document>(); for (String filePath : filePaths) { Document d
-		 * = db.parse(new File(folder, filePath)); documents.add(d); }
-		 * 
-		 * CmsRepositorySvn repository = new CmsRepositorySvn(testID
-		 * .getRepository().getParentPath(), testID.getRepository() .getName(),
-		 * this.repoDir); CmsContentsReaderSvnkitLook contentsReader = new
-		 * CmsContentsReaderSvnkitLook();
-		 * contentsReader.setSVNLookClientProvider(this.svnlookProvider);
-		 * CmsChangesetReaderSvnkitLook changesetReader = new
-		 * CmsChangesetReaderSvnkitLook();
-		 * changesetReader.setSVNLookClientProvider(this.svnlookProvider);
-		 * 
-		 * this.svncheckout();
-		 * 
-		 * ArrayList<RepoRevision> revisions = new ArrayList<RepoRevision>();
-		 * 
-		 * File testFile = new File(this.wc, testID.getRelPath().getPath());
-		 * boolean addedToSVN = false;
-		 * 
-		 * // Commits all the files to SVN, saving the RepoRevisions of each //
-		 * commit. Transformer trans =
-		 * TransformerFactory.newInstance().newTransformer(); for (int i = 0; i
-		 * < documents.size(); i++) { Document d = documents.get(i); Source
-		 * source = new DOMSource(d); Result result = new
-		 * StreamResult(testFile); trans.transform(source, result); if
-		 * (!addedToSVN) { this.svnadd(testFile); addedToSVN = true; }
-		 * RepoRevision svncommit = this.svncommit(""); if (svncommit == null) {
-		 * throw new RuntimeException("No diff for file " + filePaths[i]); }
-		 * revisions.add(svncommit); }
-		 * 
-		 * VFileStore store = new VFileStoreDisk("./vfilestore");
-		 * VFileCalculatorImpl calculator = new VFileCalculatorImpl(store);
-		 * 
-		 * VFileCommitItemHandler itemHandler = new VFileCommitItemHandler(
-		 * calculator, contentsReader); VFileCommitHandler commitHandler = new
-		 * VFileCommitHandler(repository,
-		 * itemHandler).setCmsChangesetReader(changesetReader);
-		 * 
-		 * 
-		 * 
-		 * return store; }
-		 */
-
-	private void svncheckout() throws SVNException {
-		this.clientManager.getUpdateClient().doCheckout(this.repoUrl, this.wc,
-				SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, false);
-	}
-
-	private void svnadd(File... paths) throws SVNException {
-		this.clientManager.getWCClient().doAdd(paths, true, false, false,
-				SVNDepth.INFINITY, true, true, true);
-	}
-
-	/**
-	 * @param comment
-	 * @return revision if committed, null if nothing to commit
-	 * @throws SVNException
-	 */
-	private RepoRevision svncommit(String comment) throws SVNException {
-		SVNCommitInfo info = this.clientManager.getCommitClient().doCommit(
-				new File[] { this.wc }, false, comment, null, null, false,
-				false, SVNDepth.INFINITY);
-		long revision = info.getNewRevision();
-		if (revision < 0L) {
-			return null;
-			// this.doCleanup = false;
-			// throw new
-			// RuntimeException("SVN returned negative version number. Working copy: "
-			// + this.wc);
-		}
-		return new RepoRevision(revision, info.getDate());
 	}
 
 	@Override
@@ -242,8 +162,190 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
+		// CmsRepository repository = new CmsRepository("/anyparent",
+		// "anyname");
+		// CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
+		// "/basic.xml"));
+		// VFileStore store = null;
+		// try {
+		// store = this.testVFiling(testID, new File(
+		// "./backends/XChronicler/testdata"), "/basic_1.xml",
+		// "basic_2.xml", "basic_3.xml");
+		// } catch (Exception e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+		// // store ==null
+		// Document document = store.get(testID);
+		//
+		// /*
+		// * System.out.println(document); VFile v = new
+		// VFile(store.get(testID));
+		// * v.
+		// */
+		//
+		// try {
+		// printDocument(document, System.out);
+		// } catch (IOException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// } catch (TransformerException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+
+		// If previous version existing in the database
+		// Fetches from the database the latest version of the xml
 		
+		// Updates the vfile
+		// else
+		// creates the vfile
+
+		String fileName = "url";
+		// adds the vfile to the database
+		saveToExist(fileName, content);
+
 		return true;
+	}
+
+	/**
+	 * simple test that uses the basic files as input
+	 * 
+	 * NOTE: requires that the backends/XChronicler/input/basic directory to
+	 * exist and the corresponding files
+	 * 
+	 * @return
+	 */
+	public String generateVFileSimpleTest() {
+		String originalPath = BASE_URL + "input/basic/basic_1.xml";
+		String alteredPath = BASE_URL + "input/basic/basic_2.xml";
+		return generateVFile(originalPath, alteredPath);
+	}
+
+	/**
+	 * Generates V-File based on a single version
+	 * 
+	 * Essentially it initializes the versioning for that file
+	 * 
+	 * @param initial
+	 * @return
+	 */
+	public String generateVFile(File initial) {
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		Document originalDocument;
+		try {
+			originalDocument = docBuilder.parse(initial);
+
+			String originalTime = "" + System.nanoTime();
+			String originalVersion = "1";
+
+			VFile vFile = VFile.normalizeDocument(originalDocument,
+					originalTime, originalVersion);
+			printDocument(vFile.toDocument(), output);
+		} catch (TransformerException | SAXException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return output.toString();
+	}
+
+	/**
+	 * Generates V-File based on two different filePaths
+	 * 
+	 * @param originalPath
+	 * @param alteredPath
+	 * @return
+	 */
+	public String generateVFile(String originalPath, String alteredPath) {
+		return generateVFile(new File(originalPath), new File(alteredPath));
+	}
+
+	/**
+	 * Generates V-File based on two different files
+	 * 
+	 * @param original
+	 * @param altered
+	 * @return
+	 */
+	public String generateVFile(File original, File altered) {
+		ArrayList<File> files = new ArrayList<File>();
+		files.add(original);
+		files.add(altered);
+
+		return generateVFileFromArray(files);
+	}
+
+	/**
+	 * Generates V-file based on an array of files
+	 * 
+	 * @param files
+	 *            the list with the files
+	 * @return the v-file as a string
+	 */
+	public String generateVFileFromArray(List<File> files) {
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		Document lastIndexDoc = null;
+		System.out.println("Generating V-file...");
+		try {
+			Document initialDocument = docBuilder.parse(files.get(0));
+			String originalTime = "" + System.nanoTime();
+			String originalVersion = "1";
+			VFile vFile = VFile.normalizeDocument(initialDocument,
+					originalTime, originalVersion);
+			for (int i = 0; i < files.size() - 1; i++) {
+				System.out.println("parsing file number:" + i);
+				File originalFile = files.get(i);
+				File alteredFile = files.get(i + 1);
+
+				String newTime = "" + System.nanoTime();
+				String newVersion = "" + i;
+
+				vFile.update(docBuilder.parse(originalFile), docBuilder.parse(alteredFile), newTime,
+						newVersion);
+
+				lastIndexDoc = vFile.toDocument();
+			}
+			printDocument(lastIndexDoc, output);
+		} catch (TransformerException | SAXException | IOException e) {
+			e.printStackTrace();
+		}
+		return output.toString();
+	}
+
+	/**
+	 * test that picks up a new version of the xml and updates the v file
+	 * 
+	 * @deprecated Not working, needs original vfile to be reconverted before
+	 */
+	@Deprecated
+	public void regenerateVFile() {
+		File originalDocumentFile = new File(BASE_URL + "input/vfile.xml");
+		File alteredDocumentFile = new File(BASE_URL + "input/basic_3.xml");
+
+		DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder;
+		Document originalDocument, alteredDocument;
+
+		try {
+			docBuilder = dbfac.newDocumentBuilder();
+			originalDocument = docBuilder.parse(originalDocumentFile);
+			alteredDocument = docBuilder.parse(alteredDocumentFile);
+
+			VFile vFile = new VFile(originalDocument);
+
+			String newTime = "" + System.nanoTime();
+			String newVersion = ""
+					+ Integer.parseInt(vFile.getDocumentVersion()) + 1;
+			vFile.update(originalDocument, alteredDocument, newTime, newVersion);
+
+			Document lastIndexDoc = vFile.toDocument();
+
+			printDocument(lastIndexDoc, System.out);
+		} catch (TransformerException | SAXException
+				| ParserConfigurationException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
@@ -276,123 +378,137 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public RepositoryRevision getRepositoryHEAD() {
-		// TODO Auto-generated method stub
 		try {
 			System.out.println(getHeadPrivate("/db/movies/movies2.xml"));
 		} catch (XQException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		/*
+		 * TODO Still needs to return RepositoryRevision, otherwise it won't be
+		 * able to function for calling classes
+		 */
 		throw new UnsupportedOperationException();
-		 
+
 	}
 
-	/*public void tryXSLT() {
-		String xsltResource = "<?xml version='1.0' encoding='UTF-8'?>\n"
-				+ "<xsl:stylesheet version='2.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>\n"
-				+ "   <xsl:output method='xml' indent='no'/>\n"
-				+ "   <xsl:template match='/'>\n"
-				+ "      <reRoot><reNode><xsl:value-of select='/root/nodee/@val' /> world</reNode></reRoot>\n"
-				+ "   </xsl:template>\n" + "</xsl:stylesheet>";
-		String xmlSourceResource = "<?xml version='1.0' encoding='UTF-8'?>\n"
-				+ "<root><node val='hello aa '/><nodee id='hje' val='not hello'/></root>";
+	// public void tryXSLT() {
+	// String xsltResource = "<?xml version='1.0' encoding='UTF-8'?>\n"
+	// +
+	// "<xsl:stylesheet version='2.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>\n"
+	// + "   <xsl:output method='xml' indent='no'/>\n"
+	// + "   <xsl:template match='/'>\n"
+	// +
+	// "      <reRoot><reNode><xsl:value-of select='/root/nodee/@val' /> world</reNode></reRoot>\n"
+	// + "   </xsl:template>\n" + "</xsl:stylesheet>";
+	// String xmlSourceResource = "<?xml version='1.0' encoding='UTF-8'?>\n"
+	// +
+	// "<root><node val='hello aa '/><nodee id='hje' val='not hello'/></root>";
+	//
+	// StringWriter xmlResultResource = new StringWriter();
+	//
+	// Transformer xmlTransformer;
+	// try {
+	// xmlTransformer = TransformerFactory.newInstance().newTransformer(
+	// new StreamSource(new StringReader(xsltResource)));
+	//
+	// xmlTransformer.transform(new StreamSource(new StringReader(
+	// xmlSourceResource)), new StreamResult(xmlResultResource));
+	// } catch (TransformerConfigurationException e) {
+	// // TODO Auto-generated catch block
+	// e.printStackTrace();
+	// } catch (TransformerFactoryConfigurationError e) {
+	// // TODO Auto-generated catch block
+	// e.printStackTrace();
+	// } catch (TransformerException e) {
+	// // TODO Auto-generated catch block
+	// e.printStackTrace();
+	// }
+	// System.out.println(xmlResultResource.getBuffer().toString());
+	// }
 
-		StringWriter xmlResultResource = new StringWriter();
+	/**
+	 * Saves file to existDB
+	 * 
+	 * @param fileUrl
+	 * @param content
+	 * @return
+	 */
+	private boolean saveToExist(String fileUrl, String content) {
+		fileUrl = "/db/movies/" + fileUrl;
 
-		Transformer xmlTransformer;
+		URL url;
 		try {
-			xmlTransformer = TransformerFactory.newInstance().newTransformer(
-					new StreamSource(new StringReader(xsltResource)));
+			String putUrl = "http://localhost:8080/exist/rest/" + fileUrl;
+			url = new URL(putUrl);
 
-			xmlTransformer.transform(new StreamSource(new StringReader(
-					xmlSourceResource)), new StreamResult(xmlResultResource));
-		} catch (TransformerConfigurationException e) {
+			HttpURLConnection httpCon = (HttpURLConnection) url
+					.openConnection();
+
+			String userPassword = XChroniclerHandler.DBUSERPASSWORD;
+			String encoding = new sun.misc.BASE64Encoder().encode(userPassword
+					.getBytes());
+
+			httpCon.setDoOutput(true);
+			httpCon.setRequestMethod("PUT");
+			httpCon.setRequestProperty("content-type",
+					"application/xml; charset=utf-8");
+
+			httpCon.setRequestProperty("Authorization", "Basic " + encoding);
+			httpCon.connect();
+			OutputStreamWriter out = new OutputStreamWriter(
+					httpCon.getOutputStream());
+
+			out.write(content);
+			out.close();
+			httpCon.getInputStream();
+			return true;
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (TransformerFactoryConfigurationError e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TransformerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return false;
 		}
 
-		System.out.println(xmlResultResource.getBuffer().toString());
 	}
+
+	/**
+	 * Takes a url for a vfile and returns the xml that refers to the latest
+	 * version
+	 * 
+	 * @param url
+	 * @return
+	 * @throws XQException
 	 */
-
-	
-	
-	private boolean saveToExist(String fileUrl,String content){
-		 	fileUrl="/db/movies/"+fileUrl;
-		   	
-		    URL url;
-			try {
-				String putUrl="http://localhost:8080/exist/rest/"+fileUrl;
-				url = new URL(putUrl);
-				
-				HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-				String userPassword = "admin" + ":" + "monraket";
-				String encoding = new sun.misc.BASE64Encoder().encode(userPassword.getBytes());
-			   
-				httpCon.setDoOutput(true);
-				httpCon.setRequestMethod("PUT");
-				httpCon.setRequestProperty("content-type", "application/xml; charset=utf-8");
-				
-				httpCon.setRequestProperty("Authorization", "Basic " + encoding);
-				httpCon.connect();
-				OutputStreamWriter out = new OutputStreamWriter(
-					    httpCon.getOutputStream());
-				
-				out.write(content);
-				out.close();
-				httpCon.getInputStream();
-				return true;
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return false;
-			}
-		
-	}
-	private String getHeadPrivate(String url) throws XQException{
+	private String getHeadPrivate(String url) throws XQException {
 		XQDataSource xqs = new ExistXQDataSource();
-	    xqs.setProperty("serverName", "localhost");
-	    xqs.setProperty("port", "8080");
+		xqs.setProperty("serverName", "localhost");
+		xqs.setProperty("port", "8080");
 
-	    XQConnection conn = xqs.getConnection();
-	   
-	  
-	    String query="xquery version '3.0';"
-	    		+ "declare namespace v='http://www.repos.se/namespace/v';"
-	    		+ "declare function v:getAttr($e)"
-	    		+ "{"
-	    		+ "    for $a in $e/v:attr"
-	    		+ "          return attribute {string($a/@v:name)}{$a}"
-	    		+ "};"
-	    		+ "    declare function v:snapshot($e, $v){"
-	    		+ "    if (($e/@v:end) = ($v) and name($e) != 'v:text' and name($e) != 'v:attr') then"
+		XQConnection conn = xqs.getConnection();
+
+		String query = "xquery version '3.0';"
+				+ "declare namespace v='http://www.repos.se/namespace/v';"
+				+ "declare function v:getAttr($e)"
+				+ "{"
+				+ "    for $a in $e/v:attr"
+				+ "          return attribute {string($a/@v:name)}{$a}"
+				+ "};"
+				+ "    declare function v:snapshot($e, $v){"
+				+ "    if (($e/@v:end) = ($v) and name($e) != 'v:text' and name($e) != 'v:attr') then"
 				+ "        element { name($e) } {"
 				+ "            v:getAttr($e),"
 				+ "            $e/v:text/text(),"
 				+ "for $child in $e/*  return v:snapshot($child, $v)"
-				+ "        }"
-				+ "    else"
-				+ "        ()"
-				+ "};"
-				+ "v:snapshot(doc('"+url+"')/v:file/body,'NOW')";
-				
-	    
-	    XQPreparedExpression xqpe = conn.prepareExpression(query);
+				+ "        }" + "    else" + "        ()" + "};"
+				+ "v:snapshot(doc('" + url + "')/v:file/body,'NOW')";
 
-	    XQResultSequence rs = xqpe.executeQuery();
-	    String returnString="";
-	    while(rs.next()){
-	    	returnString+=rs.getItemAsString(null).replace("xmlns=\"\"", "");
-	    } 
-	   return returnString;
+		XQPreparedExpression xqpe = conn.prepareExpression(query);
+
+		XQResultSequence rs = xqpe.executeQuery();
+		String returnString = "";
+		while (rs.next()) {
+			returnString += rs.getItemAsString(null).replace("xmlns=\"\"", "");
+		}
+		return returnString;
 	}
-	
-	
-	
+
 }

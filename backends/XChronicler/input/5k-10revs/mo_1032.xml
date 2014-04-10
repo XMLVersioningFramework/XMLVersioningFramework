@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Arbortext, Inc., 1988-2012, v.4002-->
+<!DOCTYPE section PUBLIC "-//Simonsoft//DTD TechDoc Base V1.1 PDS//EN"
+ "pds.dtd">
+<?Pub UDT _bookmark _target?>
+<section xml:id="manage">
+<title>Manage Objects</title>
+<section><?Pub Dtl?>
+<title>Copy / Move / Rename</title>
+<description>
+<descriptionblock>
+<figure>
+<graphic
+fileref="x-svn:///svn/documentation^/graphics/cms/web/reuse_000066.png"
+scalefit="yes"/>
+<title>Detail View – Copy / Move / Rename</title>
+</figure>
+<descriptiontext>
+<p>The Copy / Move / Rename operation can be performed from the details
+page.</p>
+</descriptiontext>
+</descriptionblock>
+</description>
+<description>
+<title>Copy</title>
+<descriptionblock>
+<figure>
+<graphic
+fileref="x-svn:///svn/documentation^/graphics/cms/web/reuse_000067.png"
+scalefit="yes"/>
+<title>Copy</title>
+</figure>
+<descriptiontext>
+<numlist>
+<li><p>Type a new location in the <label type="guiitem">folder</label
+> field or use the <label type="guiitem">Change destination folder</label
+> function. Type a new name in the <label type="guiitem">new name</label
+> field, if needed. Click <label type="guiitem">Copy</label> to commit.</p>
+</li>
+<li><p>To get correct metadata for the new file you need to do Check
+out and Check in from the Editor. Start with <label type="guiitem"
+>Refresh</label> in the CMS Browser, to see the new object.</p></li>
+</numlist>
+</descriptiontext>
+</descriptionblock>
+</description>
+<description>
+<title>Move</title>
+<descriptionblock>
+<figure>
+<graphic
+fileref="x-svn:///svn/documentation^/graphics/cms/web/reuse_000068.png"
+scalefit="yes"/>
+<title> Move</title>
+</figure>
+<descriptiontext>
+<numlist>
+<li><p>Type a new location in the <label type="guiitem">folder</label
+> field or use the <label type="guiitem">Change destination folder</label
+> function. Type a new name in the <label type="guiitem">new name</label
+> field, if needed.</p></li>
+<li><p>Check the <label type="guiitem">delete the original box</label
+></p></li>
+<li><p>Click <label type="guiitem">Move</label> to commit.</p></li>
+<li><p>A warning will be displayed if the object is referenced by
+other objects.</p>
+<note>
+<p>The reference(s) must be manually updated.</p>
+</note>
+</li>
+<li><p>To get correct metadata for the new file you need to do Check
+out and Check in from the Editor. Start with <label type="guiitem"
+>Refresh</label> in the CMS Browser, to see the new object.</p></li>
+</numlist>
+</descriptiontext>
+</descriptionblock>
+</description>
+<description>
+<title>Rename</title>
+<descriptionblock>
+<figure>
+<graphic
+fileref="x-svn:///svn/documentation^/graphics/cms/web/reuse_000069.png"
+scalefit="yes"/>
+<title> Rename</title>
+</figure>
+<descriptiontext>
+<numlist>
+<li><p>Type a new name in the <label type="guiitem">new name</label
+> field. </p></li>
+<li><p>Check the <label type="guiitem">delete the original box</label
+></p></li>
+<li><p>Click <label type="guiitem">Move</label> to commit.</p></li>
+<li><p>A warning will be displayed if the object is referenced by
+other objects.</p>
+<note>
+<p>The reference(s) must be manually updated.</p>
+</note>
+</li>
+<li><p>To get correct metadata for the new file you need to do Check
+out and Check in from the Editor. Start with <label type="guiitem"
+>Refresh</label> in the CMS Browser, to see the new object.</p></li>
+</numlist>
+</descriptiontext>
+</descriptionblock>
+</description>
+</section>
+<section>
+<title>Delete</title>
+<description>
+<descriptionblock>
+<figure>
+<graphic
+fileref="x-svn:///svn/documentation^/graphics/cms/web/delete_000001.png"
+scalefit="yes"/>
+<title>Detail View – Delete</title>
+</figure>
+<descriptiontext>
+<p>The Delete operation can be performed from the details page and
+deletes the selected object from the current folder version forward,
+all historical versions will be kept.</p>
+</descriptiontext><?Pub Caret -1?>
+</descriptionblock>
+</description>
+<description>
+<title>Delete</title>
+<descriptionblock>
+<figure>
+<graphic
+fileref="x-svn:///svn/documentation^/graphics/cms/web/delete_000002.png"
+scalefit="yes"/>
+<title>Delete</title>
+</figure>
+<descriptiontext>
+<numlist>
+<li><p>Enter comments in the <label type="guiitem">history comment</label
+> field.</p></li>
+<li><p>Click <label type="guiitem">delete</label>.</p></li>
+</numlist>
+</descriptiontext>
+</descriptionblock>
+</description>
+</section>
+</section>

@@ -168,6 +168,14 @@ public class Application extends Controller {
 
 		return ok(returnJson);
 	}
+	
+	public static Result testVfile(){
+		XChroniclerHandler backend = (XChroniclerHandler) XChroniclerHandler.getInstance();
+		
+		backend.generateVFileSimpleTest();
+
+		return ok();
+	}
 
 	public static Result checkPreFlight() {
 		// Need to add the correct domain in here!!
