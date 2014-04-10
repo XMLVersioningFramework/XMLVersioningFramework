@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -58,6 +59,8 @@ import org.xml.sax.SAXException;
 
 
 
+
+
 import se.repos.vfile.VFileCalculatorImpl;
 import se.repos.vfile.VFileCommitHandler;
 import se.repos.vfile.VFileCommitItemHandler;
@@ -91,14 +94,8 @@ import net.xqj.exist.ExistXQDataSource;
 
 public class XChroniclerHandler extends BackendHandlerInterface {
 	
-	protected static String DRIVER = "org.exist.xmldb.DatabaseImpl"; 
-    protected static String DBURI = "xmldb:exist://localhost:8080/exist/xmlrpc"; 
     protected static String collectionPath = "/db/movies"; 
-    protected static String resourceName = "movies.xml"; 
 	
-	private boolean doCleanup = false;
-	private File testDir = null;
-	private File repoDir = null;
 	private SVNURL repoUrl;
 	private File wc = null;
 	final String BASE_URL = rootBackendFolder + "XChronicler/";
@@ -234,7 +231,9 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean init() {
-		this.testDir = new File(BASE_URL);
+		System.out.println("running xquery init");
+		deliteFile(collectionPath);
+	/*	this.testDir = new File(BASE_URL);
 
 		// this.testDir.delete();
 
@@ -263,7 +262,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 			e1.printStackTrace();
 		}
 		System.out.println("Running local fs repository " + this.repoUrl);
-		this.clientManager = SVNClientManager.newInstance();
+		this.clientManager = SVNClientManager.newInstance();*/
 		return true;
 	}
 
@@ -287,7 +286,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		
+		saveToExist("/asd.xml","<node>sad</node>");
 		return true;
 
 	}
@@ -321,14 +320,13 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public RepositoryRevision getRepositoryHEAD() {
-		// TODO Auto-generated method stub
-		try {
-			System.out.println(getHeadPrivate("/db/movies/movies2.xml"));
-		} catch (XQException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		String[] files=getFilesFromExist(collectionPath);
+		RepositoryRevision repo=new RepositoryRevision();
+		for (String file : files) {
+			RepositoryFile repositoryFile=new RepositoryFile(file,getHeadFile(collectionPath+file));
+			repo.addRepositoryFile(repositoryFile);
 		}
-		throw new UnsupportedOperationException();
+		return repo;
 		 
 	}
 
@@ -369,26 +367,22 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	
 	
 	private boolean saveToExist(String fileUrl,String content){
-		 	fileUrl="/db/movies/"+fileUrl;
+		 	fileUrl=collectionPath+fileUrl;
 		   	
 		    URL url;
 			try {
-				String putUrl="http://localhost:8080/exist/rest/"+fileUrl;
+				String putUrl="http://localhost:8080/exist/rest"+fileUrl;
 				url = new URL(putUrl);
 				
 				HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-				String userPassword = "admin" + ":" + "monraket";
-				String encoding = new sun.misc.BASE64Encoder().encode(userPassword.getBytes());
-			   
+				setUserNameAndPass(httpCon);
 				httpCon.setDoOutput(true);
 				httpCon.setRequestMethod("PUT");
 				httpCon.setRequestProperty("content-type", "application/xml; charset=utf-8");
 				
-				httpCon.setRequestProperty("Authorization", "Basic " + encoding);
 				httpCon.connect();
 				OutputStreamWriter out = new OutputStreamWriter(
 					    httpCon.getOutputStream());
-				
 				out.write(content);
 				out.close();
 				httpCon.getInputStream();
@@ -400,13 +394,37 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 			}
 		
 	}
-	private String getHeadPrivate(String url) throws XQException{
-		XQDataSource xqs = new ExistXQDataSource();
-	    xqs.setProperty("serverName", "localhost");
-	    xqs.setProperty("port", "8080");
-
-	    XQConnection conn = xqs.getConnection();
-	   
+	private void deliteFile(String fileUrl){
+		
+	   	
+	    URL url;
+		try {
+		
+			String putUrl="http://localhost:8080/exist/rest"+fileUrl;
+			System.out.println(putUrl);
+			url = new URL(putUrl);
+			
+			HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
+			setUserNameAndPass(httpCon);
+			httpCon.setDoOutput(true);
+			httpCon.setRequestMethod("DELETE");
+			httpCon.setRequestProperty("content-type", "application/xml; charset=utf-8");
+			httpCon.connect();
+			httpCon.getInputStream();
+			
+		}catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	private void setUserNameAndPass(HttpURLConnection con){
+		String userPassword = "admin" + ":" + "monraket";
+		String encoding = new sun.misc.BASE64Encoder().encode(userPassword.getBytes());
+		con.setRequestProperty("Authorization", "Basic " + encoding);
+	}
+	
+	private String getHeadFile(String url){
+		
 	  
 	    String query="xquery version '3.0';"
 	    		+ "declare namespace v='http://www.repos.se/namespace/v';"
@@ -427,16 +445,65 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 				+ "};"
 				+ "v:snapshot(doc('"+url+"')/v:file/body,'NOW')";
 				
-	    
-	    XQPreparedExpression xqpe = conn.prepareExpression(query);
-
-	    XQResultSequence rs = xqpe.executeQuery();
-	    String returnString="";
-	    while(rs.next()){
-	    	returnString+=rs.getItemAsString(null).replace("xmlns=\"\"", "");
-	    } 
-	   return returnString;
+	    return runQuery(query);
+	   
 	}
+	private String[] getFilesFromExist(String url){
+		updateFilelist(url);
+		String queryAfterNameOfFiles="for $files in doc('"+url+"filelist.xml')//exist:resource"
+		+ "		 return string($files/@name)";
+		String queryReturnString=runQuery(queryAfterNameOfFiles);
+		System.out.println(queryReturnString);
+		return queryReturnString.split("\n");
+		
+	}
+	
+	private void updateFilelist(String url){
+		URL webUrl;
+		try {
+			System.out.println("http://localhost:8080/exist/rest/"+url);
+			webUrl = new URL("http://localhost:8080/exist/rest/"+url);
+			
+	        InputStream is = webUrl.openStream();  // throws an IOException
+	        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+	
+	        String line;
+	        String totalFileList="";
+			while ((line = br.readLine()) != null) {
+				totalFileList+=line+"\n";
+	        }
+			saveToExist("filelist.xml",totalFileList);
+			
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	private String runQuery(String query){
+		XQDataSource xqs = new ExistXQDataSource();
+		String returnString="";
+	    try {
+			xqs.setProperty("serverName", "localhost");
+		
+		    xqs.setProperty("port", "8080");
+	
+		    XQConnection conn = xqs.getConnection();
+		    XQPreparedExpression xqpe = conn.prepareExpression(query);
+	
+		    XQResultSequence rs = xqpe.executeQuery();
+		    
+		    while(rs.next()){
+		    	returnString+=rs.getItemAsString(null).replace("xmlns=\"\"", "")+"\n";
+		    } 
+	    } catch (XQException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	   return returnString;
+	   
+	}
+	
 	
 	
 	
