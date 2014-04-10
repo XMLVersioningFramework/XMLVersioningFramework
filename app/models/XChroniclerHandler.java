@@ -1,11 +1,12 @@
 package models;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -16,13 +17,10 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
 import javax.xml.xquery.XQConnection;
 import javax.xml.xquery.XQDataSource;
 import javax.xml.xquery.XQException;
@@ -31,26 +29,14 @@ import javax.xml.xquery.XQResultSequence;
 
 import net.xqj.exist.ExistXQDataSource;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import se.repos.vfile.VFileDocumentBuilderFactory;
 import se.repos.vfile.gen.VFile;
-import se.repos.vfile.store.VFileStore;
-import se.simonsoft.cms.item.CmsItemId;
-import se.simonsoft.cms.item.CmsItemPath;
-import se.simonsoft.cms.item.CmsRepository;
-import se.simonsoft.cms.item.RepoRevision;
-import se.simonsoft.cms.item.impl.CmsItemIdUrl;
 
 public class XChroniclerHandler extends BackendHandlerInterface {
 	private static XChroniclerHandler instance = null;
@@ -109,36 +95,28 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean init() {
-		this.testDir = new File(BASE_URL);
-
-		// this.testDir.delete();
-
-		this.repoDir = new File(this.testDir, "repo");
-		try {
-			FileUtils.cleanDirectory(this.repoDir);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
-		try {
-			this.repoUrl = SVNRepositoryFactory.createLocalRepository(
-					this.repoDir, true, false);
-		} catch (SVNException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		// for low level operations
-		// SVNRepository repo = SVNRepositoryFactory.create(repoUrl);
-		this.wc = new File(this.testDir, "wc");
-		try {
-			FileUtils.cleanDirectory(this.wc);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		System.out.println("Running local fs repository " + this.repoUrl);
-		this.clientManager = SVNClientManager.newInstance();
+		System.out.println("running xquery init");
+		deliteFile(collectionPath);
+		/*
+		 * this.testDir = new File(BASE_URL);
+		 * 
+		 * // this.testDir.delete();
+		 * 
+		 * this.repoDir = new File(this.testDir, "repo"); try {
+		 * FileUtils.cleanDirectory(this.repoDir); } catch (IOException e1) { //
+		 * TODO Auto-generated catch block e1.printStackTrace(); }
+		 * 
+		 * try { this.repoUrl = SVNRepositoryFactory.createLocalRepository(
+		 * this.repoDir, true, false); } catch (SVNException e) { // TODO
+		 * Auto-generated catch block e.printStackTrace(); } // for low level
+		 * operations // SVNRepository repo =
+		 * SVNRepositoryFactory.create(repoUrl); this.wc = new
+		 * File(this.testDir, "wc"); try { FileUtils.cleanDirectory(this.wc); }
+		 * catch (IOException e1) { // TODO Auto-generated catch block
+		 * e1.printStackTrace(); }
+		 * System.out.println("Running local fs repository " + this.repoUrl);
+		 * this.clientManager = SVNClientManager.newInstance();
+		 */
 		return true;
 	}
 
@@ -162,48 +140,18 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		// CmsRepository repository = new CmsRepository("/anyparent",
-		// "anyname");
-		// CmsItemId testID = new CmsItemIdUrl(repository, new CmsItemPath(
-		// "/basic.xml"));
-		// VFileStore store = null;
-		// try {
-		// store = this.testVFiling(testID, new File(
-		// "./backends/XChronicler/testdata"), "/basic_1.xml",
-		// "basic_2.xml", "basic_3.xml");
-		// } catch (Exception e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		// // store ==null
-		// Document document = store.get(testID);
-		//
-		// /*
-		// * System.out.println(document); VFile v = new
-		// VFile(store.get(testID));
-		// * v.
-		// */
-		//
-		// try {
-		// printDocument(document, System.out);
-		// } catch (IOException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// } catch (TransformerException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
+		saveToExist("/asd.xml", "<node>sad</node>");
 
 		// If previous version existing in the database
 		// Fetches from the database the latest version of the xml
-		
+
 		// Updates the vfile
 		// else
 		// creates the vfile
 
-		String fileName = "url";
+		// String fileName = "url";
 		// adds the vfile to the database
-		saveToExist(fileName, content);
+		// saveToExist(fileName, content);
 
 		return true;
 	}
@@ -300,8 +248,8 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 				String newTime = "" + System.nanoTime();
 				String newVersion = "" + i;
 
-				vFile.update(docBuilder.parse(originalFile), docBuilder.parse(alteredFile), newTime,
-						newVersion);
+				vFile.update(docBuilder.parse(originalFile),
+						docBuilder.parse(alteredFile), newTime, newVersion);
 
 				lastIndexDoc = vFile.toDocument();
 			}
@@ -378,53 +326,50 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public RepositoryRevision getRepositoryHEAD() {
-		try {
-			System.out.println(getHeadPrivate("/db/movies/movies2.xml"));
-		} catch (XQException e) {
-			e.printStackTrace();
+		String[] files = getFilesFromExist(collectionPath);
+		RepositoryRevision repo = new RepositoryRevision();
+		for (String file : files) {
+			RepositoryFile repositoryFile = null;
+			try {
+				repositoryFile = new RepositoryFile(file,
+						getHeadFile(collectionPath + file));
+			} catch (XQException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			repo.addRepositoryFile(repositoryFile);
 		}
-		/*
-		 * TODO Still needs to return RepositoryRevision, otherwise it won't be
-		 * able to function for calling classes
-		 */
-		throw new UnsupportedOperationException();
+		return repo;
 
 	}
 
-	// public void tryXSLT() {
-	// String xsltResource = "<?xml version='1.0' encoding='UTF-8'?>\n"
-	// +
-	// "<xsl:stylesheet version='2.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>\n"
-	// + "   <xsl:output method='xml' indent='no'/>\n"
-	// + "   <xsl:template match='/'>\n"
-	// +
-	// "      <reRoot><reNode><xsl:value-of select='/root/nodee/@val' /> world</reNode></reRoot>\n"
-	// + "   </xsl:template>\n" + "</xsl:stylesheet>";
-	// String xmlSourceResource = "<?xml version='1.0' encoding='UTF-8'?>\n"
-	// +
-	// "<root><node val='hello aa '/><nodee id='hje' val='not hello'/></root>";
-	//
-	// StringWriter xmlResultResource = new StringWriter();
-	//
-	// Transformer xmlTransformer;
-	// try {
-	// xmlTransformer = TransformerFactory.newInstance().newTransformer(
-	// new StreamSource(new StringReader(xsltResource)));
-	//
-	// xmlTransformer.transform(new StreamSource(new StringReader(
-	// xmlSourceResource)), new StreamResult(xmlResultResource));
-	// } catch (TransformerConfigurationException e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// } catch (TransformerFactoryConfigurationError e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// } catch (TransformerException e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// }
-	// System.out.println(xmlResultResource.getBuffer().toString());
-	// }
+	/*
+	 * public void tryXSLT() { String xsltResource =
+	 * "<?xml version='1.0' encoding='UTF-8'?>\n" +
+	 * "<xsl:stylesheet version='2.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>\n"
+	 * + " <xsl:output method='xml' indent='no'/>\n" +
+	 * " <xsl:template match='/'>\n" +
+	 * " <reRoot><reNode><xsl:value-of select='/root/nodee/@val' /> world</reNode></reRoot>\n"
+	 * + " </xsl:template>\n" + "</xsl:stylesheet>"; String xmlSourceResource =
+	 * "<?xml version='1.0' encoding='UTF-8'?>\n" +
+	 * "<root><node val='hello aa '/><nodee id='hje' val='not hello'/></root>";
+	 * 
+	 * StringWriter xmlResultResource = new StringWriter();
+	 * 
+	 * Transformer xmlTransformer; try { xmlTransformer =
+	 * TransformerFactory.newInstance().newTransformer( new StreamSource(new
+	 * StringReader(xsltResource)));
+	 * 
+	 * xmlTransformer.transform(new StreamSource(new StringReader(
+	 * xmlSourceResource)), new StreamResult(xmlResultResource)); } catch
+	 * (TransformerConfigurationException e) { // TODO Auto-generated catch
+	 * block e.printStackTrace(); } catch (TransformerFactoryConfigurationError
+	 * e) { // TODO Auto-generated catch block e.printStackTrace(); } catch
+	 * (TransformerException e) { // TODO Auto-generated catch block
+	 * e.printStackTrace(); }
+	 * 
+	 * System.out.println(xmlResultResource.getBuffer().toString()); }
+	 */
 
 	/**
 	 * Saves file to existDB
@@ -434,30 +379,24 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	 * @return
 	 */
 	private boolean saveToExist(String fileUrl, String content) {
-		fileUrl = "/db/movies/" + fileUrl;
+		fileUrl = collectionPath + fileUrl;
 
 		URL url;
 		try {
-			String putUrl = "http://localhost:8080/exist/rest/" + fileUrl;
+			String putUrl = "http://localhost:8080/exist/rest" + fileUrl;
 			url = new URL(putUrl);
 
 			HttpURLConnection httpCon = (HttpURLConnection) url
 					.openConnection();
-
-			String userPassword = XChroniclerHandler.DBUSERPASSWORD;
-			String encoding = new sun.misc.BASE64Encoder().encode(userPassword
-					.getBytes());
-
+			setUserNameAndPass(httpCon);
 			httpCon.setDoOutput(true);
 			httpCon.setRequestMethod("PUT");
 			httpCon.setRequestProperty("content-type",
 					"application/xml; charset=utf-8");
 
-			httpCon.setRequestProperty("Authorization", "Basic " + encoding);
 			httpCon.connect();
 			OutputStreamWriter out = new OutputStreamWriter(
 					httpCon.getOutputStream());
-
 			out.write(content);
 			out.close();
 			httpCon.getInputStream();
@@ -470,20 +409,39 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	}
 
-	/**
-	 * Takes a url for a vfile and returns the xml that refers to the latest
-	 * version
-	 * 
-	 * @param url
-	 * @return
-	 * @throws XQException
-	 */
-	private String getHeadPrivate(String url) throws XQException {
-		XQDataSource xqs = new ExistXQDataSource();
-		xqs.setProperty("serverName", "localhost");
-		xqs.setProperty("port", "8080");
+	private void deliteFile(String fileUrl) {
 
-		XQConnection conn = xqs.getConnection();
+		URL url;
+		try {
+
+			String putUrl = "http://localhost:8080/exist/rest" + fileUrl;
+			System.out.println(putUrl);
+			url = new URL(putUrl);
+
+			HttpURLConnection httpCon = (HttpURLConnection) url
+					.openConnection();
+			setUserNameAndPass(httpCon);
+			httpCon.setDoOutput(true);
+			httpCon.setRequestMethod("DELETE");
+			httpCon.setRequestProperty("content-type",
+					"application/xml; charset=utf-8");
+			httpCon.connect();
+			httpCon.getInputStream();
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private void setUserNameAndPass(HttpURLConnection con) {
+		String userPassword = "admin" + ":" + "monraket";
+		String encoding = new sun.misc.BASE64Encoder().encode(userPassword
+				.getBytes());
+		con.setRequestProperty("Authorization", "Basic " + encoding);
+	}
+
+	private String getHeadFile(String url) throws XQException {
 
 		String query = "xquery version '3.0';"
 				+ "declare namespace v='http://www.repos.se/namespace/v';"
@@ -501,14 +459,74 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 				+ "        }" + "    else" + "        ()" + "};"
 				+ "v:snapshot(doc('" + url + "')/v:file/body,'NOW')";
 
+		return runQuery(query);
+
+	}
+
+	private String[] getFilesFromExist(String url) {
+		updateFilelist(url);
+		String queryAfterNameOfFiles = "for $files in doc('" + url
+				+ "filelist.xml')//exist:resource"
+				+ "		 return string($files/@name)";
+		String queryReturnString = null;
+		try {
+			queryReturnString = runQuery(queryAfterNameOfFiles);
+		} catch (XQException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println(queryReturnString);
+		return queryReturnString.split("\n");
+
+	}
+
+	private void updateFilelist(String url) {
+		URL webUrl;
+		try {
+			System.out.println("http://localhost:8080/exist/rest/" + url);
+			webUrl = new URL("http://localhost:8080/exist/rest/" + url);
+
+			InputStream is = webUrl.openStream(); // throws an IOException
+			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+
+			String line;
+			String totalFileList = "";
+			while ((line = br.readLine()) != null) {
+				totalFileList += line + "\n";
+			}
+			saveToExist("filelist.xml", totalFileList);
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private String runQuery(String query) throws XQException {
+		XQDataSource xqs = new ExistXQDataSource();
+		String returnString = "";
+		xqs.setProperty("serverName", "localhost");
+
+		xqs.setProperty("port", "8080");
+
+		XQConnection conn = xqs.getConnection();
 		XQPreparedExpression xqpe = conn.prepareExpression(query);
 
 		XQResultSequence rs = xqpe.executeQuery();
-		String returnString = "";
+
 		while (rs.next()) {
-			returnString += rs.getItemAsString(null).replace("xmlns=\"\"", "");
+			returnString += rs.getItemAsString(null).replace("xmlns=\"\"", "")
+					+ "\n";
 		}
+
 		return returnString;
+
+	}
+
+	@Override
+	public String getLog() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
