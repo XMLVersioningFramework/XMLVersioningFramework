@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+import play.Play;
 import se.repos.vfile.VFileDocumentBuilderFactory;
 import se.repos.vfile.gen.VFile;
 
@@ -52,7 +53,9 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	protected static String DBURI = "xmldb:exist://localhost:8080/exist/xmlrpc";
 	protected static String collectionPath = "/db/movies";
 	protected static String resourceName = "movies.xml";
-	protected static final String DBUSERPASSWORD = "user" + ":" + "pass";
+	
+	protected static final String DB_USER = Play.application().configuration().getString("eXist.user");
+	protected static final String DB_PASS = Play.application().configuration().getString("eXist.pass");
 
 	/**
 	 * VFile generation
@@ -166,6 +169,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	public String generateVFileSimpleTest() {
 		String originalPath = BASE_URL + "input/basic/basic_1.xml";
 		String alteredPath = BASE_URL + "input/basic/basic_2.xml";
+
 		return generateVFile(originalPath, alteredPath);
 	}
 
@@ -434,7 +438,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	}
 
 	private void setUserNameAndPass(HttpURLConnection con) {
-		String userPassword = "admin" + ":" + "monraket";
+		String userPassword = DB_USER + ":" + DB_PASS;
 		String encoding = new sun.misc.BASE64Encoder().encode(userPassword
 				.getBytes());
 		con.setRequestProperty("Authorization", "Basic " + encoding);
