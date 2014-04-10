@@ -95,7 +95,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	@Override
 	public boolean init() {
 		System.out.println("running xquery init");
-		deliteFile(collectionPath);
+		deleteFile(collectionPath);
 		/*
 		 * this.testDir = new File(BASE_URL);
 		 * 
@@ -408,7 +408,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	}
 
-	private void deliteFile(String fileUrl) {
+	private void deleteFile(String fileUrl) {
 
 		URL url;
 		try {
