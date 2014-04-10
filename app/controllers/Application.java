@@ -171,10 +171,8 @@ public class Application extends Controller {
 	
 	public static Result testVfile(){
 		XChroniclerHandler backend = (XChroniclerHandler) XChroniclerHandler.getInstance();
-		
-		backend.generateVFileSimpleTest();
 
-		return ok();
+		return ok(backend.generateVFileSimpleTest());
 	}
 
 	public static Result checkPreFlight() {
