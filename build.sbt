@@ -10,9 +10,12 @@ libraryDependencies ++= Seq(
 	"mysql" % "mysql-connector-java" % "5.1.27",
 	"org.eclipse.jgit" % "org.eclipse.jgit" % "3.3.0.201403021825-r",
 	"commons-io" % "commons-io" % "2.4",
-	"exist" % "exist" % "0.9.2",
-	"xmldb" % "xmldb-api" % "20021118",
-	"xmlunit" % "xmlunit" % "1.5"
+	"org.tmatesoft.svnkit" % "svnkit" % "1.8.3-1",
+	"se.simonsoft" % "cms-item" % "2.1-SNAPSHOT",
+	"se.simonsoft" % "cms-backend-svnkit" % "0.9-SNAPSHOT", 
+	"se.simonsoft" % "cms-testing" % "0.9-SNAPSHOT",
+	"xmlunit" % "xmlunit" % "1.5",
+    "javax" % "javaee-api" % "7.0"
 	)
 
 libraryDependencies += javaEbean
