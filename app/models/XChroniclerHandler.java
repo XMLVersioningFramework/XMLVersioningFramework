@@ -1,34 +1,28 @@
 package models;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
-import javax.inject.Provider;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
+import javax.xml.xquery.XQConnection;
+import javax.xml.xquery.XQDataSource;
+//import org.exist.xmldb.EXistResource;
+//import org.exist.*;
+import javax.xml.xquery.XQException;
+import javax.xml.xquery.XQPreparedExpression;
+import javax.xml.xquery.XQResultSequence;
+
+import net.xqj.exist.ExistXQDataSource;
 
 import org.apache.commons.io.FileUtils;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -38,54 +32,15 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
-//import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import se.repos.vfile.VFileCalculatorImpl;
-import se.repos.vfile.VFileCommitHandler;
-import se.repos.vfile.VFileCommitItemHandler;
-import se.repos.vfile.VFileDocumentBuilderFactory;
-import se.repos.vfile.gen.VFile;
 import se.repos.vfile.store.VFileStore;
-import se.repos.vfile.store.VFileStoreDisk;
-//import se.simonsoft.cms.backend.svnkit.CmsRepositorySvn;
-//import se.simonsoft.cms.backend.svnkit.svnlook.CmsChangesetReaderSvnkitLook;
-//import se.simonsoft.cms.backend.svnkit.svnlook.CmsContentsReaderSvnkitLook;
-//import se.simonsoft.cms.backend.svnkit.svnlook.SvnlookClientProviderStateless;
 import se.simonsoft.cms.item.CmsItemId;
 import se.simonsoft.cms.item.CmsItemPath;
 import se.simonsoft.cms.item.CmsRepository;
 import se.simonsoft.cms.item.RepoRevision;
 import se.simonsoft.cms.item.impl.CmsItemIdUrl;
-
-import org.xmldb.api.base.*;
-import org.xmldb.api.modules.*;
-import org.xmldb.api.*;
-
-import javax.xml.transform.OutputKeys;
-//import org.exist.xmldb.EXistResource;
-//import org.exist.*;
-import javax.xml.xquery.*;
-import javax.xml.namespace.QName;
-
-import net.xqj.exist.ExistXQDataSource;
+//import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 
 
 
