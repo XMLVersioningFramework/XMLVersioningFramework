@@ -173,6 +173,9 @@ public class GitHandler extends BackendHandlerInterface {
 			return true;
 		return false;
 	}
+	public String getLog(){
+		return (gitRepository.log().toString());
+	}
 
 	/**
 	 * Adds a file/dir to the repository for commit
@@ -377,5 +380,6 @@ public class GitHandler extends BackendHandlerInterface {
 			repoFile.setFileURL(this.getStrippedFileURL(repoFile.getFileURL()));
 		}
 	}
+	
 
 }

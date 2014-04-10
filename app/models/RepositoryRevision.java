@@ -91,6 +91,13 @@ public class RepositoryRevision {
 	public void setRepositoryFiles(ArrayList<RepositoryFile> repositoryFiles) {
 		this.repositoryFiles = repositoryFiles;
 	}
+	
+	public void addRepositoryFile(RepositoryFile repositoryFile){
+		if(this.repositoryFiles==null){
+			this.repositoryFiles=new ArrayList<RepositoryFile>();
+		}
+		this.repositoryFiles.add(repositoryFile);
+	}
 
 	/**
 	 * Writes the content of repository Head to JSON

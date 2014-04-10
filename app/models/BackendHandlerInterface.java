@@ -22,6 +22,8 @@ public abstract class BackendHandlerInterface {
 	public abstract String commitAFile(TempFile tf);
 
 	public abstract TempFile getFile(String url);
+	
+	public abstract String getLog();
 
 	public abstract ArrayList<RepositoryFile> getWorkingDirFiles();
 
