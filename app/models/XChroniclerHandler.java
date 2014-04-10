@@ -39,7 +39,6 @@ import se.repos.vfile.VFileDocumentBuilderFactory;
 import se.repos.vfile.gen.VFile;
 
 public class XChroniclerHandler extends BackendHandlerInterface {
-	private static XChroniclerHandler instance = null;
 
 	/**
 	 * Test folders related
