@@ -142,11 +142,16 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		saveToExist("/asd.xml", "<node>sad</node>");
+		
 
 		// If previous version existing in the database
 		// Fetches from the database the latest version of the xml
-		
+		try {
+			this.getHeadFile(url);
+		} catch (XQException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		// Updates the vfile
 		// else
@@ -155,7 +160,8 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		// String fileName = "url";
 		// adds the vfile to the database
 		// saveToExist(fileName, content);
-		
+		saveToExist("/asd.xml", "<node>sad</node>");
+
 		return true;
 	}
 
