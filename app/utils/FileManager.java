@@ -46,16 +46,16 @@ public class FileManager {
 	 * @deprecated use org.apache.commons.io.FileUtils class instead
 	 */
 	@Deprecated
-	public static void createFile(String fileContent, String fileName) {
+	public static File createFile(String fileContent, String fileName) {
 		String filePath = "./";
-		createFile(fileContent, fileName, filePath);
+		return createFile(fileContent, fileName, filePath);
 	}
 
 	/**
 	 * @deprecated use org.apache.commons.io.FileUtils class instead
 	 */
 	@Deprecated
-	public static void createFile(String data, String fileName, String filePath) {
+	public static File createFile(String data, String fileName, String filePath) {
 		String fileURL = filePath + fileName;
 		System.out.println(fileURL);
 		File file = new File(fileURL);
@@ -65,6 +65,7 @@ public class FileManager {
 			System.err.println("Couldn't write to the file :" + fileURL);
 			e.printStackTrace();
 		}
+		return file;
 	}
 
 	/**
