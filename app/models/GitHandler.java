@@ -174,14 +174,15 @@ public class GitHandler extends BackendHandlerInterface {
 			return true;
 		return false;
 	}
-	public Logs getLog(){
-		String returnString=""; 
-		Logs logs=new Logs();
+
+	public Logs getLog() {
+		String returnString = "";
+		Logs logs = new Logs();
 		try {
-			for ( RevCommit element : gitRepository.log().call()) {
-				logs.addLog(new Log(element.getName(),element.getFullMessage()));
+			for (RevCommit element : gitRepository.log().call()) {
+				logs.addLog(new Log(element.getName(), element.getFullMessage()));
 			}
-		} catch ( GitAPIException e) {
+		} catch (GitAPIException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -281,8 +282,8 @@ public class GitHandler extends BackendHandlerInterface {
 	}
 
 	/**
-	 * Only prepared for a single file
-	 * TODO: Needs to be able to receive more than one
+	 * Only prepared for a single file TODO: Needs to be able to receive more
+	 * than one
 	 */
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
@@ -292,14 +293,10 @@ public class GitHandler extends BackendHandlerInterface {
 		/**
 		 * Add to repository
 		 */
-		while (!GitHandler.add(url)) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		if(!GitHandler.add(url)){
+			System.out.println("Fail to add the file to the repository");
 		}
+
 		System.out.println("success adding file");
 
 		/**
@@ -397,6 +394,5 @@ public class GitHandler extends BackendHandlerInterface {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
 
 }
