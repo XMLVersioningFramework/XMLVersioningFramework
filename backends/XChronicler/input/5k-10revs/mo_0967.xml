@@ -2,10 +2,8 @@
 <!--Arbortext, Inc., 1988-2012, v.4002-->
 <!DOCTYPE section PUBLIC "-//Simonsoft//DTD TechDoc Base V1.1 PDS//EN"
  "pds.dtd">
-<?Pub UDT _bookmark _target?>
-<?Pub Inc?>
 <section xml:id="manage">
-<title>Manage Objects</title><?Pub Caret -2?>
+<title>Manage Objects</title>
 <section>
 <title>Copy / Move / Rename</title>
 </section>

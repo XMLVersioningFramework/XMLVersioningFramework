@@ -2,10 +2,9 @@
 <!--Arbortext, Inc., 1988-2012, v.4002-->
 <!DOCTYPE section PUBLIC "-//Simonsoft//DTD TechDoc Base V1.1 PDS//EN"
  "pds.dtd">
-<?Pub UDT _bookmark _target?>
 <section xml:id="manage">
 <title>Manage Objects</title>
-<section><?Pub Dtl?>
+<section>
 <title>Copy / Move / Rename</title>
 <description>
 <descriptionblock>
@@ -108,7 +107,7 @@ out and Check in from the Editor. Start with <label type="guiitem"
 <section>
 <title>Delete</title>
 <description type="compact">
-<descriptionblock><?Pub Dtl?>
+<descriptionblock>
 <figure>
 <graphic
 fileref="x-svn:///svn/documentation^/graphics/cms/web/delete_000001.png"
@@ -137,5 +136,5 @@ scalefit="yes"/>
 </descriptiontext>
 </descriptionblock>
 </description>
-</section><?Pub Caret -1?>
+</section>
 </section>

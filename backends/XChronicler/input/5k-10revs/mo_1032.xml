@@ -2,10 +2,9 @@
 <!--Arbortext, Inc., 1988-2012, v.4002-->
 <!DOCTYPE section PUBLIC "-//Simonsoft//DTD TechDoc Base V1.1 PDS//EN"
  "pds.dtd">
-<?Pub UDT _bookmark _target?>
 <section xml:id="manage">
 <title>Manage Objects</title>
-<section><?Pub Dtl?>
+<section>
 <title>Copy / Move / Rename</title>
 <description>
 <descriptionblock>
@@ -119,7 +118,7 @@ scalefit="yes"/>
 <p>The Delete operation can be performed from the details page and
 deletes the selected object from the current folder version forward,
 all historical versions will be kept.</p>
-</descriptiontext><?Pub Caret -1?>
+</descriptiontext>
 </descriptionblock>
 </description>
 <description>

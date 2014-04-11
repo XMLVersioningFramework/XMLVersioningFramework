@@ -41,24 +41,28 @@ import org.xml.sax.SAXException;
 import play.Play;
 import se.repos.vfile.VFileDocumentBuilderFactory;
 import se.repos.vfile.gen.VFile;
+import utils.FileManager;
 
 public class XChroniclerHandler extends BackendHandlerInterface {
 
 	/**
 	 * Test folders related
 	 */
-	final String BASE_URL = rootBackendFolder + "XChronicler/";
+	static final String BASE_URL = rootBackendFolder + "XChronicler/";
+	public static final String REPOSITORY_URL = BASE_URL + "repo/";
 
 	/**
 	 * eXist related
 	 */
 	protected static String DRIVER = "org.exist.xmldb.DatabaseImpl";
 	protected static String DBURI = "xmldb:exist://localhost:8080/exist/xmlrpc";
-	protected static String collectionPath = "/db/movies";
+	protected static String COLLECTION_PATH = "/db/repo/";
 	protected static String resourceName = "movies.xml";
-	
-	protected static final String DB_USER = Play.application().configuration().getString("eXist.user");
-	protected static final String DB_PASS = Play.application().configuration().getString("eXist.pass");
+
+	protected static final String DB_USER = Play.application().configuration()
+			.getString("eXist.user");
+	protected static final String DB_PASS = Play.application().configuration()
+			.getString("eXist.pass");
 
 	/**
 	 * VFile generation
@@ -101,27 +105,9 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	@Override
 	public boolean init() {
 		System.out.println("running xquery init");
-		deleteFile(collectionPath);
-		/*
-		 * this.testDir = new File(BASE_URL);
-		 * 
-		 * // this.testDir.delete();
-		 * 
-		 * this.repoDir = new File(this.testDir, "repo"); try {
-		 * FileUtils.cleanDirectory(this.repoDir); } catch (IOException e1) { //
-		 * TODO Auto-generated catch block e1.printStackTrace(); }
-		 * 
-		 * try { this.repoUrl = SVNRepositoryFactory.createLocalRepository(
-		 * this.repoDir, true, false); } catch (SVNException e) { // TODO
-		 * Auto-generated catch block e.printStackTrace(); } // for low level
-		 * operations // SVNRepository repo =
-		 * SVNRepositoryFactory.create(repoUrl); this.wc = new
-		 * File(this.testDir, "wc"); try { FileUtils.cleanDirectory(this.wc); }
-		 * catch (IOException e1) { // TODO Auto-generated catch block
-		 * e1.printStackTrace(); }
-		 * System.out.println("Running local fs repository " + this.repoUrl);
-		 * this.clientManager = SVNClientManager.newInstance();
-		 */
+
+		deleteFile(COLLECTION_PATH);
+
 		return true;
 	}
 
@@ -145,25 +131,37 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
+		// build temp file
+		File newFile = FileManager.createFile(content, url,
+				XChroniclerHandler.REPOSITORY_URL);
 
+		String vFileContent = "empty";
 
 		// If previous version existing in the database
 		// Fetches from the database the latest version of the xml
 		try {
-			this.getHeadFile(url);
+			if (exists(XChroniclerHandler.COLLECTION_PATH + url)) {
+				System.out.println("**********the file exists");
+				// Updates the vfile
+				String oldFileContent = getHeadFile(XChroniclerHandler.COLLECTION_PATH
+						+ url);
+				String oldFileUrl = url + ".old";
+				File oldFile = FileManager.createFile(oldFileContent,
+						oldFileUrl, XChroniclerHandler.REPOSITORY_URL);
+				vFileContent = generateVFile(oldFile, newFile);
+			} else {
+				System.out.println("**********the file doesnt exist");
+				// creates the vfile
+				vFileContent = generateVFile(newFile);
+			}
 		} catch (XQException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return false;
 		}
-
-		// Updates the vfile
-		// else
-		// creates the vfile
-
 		// String fileName = "url";
 		// adds the vfile to the database
-		// saveToExist(fileName, content);
-		saveToExist("/asd.xml", "<node>sad</node>");
+		saveToExist(url, vFileContent);
 
 		return true;
 	}
@@ -339,13 +337,13 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public RepositoryRevision getRepositoryHEAD() {
-		String[] files = getFilesFromExist(collectionPath);
+		String[] files = getFilesFromExist(COLLECTION_PATH);
 		RepositoryRevision repo = new RepositoryRevision();
 		for (String file : files) {
 			RepositoryFile repositoryFile = null;
 			try {
 				repositoryFile = new RepositoryFile(file,
-						getHeadFile(collectionPath + file));
+						getHeadFile(COLLECTION_PATH + file));
 			} catch (XQException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -355,14 +353,19 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		return repo;
 
 	}
+
 	/**
 	 * Checks if the file exists in the database
+	 * 
 	 * @param url
 	 * @return
 	 * @throws XQException
 	 */
-	public boolean exists(String url) throws XQException{
-		return XChroniclerHandler.getHeadFile(url).equalsIgnoreCase("");
+	public boolean exists(String url) throws XQException {
+		System.out.println("exists?" + url);
+		String output = XChroniclerHandler.getHeadFile(url);
+		System.out.println("\tget head result:" + output);
+		return !output.equalsIgnoreCase("");
 	}
 
 	/*
@@ -401,7 +404,10 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	 * @return
 	 */
 	private boolean saveToExist(String fileUrl, String content) {
-		fileUrl = collectionPath + fileUrl;
+		fileUrl = COLLECTION_PATH + fileUrl;
+		System.out.println("-----> Saving to Exist: ");
+		System.out.println("\tFile URL: " + fileUrl);
+		System.out.println("\tContent:" + content);
 
 		URL url;
 		try {
@@ -463,24 +469,57 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		con.setRequestProperty("Authorization", "Basic " + encoding);
 	}
 
-	
 	public static String getHeadFile(String url) throws XQException {
-		String query = "xquery version '3.0';"
-				+ "declare namespace v='http://www.repos.se/namespace/v';"
-				+ "declare function v:getAttr($e)"
-				+ "{"
-				+ "    for $a in $e/v:attr"
-				+ "          return attribute {string($a/@v:name)}{$a}"
-				+ "};"
-				+ "    declare function v:snapshot($e, $v){"
-				+ "    if (($e/@v:end) = ($v) and name($e) != 'v:text' and name($e) != 'v:attr') then"
-				+ "        element { name($e) } {"
-				+ "            v:getAttr($e),"
-				+ "            $e/v:text/text(),"
-				+ "for $child in $e/*  return v:snapshot($child, $v)"
-				+ "        }" + "    else" + "        ()" + "};"
-				+ "v:snapshot(doc('" + url + "')/v:file/body,'NOW')";
+		/*
+		 * String query = "xquery version '3.0';" +
+		 * "declare namespace v='http://www.repos.se/namespace/v';" +
+		 * "declare function v:getAttr($e)" + "{" + "    for $a in $e/v:attr" +
+		 * "          return attribute {string($a/@v:name)}{$a}" + "};" +
+		 * "    declare function v:snapshot($e, $v){" +
+		 * "    if (($e/@v:end) = ($v) and name($e) != 'v:text' and name($e) != 'v:attr') then"
+		 * + "        element { name($e) } {" + "            v:getAttr($e)," +
+		 * "            $e/v:text/text()," +
+		 * "for $child in $e/*  return v:snapshot($child, $v)" + "        }" +
+		 * "    else" + "        ()" + "};" + "v:snapshot(doc('" + url +
+		 * "')/v:file/*[*],'NOW')";
+		 */
 
+		String query = "xquery version '3.0';"
+				+ "declare namespace v = 'http://www.repos.se/namespace/v';"
+				+ "declare function v:getText($e)"
+				+ "{"
+				+ "  for $a in $e/v:text"
+				+ "    return "
+				+ "      if (string($a/@v:end)='NOW') then "
+				+ "        $a/text() "
+				+ "      else "
+				+ "        () "
+				+ "};"
+				+ "		declare function v:getAttr($e)"
+				+ "	    {"
+				+ "		    for $a in $e/v:attr"
+				+ "		    return"
+				+ "		        if (string($a/@v:end)='NOW') then"
+				+ ""
+				+ "		            attribute { string($a/@v:name) } { $a }"
+				+ "		        else"
+				+ "		            ()"
+				+ "		};"
+				+ ""
+				+ "		declare function v:snapshot($e, $v)"
+				+ "		{"
+				+ "		    if (($e/@v:end) = ($v) and name($e) != 'v:text' and name($e) != 'v:attr') then"
+				+ "		        element { name($e) } {"
+				+ "		            v:getAttr($e),"
+				+ "		            v:getText($e),"
+				+ "		            for $child in $e/*"
+				+ "		            return v:snapshot($child, $v)" 
+				+ "		    }"
+				+ "		    else" + "		        ()" 
+				+ "		};"
+				+ "		v:snapshot(doc('/db/repo/a.txt')/v:file/*[*], 'NOW')";
+
+		System.out.println(query);
 		return runQuery(query);
 
 	}
@@ -547,11 +586,11 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public Logs getLog() {
-		
-		SortedSet<String> ss =new TreeSet<String>();
-		String query="xquery version '3.0';"
+
+		SortedSet<String> ss = new TreeSet<String>();
+		String query = "xquery version '3.0';"
 				+ "		declare namespace v='http://www.repos.se/namespace/v';"
-				+ "		for $as in doc('"+collectionPath+"')//@v:end"
+				+ "		for $as in doc('" + COLLECTION_PATH + "')//@v:end"
 				+ "		    return string($as)";
 		try {
 			ss.addAll(Arrays.asList(runQuery(query).split("\n")));
@@ -559,9 +598,9 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		query="xquery version '3.0';"
+		query = "xquery version '3.0';"
 				+ "		declare namespace v='http://www.repos.se/namespace/v';"
-				+ "		for $as in doc('"+collectionPath+"')//@v:start"
+				+ "		for $as in doc('" + COLLECTION_PATH + "')//@v:start"
 				+ "		    return string($as)";
 		try {
 			ss.addAll(Arrays.asList(runQuery(query).split("\n")));
@@ -569,12 +608,12 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		Logs logs=new Logs();
-		for (String version: ss) {
+		Logs logs = new Logs();
+		for (String version : ss) {
 			System.out.println(version);
-			logs.addLog(new Log(version,""));
+			logs.addLog(new Log(version, ""));
 		}
-		return logs;		
+		return logs;
 	}
 
 	@Override
