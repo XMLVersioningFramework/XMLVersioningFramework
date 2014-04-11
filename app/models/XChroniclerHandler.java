@@ -10,7 +10,10 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -142,7 +145,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		saveToExist("/asd.xml", "<node>sad</node>");
+	//	saveToExist("/asd.xml", "<node>sad</node>");
 
 		// If previous version existing in the database
 		// Fetches from the database the latest version of the xml
@@ -528,6 +531,38 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public Logs getLog() {
+		
+		SortedSet<String> ss =new TreeSet<String>();
+		String query="xquery version '3.0';"
+				+ "		declare namespace v='http://www.repos.se/namespace/v';"
+				+ "		for $as in doc('"+collectionPath+"')//@v:end"
+				+ "		    return string($as)";
+		try {
+			ss.addAll(Arrays.asList(runQuery(query).split("\n")));
+		} catch (XQException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		query="xquery version '3.0';"
+				+ "		declare namespace v='http://www.repos.se/namespace/v';"
+				+ "		for $as in doc('"+collectionPath+"')//@v:start"
+				+ "		    return string($as)";
+		try {
+			ss.addAll(Arrays.asList(runQuery(query).split("\n")));
+		} catch (XQException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Logs logs=new Logs();
+		for (String version: ss) {
+			System.out.println(version);
+			logs.addLog(new Log(version,""));
+		}
+		return logs;		
+	}
+
+	@Override
+	public RepositoryRevision checkOut() {
 		// TODO Auto-generated method stub
 		return null;
 	}

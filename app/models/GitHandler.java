@@ -391,6 +391,12 @@ public class GitHandler extends BackendHandlerInterface {
 			repoFile.setFileURL(this.getStrippedFileURL(repoFile.getFileURL()));
 		}
 	}
+
+	@Override
+	public RepositoryRevision checkOut() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 
 }
