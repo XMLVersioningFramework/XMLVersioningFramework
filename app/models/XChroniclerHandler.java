@@ -145,10 +145,16 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-	//	saveToExist("/asd.xml", "<node>sad</node>");
+
 
 		// If previous version existing in the database
 		// Fetches from the database the latest version of the xml
+		try {
+			this.getHeadFile(url);
+		} catch (XQException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		// Updates the vfile
 		// else
@@ -157,6 +163,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		// String fileName = "url";
 		// adds the vfile to the database
 		// saveToExist(fileName, content);
+		saveToExist("/asd.xml", "<node>sad</node>");
 
 		return true;
 	}
@@ -348,6 +355,15 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		return repo;
 
 	}
+	/**
+	 * Checks if the file exists in the database
+	 * @param url
+	 * @return
+	 * @throws XQException
+	 */
+	public boolean exists(String url) throws XQException{
+		return XChroniclerHandler.getHeadFile(url).equalsIgnoreCase("");
+	}
 
 	/*
 	 * public void tryXSLT() { String xsltResource =
@@ -447,8 +463,8 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		con.setRequestProperty("Authorization", "Basic " + encoding);
 	}
 
-	private String getHeadFile(String url) throws XQException {
-
+	
+	public static String getHeadFile(String url) throws XQException {
 		String query = "xquery version '3.0';"
 				+ "declare namespace v='http://www.repos.se/namespace/v';"
 				+ "declare function v:getAttr($e)"
@@ -508,7 +524,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		}
 	}
 
-	private String runQuery(String query) throws XQException {
+	private static String runQuery(String query) throws XQException {
 		XQDataSource xqs = new ExistXQDataSource();
 		String returnString = "";
 		xqs.setProperty("serverName", "localhost");

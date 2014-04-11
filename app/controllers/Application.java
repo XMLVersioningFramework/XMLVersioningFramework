@@ -2,6 +2,8 @@ package controllers;
 
 import java.util.Map;
 
+import javax.xml.xquery.XQException;
+
 import models.BackendHandlerInterface;
 import models.GitHandler;
 import models.User;
@@ -174,6 +176,21 @@ public class Application extends Controller {
 		XChroniclerHandler backend = (XChroniclerHandler) XChroniclerHandler.getInstance();
 
 		return ok(backend.generateVFileSimpleTest());
+	}
+	
+	public static Result testXGetHEAD(String fileURL){
+		try {
+			String result = XChroniclerHandler.getHeadFile(fileURL);
+			if(result.isEmpty())
+				throw new Exception("Result was empty");
+			return ok(result);
+		} catch (XQException e) {
+			e.printStackTrace();
+			return internalServerError("The URL you sent was malformed perhaps\n Exception information: " + e.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return internalServerError("Apparently the file doesn't exist.\n Exception result: " + e.getMessage());
+		}
 	}
 
 	public static Result checkPreFlight() {
