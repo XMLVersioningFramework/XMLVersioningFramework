@@ -11,6 +11,7 @@ import org.eclipse.jgit.api.InitCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
+import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.Constants;
@@ -173,8 +174,18 @@ public class GitHandler extends BackendHandlerInterface {
 			return true;
 		return false;
 	}
-	public String getLog(){
-		return (gitRepository.log().toString());
+	public Logs getLog(){
+		String returnString=""; 
+		Logs logs=new Logs();
+		try {
+			for ( RevCommit element : gitRepository.log().call()) {
+				logs.addLog(new Log(element.getName(),element.getFullMessage()));
+			}
+		} catch ( GitAPIException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return logs;
 	}
 
 	/**

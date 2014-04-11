@@ -102,7 +102,8 @@ public class Application extends Controller {
 				.get(JSONConstants.BACKEND)[0]);
 
 		response().setHeader("Access-Control-Allow-Origin", "*");
-		return ok(Json.parse((backend.getLog())));
+		System.out.println(backend.getLog());
+		return ok(Json.toJson(backend.getLog()));
 	}
 
 	/**

@@ -517,7 +517,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	}
 
 	@Override
-	public String getLog() {
+	public Logs getLog() {
 		// TODO Auto-generated method stub
 		return null;
 	}

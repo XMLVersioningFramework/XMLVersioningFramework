@@ -23,7 +23,7 @@ public abstract class BackendHandlerInterface {
 
 	public abstract TempFile getFile(String url);
 	
-	public abstract String getLog();
+	public abstract Logs getLog();
 
 	public abstract ArrayList<RepositoryFile> getWorkingDirFiles();
 
