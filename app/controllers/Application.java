@@ -169,6 +169,12 @@ public class Application extends Controller {
 
 		return ok(returnJson);
 	}
+	
+	public static Result testVfile(){
+		XChroniclerHandler backend = (XChroniclerHandler) XChroniclerHandler.getInstance();
+
+		return ok(backend.generateVFileSimpleTest());
+	}
 
 	public static Result checkPreFlight() {
 		// Need to add the correct domain in here!!
