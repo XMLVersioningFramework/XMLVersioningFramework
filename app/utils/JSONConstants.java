@@ -24,7 +24,7 @@ public final class JSONConstants {
 	public static final String USER = "user";
 	public static final String MESSAGE = "message";
 	
-
+	public static final Object REVISION_ID = "revisionID";
 	/**
 	 * TODO: IS this equal to {@link #FILE_CONTENT}? if so, unify here, in the
 	 * caller and in the js
@@ -49,6 +49,7 @@ public final class JSONConstants {
 	public static final String ANSWER = "answer";
 	public static final String SUCCESS = "success";
 	public static final String FAIL = "fail";
+	
 
 
 	// PRIVATE //

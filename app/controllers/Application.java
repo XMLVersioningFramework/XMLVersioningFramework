@@ -109,9 +109,10 @@ public class Application extends Controller {
 		final Map<String, String[]> postInput = getPOSTData();
 		BackendHandlerInterface backend = getBackend(postInput
 				.get(JSONConstants.BACKEND)[0]);
+		String revision=postInput.get(JSONConstants.REVISION_ID)[0];
 
 		response().setHeader("Access-Control-Allow-Origin", "*");
-		return ok(backend.getRepositoryHEAD().toJSON());
+		return ok(backend.checkout(revision).toJSON());
 	}
 	
 	

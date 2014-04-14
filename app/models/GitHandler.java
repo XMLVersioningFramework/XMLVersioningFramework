@@ -8,10 +8,14 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.api.errors.NoHeadException;
+import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
+import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.Constants;
@@ -350,20 +354,18 @@ public class GitHandler extends BackendHandlerInterface {
 	@Override
 	public RepositoryRevision getRepositoryHEAD() {
 		RepositoryRevision head = new RepositoryRevision();
-		long startTime = System.nanoTime();
-
 		populateHEADRepositoryFiles(head);
-		populateHEADGeneralData(head);
+		Git git = (Git) this.getRepository();
+		Repository repository = git.getRepository();
+		populateHEADGeneralData(head,git);
 
-		head.setElapsedTime(System.nanoTime() - startTime);
 
 		return head;
 	}
 
-	private void populateHEADGeneralData(RepositoryRevision head) {
+	private void populateHEADGeneralData(RepositoryRevision head,Git git) {
 		try {
-			Git git = (Git) this.getRepository();
-			Repository repository = git.getRepository();
+			
 			ObjectId headObject = git.getRepository().resolve(Constants.HEAD);
 
 			head.setLastCommit(git.log().add(headObject).call().iterator()
@@ -393,8 +395,25 @@ public class GitHandler extends BackendHandlerInterface {
 
 	@Override
 	public RepositoryRevision checkout(String revision) {
-		// TODO Auto-generated method stub
-		return null;
+		System.out.println("running checkout");
+		Git git = (Git) this.getRepository();
+		Repository repository = git.getRepository();
+		try {
+			git.checkout().setStartPoint(revision).setCreateBranch(true).setName("newbranch").call();
+		}catch (GitAPIException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		RepositoryRevision head = new RepositoryRevision();
+		populateHEADRepositoryFiles(head);
+		populateHEADGeneralData(head,git);
+		try {
+			git.checkout().setName("master").call();
+		} catch (GitAPIException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return head;
 	}
 
 }
