@@ -56,8 +56,8 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	 */
 	protected static String DRIVER = "org.exist.xmldb.DatabaseImpl";
 	protected static String DBURI = "xmldb:exist://localhost:8080/exist/xmlrpc";
-	protected static String COLLECTION_PATH = Play.application().configuration()
-			.getString("eXist.dbPath");
+	protected static String COLLECTION_PATH = Play.application()
+			.configuration().getString("eXist.dbPath");
 	protected static String resourceName = "movies.xml";
 
 	protected static final String DB_USER = Play.application().configuration()
@@ -70,15 +70,6 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	 */
 	DocumentBuilder docBuilder = new VFileDocumentBuilderFactory()
 			.newDocumentBuilder();
-	/**
-	 * XChronicler artifacts
-	 */
-	private boolean doCleanup = false;
-	private File testDir = null;
-	private File repoDir = null;
-	private SVNURL repoUrl;
-	private File wc = null;
-	private SVNClientManager clientManager = null;
 
 	private XChroniclerHandler() {
 
@@ -369,34 +360,6 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		return !output.equalsIgnoreCase("");
 	}
 
-	/*
-	 * public void tryXSLT() { String xsltResource =
-	 * "<?xml version='1.0' encoding='UTF-8'?>\n" +
-	 * "<xsl:stylesheet version='2.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>\n"
-	 * + " <xsl:output method='xml' indent='no'/>\n" +
-	 * " <xsl:template match='/'>\n" +
-	 * " <reRoot><reNode><xsl:value-of select='/root/nodee/@val' /> world</reNode></reRoot>\n"
-	 * + " </xsl:template>\n" + "</xsl:stylesheet>"; String xmlSourceResource =
-	 * "<?xml version='1.0' encoding='UTF-8'?>\n" +
-	 * "<root><node val='hello aa '/><nodee id='hje' val='not hello'/></root>";
-	 * 
-	 * StringWriter xmlResultResource = new StringWriter();
-	 * 
-	 * Transformer xmlTransformer; try { xmlTransformer =
-	 * TransformerFactory.newInstance().newTransformer( new StreamSource(new
-	 * StringReader(xsltResource)));
-	 * 
-	 * xmlTransformer.transform(new StreamSource(new StringReader(
-	 * xmlSourceResource)), new StreamResult(xmlResultResource)); } catch
-	 * (TransformerConfigurationException e) { // TODO Auto-generated catch
-	 * block e.printStackTrace(); } catch (TransformerFactoryConfigurationError
-	 * e) { // TODO Auto-generated catch block e.printStackTrace(); } catch
-	 * (TransformerException e) { // TODO Auto-generated catch block
-	 * e.printStackTrace(); }
-	 * 
-	 * System.out.println(xmlResultResource.getBuffer().toString()); }
-	 */
-
 	/**
 	 * Saves file to existDB
 	 * 
@@ -470,59 +433,8 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		con.setRequestProperty("Authorization", "Basic " + encoding);
 	}
 
-	public static String getHeadFile(String url) throws XQException {
-		/*
-		 * String query = "xquery version '3.0';" +
-		 * "declare namespace v='http://www.repos.se/namespace/v';" +
-		 * "declare function v:getAttr($e)" + "{" + "    for $a in $e/v:attr" +
-		 * "          return attribute {string($a/@v:name)}{$a}" + "};" +
-		 * "    declare function v:snapshot($e, $v){" +
-		 * "    if (($e/@v:end) = ($v) and name($e) != 'v:text' and name($e) != 'v:attr') then"
-		 * + "        element { name($e) } {" + "            v:getAttr($e)," +
-		 * "            $e/v:text/text()," +
-		 * "for $child in $e/*  return v:snapshot($child, $v)" + "        }" +
-		 * "    else" + "        ()" + "};" + "v:snapshot(doc('" + url +
-		 * "')/v:file/*[*],'NOW')";
-		 */
-
-		String query = "xquery version '3.0';"
-				+ "declare namespace v = 'http://www.repos.se/namespace/v';"
-				+ "declare function v:getText($e)"
-				+ "{"
-				+ "  for $a in $e/v:text"
-				+ "    return "
-				+ "      if (string($a/@v:end)='NOW') then "
-				+ "        $a/text() "
-				+ "      else "
-				+ "        () "
-				+ "};"
-				+ "		declare function v:getAttr($e)"
-				+ "	    {"
-				+ "		    for $a in $e/v:attr"
-				+ "		    return"
-				+ "		        if (string($a/@v:end)='NOW') then"
-				+ ""
-				+ "		            attribute { string($a/@v:name) } { $a }"
-				+ "		        else"
-				+ "		            ()"
-				+ "		};"
-				+ ""
-				+ "		declare function v:snapshot($e, $v)"
-				+ "		{"
-				+ "		    if (($e/@v:end) = ($v) and name($e) != 'v:text' and name($e) != 'v:attr') then"
-				+ "		        element { name($e) } {"
-				+ "		            v:getAttr($e),"
-				+ "		            v:getText($e),"
-				+ "		            for $child in $e/*"
-				+ "		            return v:snapshot($child, $v)" 
-				+ "		    }"
-				+ "		    else" + "		        ()" 
-				+ "		};"
-				+ "		v:snapshot(doc('/db/repo/a.txt')/v:file/*[*], 'NOW')";
-
-		System.out.println(query);
-		return runQuery(query);
-
+	public static String getHeadFile(String fileUrl) throws XQException {
+		return checkout("NOW", fileUrl);
 	}
 
 	private String[] getFilesFromExist(String url) {
@@ -545,6 +457,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	private void updateFilelist(String url) {
 		URL webUrl;
 		try {
+			//TODO: Externalize string to the application.conf file
 			System.out.println("http://localhost:8080/exist/rest/" + url);
 			webUrl = new URL("http://localhost:8080/exist/rest/" + url);
 
@@ -617,10 +530,110 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		return logs;
 	}
 
+	/**
+	 * Checkout the repository on a specific revision
+	 * 
+	 *  TODO: Implement the search of all files in the repository
+	 * @param revision
+	 */
 	@Override
 	public RepositoryRevision checkout(String revision) {
-		// TODO Auto-generated method stub
-		return null;
+		String fileUrl = "a.xml";
+		String fileContent = "";
+		try {
+			fileContent = checkout(revision, fileUrl);
+		} catch (XQException e) {
+			e.printStackTrace();
+		}
+
+		RepositoryRevision rr = new RepositoryRevision();
+		rr.addRepositoryFile(new RepositoryFile(fileUrl, fileContent));
+		return rr;
 	}
 
+	/**
+	 * Checkout a specific revision of a file
+	 * @param revision
+	 * @param fileUrl relative to {@link COLLECTION_PATH} (ex.: a.xml)
+	 * @return String with the file contents
+	 * @throws XQException
+	 */
+	public static String checkout(String revision, String fileUrl)
+			throws XQException {
+		String query = "xquery version '3.0';"
+				+ "declare namespace v = 'http://www.repos.se/namespace/v';"
+				+ "declare function v:beforeEnd($e, $v)"
+				+ "{"
+				+ "    if (($e/@v:end) castable as xs:int) then"
+				+ "        (($e/@v:end) > ($v))"
+				+ "    else if (string($e/@v:end) = 'NOW') then"
+				+ "        xs:boolean('1')"
+				+ "    else"
+				+ "        xs:boolean('0')"
+				+ "};"
+				+ ""
+				+ "declare function v:getText($e, $v)"
+				+ "{"
+				+ "    for $a in $e/v:text"
+				+ "    return"
+				+ "        if ((($a/@v:start) <= ($v)) and (v:beforeEnd($a, $v))) then"
+				+ "            $a/text()"
+				+ "        else"
+				+ "            ()"
+				+ "};"
+				+ ""
+				+ "declare function v:getAttr($e, $v)"
+				+ "{"
+				+ "    for $a in $e/v:attr"
+				+ "    return"
+				+ "        if ((($a/@v:start) <= ($v)) and (v:beforeEnd($a, $v))) then"
+				+ "            attribute { string($a/@v:name) } { $a }"
+				+ "        else"
+				+ "            ()"
+				+ "};"
+				+ ""
+				+ "declare function v:checkout($e, $v)"
+				+ "{"
+				+ "    if ((($e/@v:start) <= ($v)) and (v:beforeEnd($e, $v)) and name($e) != 'v:text' and name($e) != 'v:attr') then"
+				+ "        element { name($e) } {"
+				+ "            v:getAttr($e, $v),"
+				+ "            v:getText($e, $v),"
+				+ "            for $child in $e/*"
+				+ "            return v:checkout($child, $v)" 
+				+ "        }"
+				+ "    else" 
+				+ "        ()" 
+				+ "};" 
+				+ ""
+				+ "v:checkout(doc('"+COLLECTION_PATH+fileUrl+"')/v:file/*[*], '"+revision+"')" + "";
+		return runQuery(query);
+	}
 }
+
+/*
+ * public void tryXSLT() { String xsltResource =
+ * "<?xml version='1.0' encoding='UTF-8'?>\n" +
+ * "<xsl:stylesheet version='2.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>\n"
+ * + " <xsl:output method='xml' indent='no'/>\n" +
+ * " <xsl:template match='/'>\n" +
+ * " <reRoot><reNode><xsl:value-of select='/root/nodee/@val' /> world</reNode></reRoot>\n"
+ * + " </xsl:template>\n" + "</xsl:stylesheet>"; String xmlSourceResource =
+ * "<?xml version='1.0' encoding='UTF-8'?>\n" +
+ * "<root><node val='hello aa '/><nodee id='hje' val='not hello'/></root>";
+ * 
+ * StringWriter xmlResultResource = new StringWriter();
+ * 
+ * Transformer xmlTransformer; try { xmlTransformer =
+ * TransformerFactory.newInstance().newTransformer( new StreamSource(new
+ * StringReader(xsltResource)));
+ * 
+ * xmlTransformer.transform(new StreamSource(new StringReader(
+ * xmlSourceResource)), new StreamResult(xmlResultResource)); } catch
+ * (TransformerConfigurationException e) { // TODO Auto-generated catch
+ * block e.printStackTrace(); } catch (TransformerFactoryConfigurationError
+ * e) { // TODO Auto-generated catch block e.printStackTrace(); } catch
+ * (TransformerException e) { // TODO Auto-generated catch block
+ * e.printStackTrace(); }
+ * 
+ * System.out.println(xmlResultResource.getBuffer().toString()); }
+ */
