@@ -246,6 +246,22 @@ public class Application extends Controller {
 			return internalServerError("Apparently the file doesn't exist.\n Exception result: " + e.getMessage());
 		}
 	}
+	
+	public static Result testXCheckoutRevision(String revision, String fileUrl){
+		try {
+			String result = XChroniclerHandler.checkout(revision, fileUrl);
+			if(result.isEmpty())
+				throw new Exception("Result was empty");
+			return ok(result);
+		} catch (XQException e) {
+			e.printStackTrace();
+			return internalServerError("The URL you sent was malformed perhaps\n Exception information: " + e.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return internalServerError("Apparently the file doesn't exist.\n Exception result: " + e.getMessage());
+		}
+		
+	}
 
 	public static Result checkPreFlight() {
 		// Need to add the correct domain in here!!
