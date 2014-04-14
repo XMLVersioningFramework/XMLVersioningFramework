@@ -18,9 +18,12 @@ public final class JSONConstants {
 	public static final String LAST_COMMIT = "lastCommit";
 	public static final String LAST_COMMIT_AUTHOR = "lastCommitAuthor";
 	public static final String LAST_COMMIT_MESSAGE = "lastCommitMessage";
+	public static final String COMMIT_FILE_URL = "commitFileUrl";
+	
 
 	public static final String USER = "user";
 	public static final String MESSAGE = "message";
+	
 
 	/**
 	 * TODO: IS this equal to {@link #FILE_CONTENT}? if so, unify here, in the
@@ -46,6 +49,7 @@ public final class JSONConstants {
 	public static final String ANSWER = "answer";
 	public static final String SUCCESS = "success";
 	public static final String FAIL = "fail";
+
 
 	// PRIVATE //
 

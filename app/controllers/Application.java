@@ -1,5 +1,12 @@
 package controllers;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.xquery.XQException;
@@ -126,19 +133,48 @@ public class Application extends Controller {
 		return ok(JSONConstants.FAIL);
 	}
 
+	
 	public static Result commit() {
 		/**
 		 * Fetch content
 		 */
 		
 		final Map<String, String[]> postInput = getPOSTData();
-
+		
+	
+		
 		String url = postInput.get(JSONConstants.URL)[0];
-		String content = postInput.get(JSONConstants.CONTENT)[0];
+		String content="";
+		if(postInput.get(JSONConstants.CONTENT)!=null){
+			content = postInput.get(JSONConstants.CONTENT)[0];
+		}
 		String message = postInput.get(JSONConstants.MESSAGE)[0];
 		String userId = postInput.get(JSONConstants.USER)[0];
 		String backendName = postInput.get(JSONConstants.BACKEND)[0];
-
+		
+		
+		if(postInput.get(JSONConstants.COMMIT_FILE_URL)!=null){
+			String fileurl= postInput.get(JSONConstants.COMMIT_FILE_URL)[0];
+			if(fileurl!=null){
+				String pathToTest="../TestFramework/public/userStories/";
+				System.out.println("try to get "+pathToTest+fileurl);
+				File file=new File(pathToTest+fileurl);
+				System.out.println(file.getAbsolutePath());
+				try {
+					
+					List<String> lines = Files.readAllLines(Paths.get(pathToTest+fileurl), Charset.defaultCharset());
+					content="";
+					for (String string : lines) {
+						content+=string;
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+		}
+		
 		/**
 		 * Pre-processes the POST contents
 		 */
@@ -171,6 +207,7 @@ public class Application extends Controller {
 
 		return ok(returnJson);
 	}
+	
 	
 	public static Result testVfile(){
 		XChroniclerHandler backend = (XChroniclerHandler) XChroniclerHandler.getInstance();
