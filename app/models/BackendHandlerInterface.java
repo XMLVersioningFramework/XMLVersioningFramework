@@ -25,7 +25,7 @@ public abstract class BackendHandlerInterface {
 	
 	public abstract Logs getLog();
 	
-	public abstract RepositoryRevision checkOut();
+	public abstract RepositoryRevision checkout(String revision);
 
 	public abstract ArrayList<RepositoryFile> getWorkingDirFiles();
 

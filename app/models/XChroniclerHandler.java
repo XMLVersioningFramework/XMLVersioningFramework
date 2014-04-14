@@ -618,7 +618,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	}
 
 	@Override
-	public RepositoryRevision checkOut() {
+	public RepositoryRevision checkout(String revision) {
 		// TODO Auto-generated method stub
 		return null;
 	}

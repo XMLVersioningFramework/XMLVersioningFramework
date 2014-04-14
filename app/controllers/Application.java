@@ -105,6 +105,23 @@ public class Application extends Controller {
 	 * 
 	 * @return
 	 */
+	public static Result getRevision() {
+		final Map<String, String[]> postInput = getPOSTData();
+		BackendHandlerInterface backend = getBackend(postInput
+				.get(JSONConstants.BACKEND)[0]);
+
+		response().setHeader("Access-Control-Allow-Origin", "*");
+		return ok(backend.getRepositoryHEAD().toJSON());
+	}
+	
+	
+	
+	
+	/**
+	 * Uses HTTP/POST
+	 * 
+	 * @return
+	 */
 	public static Result getLog() {
 		final Map<String, String[]> postInput = getPOSTData();
 		BackendHandlerInterface backend = getBackend(postInput

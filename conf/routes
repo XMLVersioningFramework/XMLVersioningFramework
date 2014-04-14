@@ -14,6 +14,12 @@ GET     /getLog	    						controllers.Application.getLog()
 POST    /getLog                 			controllers.Application.getLog()
 OPTIONS /getLog								controllers.Application.checkPreFlight()
 
+
+POST    /getRevision						controllers.Application.getRevision()
+OPTIONS /getLog								controllers.Application.checkPreFlight()
+
+
+
 GET     /removeRepository/:backendName  controllers.Application.removeRepository(backendName: String)
 
 POST    /commit                         controllers.Application.commit()
