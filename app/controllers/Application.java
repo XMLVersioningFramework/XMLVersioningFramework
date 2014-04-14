@@ -16,7 +16,10 @@ import models.GitHandler;
 import models.User;
 import models.UserHandler;
 import models.XChroniclerHandler;
+import play.libs.F.Function;
+import play.libs.F.Promise;
 import play.libs.Json;
+import play.libs.WS;
 //import play.mvc.BodyParser.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
@@ -155,11 +158,8 @@ public class Application extends Controller {
 	public static Result commit() {
 		/**
 		 * Fetch content
-		 */
-		
+		 */		
 		final Map<String, String[]> postInput = getPOSTData();
-		
-	
 		
 		String url = postInput.get(JSONConstants.URL)[0];
 		String content="";
@@ -169,8 +169,7 @@ public class Application extends Controller {
 		String message = postInput.get(JSONConstants.MESSAGE)[0];
 		String userId = postInput.get(JSONConstants.USER)[0];
 		String backendName = postInput.get(JSONConstants.BACKEND)[0];
-		
-		
+				
 		if(postInput.get(JSONConstants.COMMIT_FILE_URL)!=null){
 			String fileurl= postInput.get(JSONConstants.COMMIT_FILE_URL)[0];
 			if(fileurl!=null){
@@ -178,8 +177,7 @@ public class Application extends Controller {
 				System.out.println("try to get "+pathToTest+fileurl);
 				File file=new File(pathToTest+fileurl);
 				System.out.println(file.getAbsolutePath());
-				try {
-					
+				try {					
 					List<String> lines = Files.readAllLines(Paths.get(pathToTest+fileurl), Charset.defaultCharset());
 					content="";
 					for (String string : lines) {
@@ -189,7 +187,6 @@ public class Application extends Controller {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
 			}
 		}
 		
@@ -261,9 +258,8 @@ public class Application extends Controller {
 			e.printStackTrace();
 			return internalServerError("Apparently the file doesn't exist.\n Exception result: " + e.getMessage());
 		}
-		
 	}
-
+	
 	public static Result checkPreFlight() {
 		// Need to add the correct domain in here!!
 		response().setHeader("Access-Control-Allow-Origin", "*");
@@ -276,4 +272,5 @@ public class Application extends Controller {
 				"Origin, X-Requested-With, Content-Type, Accept");
 		return ok();
 	}
+	
 }

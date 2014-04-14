@@ -8,6 +8,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -122,28 +124,44 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		// build temp file
+		// build temp files
+		String oldFileContent = "";
+		try {
+			oldFileContent = getHeadFile(url);
+		} catch (XQException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		String oldFileUrl = url + ".old";
+		File oldFile = FileManager.createFile(oldFileContent, oldFileUrl,
+				XChroniclerHandler.REPOSITORY_URL);
 		File newFile = FileManager.createFile(content, url,
 				XChroniclerHandler.REPOSITORY_URL);
 
 		String vFileContent = "empty";
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
 
 		// If previous version existing in the database
 		// Fetches from the database the latest version of the xml
 		try {
-			if (exists(XChroniclerHandler.COLLECTION_PATH + url)) {
+			if (exists(url)) {
 				System.out.println("**********the file exists");
 				// Updates the vfile
-				String oldFileContent = getHeadFile(XChroniclerHandler.COLLECTION_PATH
-						+ url);
-				String oldFileUrl = url + ".old";
-				File oldFile = FileManager.createFile(oldFileContent,
-						oldFileUrl, XChroniclerHandler.REPOSITORY_URL);
-				vFileContent = generateVFile(oldFile, newFile);
+				String oldVFileContent = getVFile(url);
+				String oldVFileUrl = url + ".vold";
+				File indexFile = FileManager.createFile(oldVFileContent,
+						oldVFileUrl, XChroniclerHandler.REPOSITORY_URL);
+				VFile oldVFile = parseVFile(indexFile);
+				vFileContent = updateVFile(oldVFile, oldFile, newFile);
 			} else {
 				System.out.println("**********the file doesnt exist");
 				// creates the vfile
-				vFileContent = generateVFile(newFile);
+				try {
+					printDocument(generateVFile(newFile).toDocument(), output);
+				} catch (IOException | TransformerException e) {
+					e.printStackTrace();
+				}
+				vFileContent = output.toString();
 			}
 		} catch (XQException e) {
 			// TODO Auto-generated catch block
@@ -168,8 +186,9 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	public String generateVFileSimpleTest() {
 		String originalPath = BASE_URL + "input/basic/basic_1.xml";
 		String alteredPath = BASE_URL + "input/basic/basic_2.xml";
+		VFile vFile = generateVFile(new File(originalPath));
 
-		return generateVFile(originalPath, alteredPath);
+		return updateVFile(vFile, originalPath, alteredPath);
 	}
 
 	/**
@@ -178,9 +197,10 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	 * Essentially it initializes the versioning for that file
 	 * 
 	 * @param initial
+	 *            document
 	 * @return
 	 */
-	public String generateVFile(File initial) {
+	public VFile generateVFile(File initial) {
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		Document originalDocument;
 		try {
@@ -192,63 +212,82 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 			VFile vFile = VFile.normalizeDocument(originalDocument,
 					originalTime, originalVersion);
 			printDocument(vFile.toDocument(), output);
+			System.out.println("generateVFile output: " + output.toString());
+			return vFile;
 		} catch (TransformerException | SAXException | IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return null;
 		}
-		return output.toString();
 	}
 
 	/**
-	 * Generates V-File based on two different filePaths
+	 * parses an existent vFile
+	 * 
+	 * @param indexFile
+	 * @return
+	 */
+	public VFile parseVFile(File indexFile) {
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		try {
+			Document indexDocument = docBuilder.parse(indexFile);
+			VFile vFile = new VFile(indexDocument);
+			printDocument(vFile.toDocument(), output);
+			System.out.println("parseVFile output: " + output.toString());
+			return vFile;
+		} catch (SAXException | IOException | TransformerException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * updates V-File based on two different filePaths
 	 * 
 	 * @param originalPath
 	 * @param alteredPath
 	 * @return
 	 */
-	public String generateVFile(String originalPath, String alteredPath) {
-		return generateVFile(new File(originalPath), new File(alteredPath));
+	public String updateVFile(VFile vFile, String originalPath,
+			String alteredPath) {
+		return updateVFile(vFile, new File(originalPath), new File(alteredPath));
 	}
 
 	/**
-	 * Generates V-File based on two different files
+	 * updates V-File based on two different files
 	 * 
+	 * @param vFile
 	 * @param original
 	 * @param altered
 	 * @return
 	 */
-	public String generateVFile(File original, File altered) {
+	public String updateVFile(VFile vFile, File original, File altered) {
 		ArrayList<File> files = new ArrayList<File>();
 		files.add(original);
 		files.add(altered);
 
-		return generateVFileFromArray(files);
+		return updateVFileFromArray(vFile, files);
 	}
 
 	/**
-	 * Generates V-file based on an array of files
+	 * updates V-file based on an array of files
 	 * 
+	 * @param vFile
 	 * @param files
 	 *            the list with the files
 	 * @return the v-file as a string
 	 */
-	public String generateVFileFromArray(List<File> files) {
+	public String updateVFileFromArray(VFile vFile, List<File> files) {
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		Document lastIndexDoc = null;
-		System.out.println("Generating V-file...");
+		System.out.println("updating V-file...");
 		try {
-			Document initialDocument = docBuilder.parse(files.get(0));
-			String originalTime = "" + System.nanoTime();
-			String originalVersion = "1";
-			VFile vFile = VFile.normalizeDocument(initialDocument,
-					originalTime, originalVersion);
 			for (int i = 0; i < files.size() - 1; i++) {
 				System.out.println("parsing file number:" + i);
 				File originalFile = files.get(i);
 				File alteredFile = files.get(i + 1);
 
 				String newTime = "" + System.nanoTime();
-				String newVersion = "" + i;
+				String newVersion = "" + (i+1);
 
 				vFile.update(docBuilder.parse(originalFile),
 						docBuilder.parse(alteredFile), newTime, newVersion);
@@ -343,6 +382,26 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		}
 		return repo;
 
+	}
+
+	/**
+	 * returns the file requested from the database as a string
+	 * 
+	 * @param fileUrl
+	 * @return
+	 */
+	public String getVFile(String fileUrl) {
+		fileUrl = COLLECTION_PATH + fileUrl;
+
+		String query = "xquery version '3.0';"
+				+ "declare namespace v='http://www.repos.se/namespace/v';"
+				+ "doc('" + fileUrl + "')/*";
+		try {
+			return runQuery(query);
+		} catch (XQException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	/**
@@ -456,7 +515,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	private void updateFilelist(String url) {
 		URL webUrl;
 		try {
-			//TODO: Externalize string to the application.conf file
+			// TODO: Externalize string to the application.conf file
 			System.out.println("http://localhost:8080/exist/rest/" + url);
 			webUrl = new URL("http://localhost:8080/exist/rest/" + url);
 
@@ -477,6 +536,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	}
 
 	private static String runQuery(String query) throws XQException {
+		System.out.println("runQuery: \n\t" + query);
 		XQDataSource xqs = new ExistXQDataSource();
 		String returnString = "";
 		xqs.setProperty("serverName", "localhost");
@@ -492,6 +552,8 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 			returnString += rs.getItemAsString(null).replace("xmlns=\"\"", "")
 					+ "\n";
 		}
+
+		System.out.println("Query result: \n\t" + returnString);
 
 		return returnString;
 
@@ -532,7 +594,8 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	/**
 	 * Checkout the repository on a specific revision
 	 * 
-	 *  TODO: Implement the search of all files in the repository
+	 * TODO: Implement the search of all files in the repository
+	 * 
 	 * @param revision
 	 */
 	@Override
@@ -552,8 +615,10 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 
 	/**
 	 * Checkout a specific revision of a file
+	 * 
 	 * @param revision
-	 * @param fileUrl relative to {@link COLLECTION_PATH} (ex.: a.xml)
+	 * @param fileUrl
+	 *            relative to {@link COLLECTION_PATH} (ex.: a.xml)
 	 * @return String with the file contents
 	 * @throws XQException
 	 */
@@ -598,13 +663,10 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 				+ "            v:getAttr($e, $v),"
 				+ "            v:getText($e, $v),"
 				+ "            for $child in $e/*"
-				+ "            return v:checkout($child, $v)" 
-				+ "        }"
-				+ "    else" 
-				+ "        ()" 
-				+ "};" 
-				+ ""
-				+ "v:checkout(doc('"+COLLECTION_PATH+fileUrl+"')/v:file/*[*], '"+revision+"')" + "";
+				+ "            return v:checkout($child, $v)" + "        }"
+				+ "    else" + "        ()" + "};" + "" + "v:checkout(doc('"
+				+ COLLECTION_PATH + fileUrl + "')/v:file/*[*], '" + revision
+				+ "')" + "";
 		return runQuery(query);
 	}
 }
@@ -613,8 +675,8 @@ public class XChroniclerHandler extends BackendHandlerInterface {
  * public void tryXSLT() { String xsltResource =
  * "<?xml version='1.0' encoding='UTF-8'?>\n" +
  * "<xsl:stylesheet version='2.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>\n"
- * + " <xsl:output method='xml' indent='no'/>\n" +
- * " <xsl:template match='/'>\n" +
+ * + " <xsl:output method='xml' indent='no'/>\n" + " <xsl:template match='/'>\n"
+ * +
  * " <reRoot><reNode><xsl:value-of select='/root/nodee/@val' /> world</reNode></reRoot>\n"
  * + " </xsl:template>\n" + "</xsl:stylesheet>"; String xmlSourceResource =
  * "<?xml version='1.0' encoding='UTF-8'?>\n" +
@@ -628,9 +690,9 @@ public class XChroniclerHandler extends BackendHandlerInterface {
  * 
  * xmlTransformer.transform(new StreamSource(new StringReader(
  * xmlSourceResource)), new StreamResult(xmlResultResource)); } catch
- * (TransformerConfigurationException e) { // TODO Auto-generated catch
- * block e.printStackTrace(); } catch (TransformerFactoryConfigurationError
- * e) { // TODO Auto-generated catch block e.printStackTrace(); } catch
+ * (TransformerConfigurationException e) { // TODO Auto-generated catch block
+ * e.printStackTrace(); } catch (TransformerFactoryConfigurationError e) { //
+ * TODO Auto-generated catch block e.printStackTrace(); } catch
  * (TransformerException e) { // TODO Auto-generated catch block
  * e.printStackTrace(); }
  * 
