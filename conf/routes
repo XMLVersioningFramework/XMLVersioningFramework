@@ -16,7 +16,7 @@ OPTIONS /getLog								controllers.Application.checkPreFlight()
 
 
 POST    /getRevision						controllers.Application.getRevision()
-OPTIONS /getLog								controllers.Application.checkPreFlight()
+OPTIONS /getRevision								controllers.Application.checkPreFlight()
 
 
 
