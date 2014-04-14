@@ -58,7 +58,6 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	protected static String DBURI = "xmldb:exist://localhost:8080/exist/xmlrpc";
 	protected static String COLLECTION_PATH = Play.application()
 			.configuration().getString("eXist.dbPath");
-	protected static String resourceName = "movies.xml";
 
 	protected static final String DB_USER = Play.application().configuration()
 			.getString("eXist.user");
