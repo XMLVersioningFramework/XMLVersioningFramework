@@ -281,13 +281,15 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		Document lastIndexDoc = null;
 		System.out.println("updating V-file...");
 		try {
+			String version = vFile.getDocumentVersion();
+			System.out.println("version:" + version);
 			for (int i = 0; i < files.size() - 1; i++) {
 				System.out.println("parsing file number:" + i);
 				File originalFile = files.get(i);
 				File alteredFile = files.get(i + 1);
 
 				String newTime = "" + System.nanoTime();
-				String newVersion = "" + (i+1);
+				String newVersion = "" + (Integer.parseInt(version)+1);
 
 				vFile.update(docBuilder.parse(originalFile),
 						docBuilder.parse(alteredFile), newTime, newVersion);
