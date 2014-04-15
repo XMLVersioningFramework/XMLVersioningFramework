@@ -2,7 +2,6 @@ package controllers;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -11,22 +10,22 @@ import java.util.Map;
 
 import javax.xml.xquery.XQException;
 
+import org.brackit.xquery.QueryException;
+
 import models.BackendHandlerInterface;
 import models.GitHandler;
 import models.User;
 import models.UserHandler;
 import models.XChroniclerHandler;
-import play.libs.F.Function;
-import play.libs.F.Promise;
+import models.XQueryUsage;
 import play.libs.Json;
-import play.libs.WS;
 //import play.mvc.BodyParser.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import utils.JSONConstants;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 
 public class Application extends Controller {
 
@@ -272,5 +271,16 @@ public class Application extends Controller {
 				"Origin, X-Requested-With, Content-Type, Accept");
 		return ok();
 	}
-	
+	public static Result testSirix(){
+		try {
+			XQueryUsage.loadDocumentAndQueryTemporal();
+		} catch (QueryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ok();
+	}
 }
