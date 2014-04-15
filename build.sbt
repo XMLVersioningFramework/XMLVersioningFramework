@@ -24,9 +24,12 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += javaEbean
 
+resolvers += "Oracle Maven Repository" at "http://download.oracle.com/maven/"
+
 resolvers += "sirixDb" at "https://oss.sonatype.org/content/repositories/snapshots/"
 
 resolvers += "Repos Open Repository" at "http://reposserver.sourceforge.net/maven/"
+
 
 
 
