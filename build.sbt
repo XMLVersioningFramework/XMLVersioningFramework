@@ -15,11 +15,19 @@ libraryDependencies ++= Seq(
 	"se.simonsoft" % "cms-backend-svnkit" % "0.9-SNAPSHOT", 
 	"se.simonsoft" % "cms-testing" % "0.9-SNAPSHOT",
 	"xmlunit" % "xmlunit" % "1.5",
-    "javax" % "javaee-api" % "7.0"
+    "javax" % "javaee-api" % "7.0",
+    "com.github.sirixdb.sirix" % "sirix-core" % "0.1.2-SNAPSHOT",
+    "com.github.sirixdb.sirix" % "sirix-example" % "0.1.2-SNAPSHOT",
+    "com.github.sirixdb.sirix" % "sirix-xquery" % "0.1.2-SNAPSHOT"  
 	)
+
 
 libraryDependencies += javaEbean
 
+resolvers += "sirixDb" at "https://oss.sonatype.org/content/repositories/snapshots/"
+
 resolvers += "Repos Open Repository" at "http://reposserver.sourceforge.net/maven/"
+
+
 
 playJavaSettings
