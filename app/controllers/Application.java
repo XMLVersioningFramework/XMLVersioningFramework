@@ -41,7 +41,7 @@ public class Application extends Controller {
 		} else if (backendName.equals(BackendHandlerInterface.XCHRONICLER)) {
 			return XChroniclerHandler.getInstance();
 		} else if (backendName.equals(BackendHandlerInterface.SIRIX)) {
-			return XChroniclerHandler.getInstance();
+			return SirixHandler.getInstance();
 		} else {
 			throw new UnsupportedOperationException();
 		}
