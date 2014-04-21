@@ -11,9 +11,11 @@ import java.util.Map;
 import javax.xml.xquery.XQException;
 
 import org.brackit.xquery.QueryException;
+import org.sirix.exception.SirixException;
 
 import models.BackendHandlerInterface;
 import models.GitHandler;
+import models.SirixHandler;
 import models.User;
 import models.UserHandler;
 import models.XChroniclerHandler;
@@ -37,6 +39,8 @@ public class Application extends Controller {
 		if (backendName.equals(BackendHandlerInterface.GIT)) {
 			return GitHandler.getInstance();
 		} else if (backendName.equals(BackendHandlerInterface.XCHRONICLER)) {
+			return XChroniclerHandler.getInstance();
+		} else if (backendName.equals(BackendHandlerInterface.SIRIX)) {
 			return XChroniclerHandler.getInstance();
 		} else {
 			throw new UnsupportedOperationException();
@@ -272,15 +276,23 @@ public class Application extends Controller {
 		return ok();
 	}
 	public static Result testSirix(){
-		try {
-			XQueryUsage.loadDocumentAndQueryTemporal();
+		SirixHandler.printAllVersions();
+		/*try {
+			
+			//XQueryUsage.loadDocumentAndQuery();
+			 //System.out.println();
+			// XQueryUsage.loadDocumentAndUpdate();
+			 //System.out.println();
+			// XQueryUsage.loadCollectionAndQuery();
+			// System.out.println();
+			// XQueryUsage.loadDocumentAndQueryTemporal();
 		} catch (QueryException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		} */
 		return ok();
 	}
 }
