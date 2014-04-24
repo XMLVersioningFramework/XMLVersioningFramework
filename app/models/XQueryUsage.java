@@ -13,9 +13,9 @@ import org.brackit.xquery.QueryContext;
 import org.brackit.xquery.QueryException;
 import org.brackit.xquery.Tuple;
 import org.brackit.xquery.XQuery;
+import org.brackit.xquery.compiler.CompileChain;
 import org.brackit.xquery.sequence.SortedNodeSequence;
 import org.brackit.xquery.util.path.Path;
-import org.brackit.xquery.xdm.DocumentException;
 import org.brackit.xquery.xdm.Item;
 import org.brackit.xquery.xdm.Iter;
 import org.brackit.xquery.xdm.Node;
@@ -27,6 +27,7 @@ import org.sirix.index.IndexDef;
 import org.sirix.xquery.SirixCompileChain;
 import org.sirix.xquery.node.DBNode;
 import org.sirix.xquery.node.DBStore;
+import org.sirix.api.NodeWriteTrx;
 
 import com.google.common.base.Optional;
 
@@ -38,7 +39,7 @@ import com.google.common.base.Optional;
  * @author Sebastian Bächle
  * 
  */
-public class XQueryUsage {
+public final class XQueryUsage {
 
 	/** User home directory. */
 	private static final String USER_HOME = System.getProperty("user.home");
@@ -78,12 +79,12 @@ public class XQueryUsage {
 	/**
 	 * Load a document and query it.
 	 */
-	public static void loadDocumentAndQuery() throws QueryException,
+	private static void loadDocumentAndQuery() throws QueryException,
 			IOException, SirixException {
-	/*	final File doc = new File(new StringBuilder("src").append(File.separator)
+		final File doc = new File(new StringBuilder("src").append(File.separator)
 				.append("main").append(File.separator).append("resources")
-				.append(File.separator).append("test.xml").toString());*/
-		final File doc = new File(new StringBuilder("backends").append(File.separator).append("sirix").append(File.separator).append("test.xml").toString());
+				.append(File.separator).append("test.xml").toString());
+
 		// Initialize query context and store.
 		final DBStore store = DBStore.newBuilder().build();
 		QueryContext ctx = new QueryContext(store);
@@ -116,7 +117,7 @@ public class XQueryUsage {
 	/**
 	 * Load a document and update it.
 	 */
-	public static void loadDocumentAndUpdate() throws QueryException,
+	private static void loadDocumentAndUpdate() throws QueryException,
 			IOException {
 		// Prepare sample document.
 		final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
@@ -124,13 +125,13 @@ public class XQueryUsage {
 		doc.deleteOnExit();
 
 		// Initialize query context and store.
-		try (final DBStore store = DBStore.newBuilder().isUpdatable().build()) {
+		try (final DBStore store = DBStore.newBuilder().build()) {
 			final QueryContext ctx = new QueryContext(store);
 
 			// Use XQuery to load sample document into store.
 			System.out.println("Loading document:");
 			URI docUri = doc.toURI();
-			final String xq1 = String.format("bit:load('mydoc.xml', '%s')",
+			final String xq1 = String.format("sdb:load('mycol.xml', 'mydoc.xml', '%s')",
 					docUri.toString());
 			System.out.println(xq1);
 			new XQuery(xq1).evaluate(ctx);
@@ -139,7 +140,7 @@ public class XQueryUsage {
 			final QueryContext ctx2 = new QueryContext(store);
 			System.out.println();
 			System.out.println("Query loaded document:");
-			final String xq2 = "insert nodes <a><b/></a> into doc('mydoc.xml')/log";
+			final String xq2 = "insert nodes <a><b/></a> into sdb:doc('mydoc.xml')/log";
 			System.out.println(xq2);
 			new XQuery(xq2).execute(ctx2);
 			store.commitAll();
@@ -150,7 +151,7 @@ public class XQueryUsage {
 	/**
 	 * Load a collection and query it.
 	 */
-	public static void loadCollectionAndQuery() throws QueryException,
+	private static void loadCollectionAndQuery() throws QueryException,
 			IOException {
 		// Prepare directory with sample documents.
 		final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
@@ -160,9 +161,9 @@ public class XQueryUsage {
 			throw new IOException("Directory " + dir + " already exists");
 		}
 		dir.deleteOnExit();
-		//for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 10; i++) {
 			generateSampleDoc(dir, "sample");
-	//	}
+		}
 
 		// Initialize query context and store.
 		try (final DBStore store = DBStore.newBuilder().build()) {
@@ -198,253 +199,214 @@ public class XQueryUsage {
 			new XQuery(xq3).evaluate(ctx);
 		}
 	}
-	public  static  void init(){
-		// Prepare sample document.
-		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-		System.out.println("saving temp in :"+tmpDir.getAbsolutePath());
-		// Initialize query context and store.
-		try (final DBStore store = DBStore.newBuilder().isUpdatable().build()) {
-			final QueryContext ctx = new QueryContext(store);
-	
-			File doc1 = generateSampleDoc(tmpDir, "sample1");
-			doc1.deleteOnExit();
-	
-			// Use XQuery to load sample document into store.
-			System.out.println("Loading document:");
-			URI doc1Uri = doc1.toURI();
-			final String xq1 = String.format("bit:load('mydocs.col', '%s')",
-					doc1Uri.toString());
-			System.out.println(xq1);
-			new XQuery(xq1).evaluate(ctx);
-		} catch (DocumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (QueryException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+
 	/**
 	 * Load a document and query it (temporal enhancements).
 	 */
 	public static void loadDocumentAndQueryTemporal() throws QueryException,
-			IOException {
+			IOException, SirixException {
 		// Prepare sample document.
-		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-		System.out.println("saving temp in :"+tmpDir.getAbsolutePath());
-		// Initialize query context and store.
-		
-		
-		init();
-		
-		
-		commit( " <a><b/>version 1<c/>-------<d>+++++++</d></a>");
-		commit( " <a><b/>version 2<c/>-----<d>++++</d></a>");
-		
-		commit( " <a><b/>version 3<c/>-----<d>+++asd+</d></a>");
-		commit("<a><b/>version 4<c/>-----<d>+++asd+</d></a>");
-		
+		final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 
-		
-		
+		// Initialize query context and store.
+		try (final DBStore store = DBStore.newBuilder().build()) {
+			final QueryContext ctx = new QueryContext(store);
+			final CompileChain compileChain = new SirixCompileChain(store);
+
+			final File doc1 = generateSampleDoc(tmpDir, "sample1");
+			doc1.deleteOnExit();
+			
+			final URI docUri = doc1.toURI();
+
+			// Use XQuery to load sample document into store.
+			System.out.println("Loading document:");
+			final String xq1 = String.format("sdb:load('mydocs.col', 'resource1', '%s')",
+					docUri.toString());
+			System.out.println(xq1);
+			new XQuery(compileChain, xq1).evaluate(ctx);
+
+			// Reuse store and insert into loaded document with a subsequent explicit commit.
+			final QueryContext ctx2 = new QueryContext(store);
+			System.out.println();
+			System.out.println("Insert into loaded document:");
+			final String xq2 = "insert nodes <a><b/>test<c/>55<d>22</d></a> into sdb:doc('mydocs.col', 'resource1', (), fn:boolean(1))/log";
+			System.out.println(xq2);
+			final XQuery q1 = new XQuery(compileChain, xq2);
+			q1.execute(ctx2);
+			System.out.println("Commit changes:");
+			final String xq3 = "sdb:commit(sdb:doc('mydocs.col', 'resource1', (), fn:boolean(1)))";
+			final XQuery q2 = new XQuery(compileChain, xq3);
+			q2.execute(ctx2);
+			System.out.println();
+		}
+
 		// Create and commit CAS indexes on all attribute- and text-nodes.
-//		try (final DBStore store = DBStore.newBuilder().isUpdatable().build()) {
-//			final QueryContext ctx3 = new QueryContext(store);
-//			System.out.println();
-//			System.out.println("Create a cas index for all attributes and another one for text-nodes. A third one is created for all integers:");
-//			final XQuery q = new XQuery(
-//					new SirixCompileChain(store),
-//					"let $doc := sdb:doc('mydocs.col', 'resource1') "
-//							+ "let $casStats1 := sdb:create-cas-index($doc, 'xs:string', '//@*') "
-//							+ "let $casStats2 := sdb:create-cas-index($doc, 'xs:string', '//*') "
-//						//	+ "let $casStats3 := sdb:create-cas-index($doc, 'xs:integer', '//*') "
-//							+ "return <rev>{sdb:commit($doc)}</rev>");
-//			q.serialize(ctx3, System.out);
-//			System.out.println();
-//			System.out.println("CAS index creation done.");
-//		}
-//
-//		// Create and commit path index on all elements.
-//		try (final DBStore store = DBStore.newBuilder().isUpdatable().build()) {
-//			final QueryContext ctx3 = new QueryContext(store);
-//			System.out.println();
-//			System.out.println("Create path index for all elements (all paths):");
-//			final XQuery q = new XQuery(new SirixCompileChain(store),
-//					"let $doc := sdb:doc('mydocs.col', 'resource1') "
-//							+ "let $stats := sdb:create-path-index($doc, '//*') "
-//							+ "return <rev>{sdb:commit($doc)}</rev>");
-//			q.serialize(ctx3, System.out);
-//			System.out.println();
-//			System.out.println("Path index creation done.");
-//		}
-//
-//		// Create and commit name index on all elements with QName 'src' or 'msg'.
-//		try (final DBStore store = DBStore.newBuilder().isUpdatable().build()) {
-//			final QueryContext ctx3 = new QueryContext(store);
-//			System.out.println();
-//			System.out
-//					.println("Create name index for all elements with name 'src' or 'msg':");
-//			final XQuery q = new XQuery(
-//					new SirixCompileChain(store),
-//					"let $doc := sdb:doc('mydocs.col', 'resource1') "
-//							+ "let $stats := sdb:create-name-index($doc, fn:QName((), 'src')) "
-//							+ "return <rev>{sdb:commit($doc)}</rev>");
-//			q.serialize(ctx3, System.out);
-//			System.out.println();
-//			System.out.println("Name index creation done.");
-//		
-//		}
-//
-//		// Query CAS index.
-//		try (final DBStore store = DBStore.newBuilder().build()) {
-//			System.out.println("");
-//			System.out.println("Find CAS index for all attribute values.");
-//			final QueryContext ctx3 = new QueryContext(store);
-//			final String query = "let $doc := sdb:doc('mydocs.col', 'resource1') "
-//					+ "return sdb:scan-cas-index($doc, sdb:find-cas-index($doc, 'xs:string', '//@*'), "
-//					+ "'bar', true(), 0, ())";
-//			XQuery xQuery= new XQuery(new SirixCompileChain(store), query);
-//			final Sequence seq = xQuery.execute(ctx3);
-//			System.out.println("prettyPrint");
-//			
-//			//seq.serialize(ctx3, System.out);
-//			System.out.println("seq ");
-//			System.out.println(seq.toString());
-//			System.out.println("for loop:");
-//			/*for (Sequence s : 	seq.array()) {
-//				System.out.println(s.toString());
-//			}
-//			
-//			 final Iter iter = seq.iterate();
-//			 for (Item item = iter.next(); item != null; item = iter.next()) {
-//				 System.out.println(item);
-//			 }*/
-//			final Comparator<Tuple> comparator = new Comparator<Tuple>() {
-//				@Override
-//				public int compare(Tuple o1, Tuple o2) {
-//					return ((Node<?>) o1).cmp((Node<?>) o2);
-//				}
-//			};
-//			final Sequence sortedSeq = new SortedNodeSequence(comparator, seq, true);
-//			final Iter sortedIter = sortedSeq.iterate();
-//
-//			System.out.println("Sorted index entries in document order: ");
-//			/*for (Item item = sortedIter.next(); item != null; item = sortedIter
-//					.next()) {
-//				System.out.println(item);
-//			}*/
-//			System.out.println("after printout");
-//		}
-//
-//		// Query CAS index.
-//		try (final DBStore store = DBStore.newBuilder().build()) {
-//			System.out.println("");
-//			System.out
-//					.println("Find CAS index for all text values which are integers between 10 and 100.");
-//			final QueryContext ctx3 = new QueryContext(store);
-//			final String query = "let $doc := sdb:doc('mydocs.col', 'resource1') return sdb:scan-cas-index-range($doc, sdb:find-cas-index($doc, 'xs:integer', '//*'), 10, 100, true(), true(), ())";
-//			final Sequence seq = new XQuery(new SirixCompileChain(store), query)
-//					.execute(ctx3);
-//			// final Iter iter = seq.iterate();
-//			// for (Item item = iter.next(); item != null; item = iter.next()) {
-//			// System.out.println(item);
-//			// }
-//			final Comparator<Tuple> comparator = new Comparator<Tuple>() {
-//				@Override
-//				public int compare(Tuple o1, Tuple o2) {
-//					return ((Node<?>) o1).cmp((Node<?>) o2);
-//				}
-//			};
-//			final Sequence sortedSeq = new SortedNodeSequence(comparator, seq, true);
-//			final Iter sortedIter = sortedSeq.iterate();
-//
-//			System.out.println("Sorted index entries in document order: ");
-//			for (Item item = sortedIter.next(); item != null; item = sortedIter
-//					.next()) {
-//				System.out.println(item);
-//			}
-//		}
-//
-//		// Query path index which are children of the log-element (only elements).
-//		try (final DBStore store = DBStore.newBuilder().build()) {
-//			System.out.println("");
-//			System.out
-//					.println("Find path index for all elements which are children of the log-element (only elements).");
-//			final QueryContext ctx3 = new QueryContext(store);
-//			final DBNode node = (DBNode) new XQuery(new SirixCompileChain(store),
-//					"doc('mydocs.col')").execute(ctx3);
-//			final Optional<IndexDef> index = node.getTrx().getSession()
-//					.getRtxIndexController(node.getTrx().getRevisionNumber())
-//					.getIndexes().findPathIndex(Path.parse("//log/*"));
-//			System.out.println(index);
-//			// last param '()' queries whole index.
-//			final String query = "let $doc := sdb:doc('mydocs.col', 'resource1') "
-//					+ "return sdb:scan-path-index($doc, " + index.get().getID()
-//					+ ", '//log/*')";
-//			final Sequence seq = new XQuery(new SirixCompileChain(store), query)
-//					.execute(ctx3);
-//			final Comparator<Tuple> comparator = new Comparator<Tuple>() {
-//				@Override
-//				public int compare(Tuple o1, Tuple o2) {
-//					return ((Node<?>) o1).cmp((Node<?>) o2);
-//				}
-//			};
-//			final Sequence sortedSeq = new SortedNodeSequence(comparator, seq, true);
-//			final Iter sortedIter = sortedSeq.iterate();
-//
-//			System.out.println("Sorted index entries in document order: ");
-//			for (Item item = sortedIter.next(); item != null; item = sortedIter
-//					.next()) {
-//				System.out.println(item);
-//			}
-//		}
-//
-//		// Query name index.
-//		try (final DBStore store = DBStore.newBuilder().build()) {
-//			System.out.println("");
-//			System.out.println("Find name index.");
-//			final QueryContext ctx3 = new QueryContext(store);
-//			final String query = "let $doc := sdb:doc('mydocs.col', 'resource1') return sdb:scan-name-index($doc, sdb:find-name-index($doc, fn:QName((), 'src')), fn:QName((), 'src'))";
-//			final Sequence seq = new XQuery(new SirixCompileChain(store), query)
-//					.execute(ctx3);
-//			final Comparator<Tuple> comparator = new Comparator<Tuple>() {
-//				@Override
-//				public int compare(Tuple o1, Tuple o2) {
-//					return ((Node<?>) o1).cmp((Node<?>) o2);
-//				}
-//			};
-//			final Sequence sortedSeq = new SortedNodeSequence(comparator, seq, true);
-//			final Iter sortedIter = sortedSeq.iterate();
-//
-//			System.out.println("Sorted index entries in document order: ");
-////			for (Item item = sortedIter.next(); item != null; item = sortedIter
-////					.next()) {
-////				System.out.println(item);
-////			}
-//		}
+		try (final DBStore store = DBStore.newBuilder().build()) {
+			final QueryContext ctx3 = new QueryContext(store);
+			System.out.println();
+			System.out
+					.println("Create a cas index for all attributes and another one for text-nodes. A third one is created for all integers:");
+			final XQuery q = new XQuery(
+					new SirixCompileChain(store),
+					"let $doc := sdb:doc('mydocs.col', 'resource1', (), fn:boolean(1)) "
+							+ "let $casStats1 := sdb:create-cas-index($doc, 'xs:string', '//@*') "
+							+ "let $casStats2 := sdb:create-cas-index($doc, 'xs:string', '//*') "
+							+ "let $casStats3 := sdb:create-cas-index($doc, 'xs:integer', '//*') "
+							+ "return <rev>{sdb:commit($doc)}</rev>");
+			q.serialize(ctx3, System.out);
+			System.out.println();
+			System.out.println("CAS index creation done.");
+		}
+
+		// Create and commit path index on all elements.
+		try (final DBStore store = DBStore.newBuilder().build()) {
+			final QueryContext ctx3 = new QueryContext(store);
+			System.out.println();
+			System.out.println("Create path index for all elements (all paths):");
+			final XQuery q = new XQuery(new SirixCompileChain(store),
+					"let $doc := sdb:doc('mydocs.col', 'resource1', (), fn:boolean(1)) "
+							+ "let $stats := sdb:create-path-index($doc, '//*') "
+							+ "return <rev>{sdb:commit($doc)}</rev>");
+			q.serialize(ctx3, System.out);
+			System.out.println();
+			System.out.println("Path index creation done.");
+		}
+
+		// Create and commit name index on all elements with QName 'src' or 'msg'.
+		try (final DBStore store = DBStore.newBuilder().build()) {
+			final QueryContext ctx3 = new QueryContext(store);
+			System.out.println();
+			System.out
+					.println("Create name index for all elements with name 'src' or 'msg':");
+			final XQuery q = new XQuery(
+					new SirixCompileChain(store),
+					"let $doc := sdb:doc('mydocs.col', 'resource1', (), fn:boolean(1)) "
+							+ "let $stats := sdb:create-name-index($doc, fn:QName((), 'src')) "
+							+ "return <rev>{sdb:commit($doc)}</rev>");
+			q.serialize(ctx3, System.out);
+			System.out.println();
+			System.out.println("Name index creation done.");
+		}
+
+		// Query CAS index.
+		try (final DBStore store = DBStore.newBuilder().build()) {
+			System.out.println("");
+			System.out.println("Find CAS index for all attribute values.");
+			final QueryContext ctx3 = new QueryContext(store);
+			final String query = "let $doc := sdb:doc('mydocs.col', 'resource1') return sdb:scan-cas-index($doc, sdb:find-cas-index($doc, 'xs:string', '//@*'), 'bar', true(), 0, ())";
+			final Sequence seq = new XQuery(new SirixCompileChain(store), query)
+					.execute(ctx3);
+			// final Iter iter = seq.iterate();
+			// for (Item item = iter.next(); item != null; item = iter.next()) {
+			// System.out.println(item);
+			// }
+			final Comparator<Tuple> comparator = new Comparator<Tuple>() {
+				@Override
+				public int compare(Tuple o1, Tuple o2) {
+					return ((Node<?>) o1).cmp((Node<?>) o2);
+				}
+			};
+			final Sequence sortedSeq = new SortedNodeSequence(comparator, seq, true);
+			final Iter sortedIter = sortedSeq.iterate();
+
+			System.out.println("Sorted index entries in document order: ");
+			for (Item item = sortedIter.next(); item != null; item = sortedIter
+					.next()) {
+				System.out.println(item);
+			}
+		}
+
+		// Query CAS index.
+		try (final DBStore store = DBStore.newBuilder().build()) {
+			System.out.println("");
+			System.out
+					.println("Find CAS index for all text values which are integers between 10 and 100.");
+			final QueryContext ctx3 = new QueryContext(store);
+			final String query = "let $doc := sdb:doc('mydocs.col', 'resource1') return sdb:scan-cas-index-range($doc, sdb:find-cas-index($doc, 'xs:integer', '//*'), 10, 100, true(), true(), ())";
+			final Sequence seq = new XQuery(new SirixCompileChain(store), query)
+					.execute(ctx3);
+			// final Iter iter = seq.iterate();
+			// for (Item item = iter.next(); item != null; item = iter.next()) {
+			// System.out.println(item);
+			// }
+			final Comparator<Tuple> comparator = new Comparator<Tuple>() {
+				@Override
+				public int compare(Tuple o1, Tuple o2) {
+					return ((Node<?>) o1).cmp((Node<?>) o2);
+				}
+			};
+			final Sequence sortedSeq = new SortedNodeSequence(comparator, seq, true);
+			final Iter sortedIter = sortedSeq.iterate();
+
+			System.out.println("Sorted index entries in document order: ");
+			for (Item item = sortedIter.next(); item != null; item = sortedIter
+					.next()) {
+				System.out.println(item);
+			}
+		}
+
+		// Query path index which are children of the log-element (only elements).
+		try (final DBStore store = DBStore.newBuilder().build()) {
+			System.out.println("");
+			System.out
+					.println("Find path index for all elements which are children of the log-element (only elements).");
+			final QueryContext ctx3 = new QueryContext(store);
+			final DBNode node = (DBNode) new XQuery(new SirixCompileChain(store),
+					"doc('mydocs.col')").execute(ctx3);
+			final Optional<IndexDef> index = node.getTrx().getSession()
+					.getRtxIndexController(node.getTrx().getRevisionNumber())
+					.getIndexes().findPathIndex(Path.parse("//log/*"));
+			System.out.println(index);
+			// last param '()' queries whole index.
+			final String query = "let $doc := sdb:doc('mydocs.col', 'resource1') "
+					+ "return sdb:scan-path-index($doc, " + index.get().getID()
+					+ ", '//log/*')";
+			final Sequence seq = new XQuery(new SirixCompileChain(store), query)
+					.execute(ctx3);
+			final Comparator<Tuple> comparator = new Comparator<Tuple>() {
+				@Override
+				public int compare(Tuple o1, Tuple o2) {
+					return ((Node<?>) o1).cmp((Node<?>) o2);
+				}
+			};
+			final Sequence sortedSeq = new SortedNodeSequence(comparator, seq, true);
+			final Iter sortedIter = sortedSeq.iterate();
+
+			System.out.println("Sorted index entries in document order: ");
+			for (Item item = sortedIter.next(); item != null; item = sortedIter
+					.next()) {
+				System.out.println(item);
+			}
+		}
+
+		// Query name index.
+		try (final DBStore store = DBStore.newBuilder().build()) {
+			System.out.println("");
+			System.out.println("Query name index (src-element).");
+			final QueryContext ctx3 = new QueryContext(store);
+			final String query = "let $doc := sdb:doc('mydocs.col', 'resource1')"
+                         + " let $sequence := sdb:scan-name-index($doc, sdb:find-name-index($doc, fn:QName((), 'src')), fn:QName((), 'src'))"
+                         + " return sdb:sort($sequence)";
+			final XQuery q = new XQuery(new SirixCompileChain(store), query);
+			q.prettyPrint();
+			q.serialize(ctx3, System.out);
+		}
 
 		try (final DBStore store = DBStore.newBuilder().build()) {
-			
-			printAllVersions();
-//			final QueryContext ctx = new QueryContext(store);
-//			System.out.println();
-//			System.out.println("Query loaded document: 555");
-//		//	final String xq3 = "doc('mydocs.col')/log/all-time::*";
-//			final String xq3 = "doc('mydocs.col')/log/all-time::*";
-//			
-//			System.out.println(xq3);
-//			XQuery q = new XQuery(new SirixCompileChain(store), xq3);
-//			q.prettyPrint();
-//			q.serialize(ctx, System.out);
+			final QueryContext ctx = new QueryContext(store);
+			System.out.println();
+			System.out.println("Query loaded document:");
+			final String xq3 = "doc('mydocs.col')/log/all-time::*";
+			System.out.println(xq3);
+			XQuery q = new XQuery(new SirixCompileChain(store), xq3);
+			q.prettyPrint();
+			q.serialize(ctx, System.out);
 
 			// Serialize first version to XML
 			// ($user.home$/sirix-data/output-revision-1.xml).
 			final QueryContext ctx4 = new QueryContext(store);
 			final String xq4 = "bit:serialize(doc('mydocs.col', 1))";
-			XQuery q = new XQuery(xq4);
+			q = new XQuery(xq4);
 			try (final PrintStream out = new PrintStream(new FileOutputStream(
 					new File(new StringBuilder(LOCATION.getAbsolutePath())
 							.append(File.separator).append("output-revision-1.xml")
@@ -466,12 +428,11 @@ public class XQueryUsage {
 			System.out.println();
 		}
 
-		try (final DBStore store = DBStore.newBuilder().isUpdatable().build()) {
-//			final File doc = new File(new StringBuilder("src").append(File.separator)
-//					.append("main").append(File.separator).append("resources")
-//					.append(File.separator).append("test.xml").toString());
-			final File doc = new File(new StringBuilder("backends").append(File.separator).append("sirix").append(File.separator).append("test.xml").toString());
-			
+		try (final DBStore store = DBStore.newBuilder().build()) {
+			final File doc = new File(new StringBuilder("src").append(File.separator)
+					.append("main").append(File.separator).append("resources")
+					.append(File.separator).append("test.xml").toString());
+
 			final QueryContext ctx = new QueryContext(store);
 			System.out.println();
 			URI docUri = doc.toURI();
@@ -494,7 +455,7 @@ public class XQueryUsage {
 	 * @throws IOException
 	 *           if any I/O exception occured
 	 */
-	 static File generateSampleDoc(final File dir, final String prefix)
+	private static File generateSampleDoc(final File dir, final String prefix)
 			throws IOException {
 		final File file = File.createTempFile(prefix, ".xml", dir);
 		file.deleteOnExit();
@@ -526,45 +487,12 @@ public class XQueryUsage {
 				sev));
 		out.print(String.format("<src>%s</src>", src));
 		out.print(String.format("<msg>%s</msg>", msg));
+		out.print("oops1");
+		out.print("<b/>");
+		out.print("oops2");
 		out.print("</log>");
 		out.close();
 		return file;
 	}
-	 public static void append(String text){
-		 runQuery("insert nodes "+text+" into doc('mydocs.col')/log");
-	 }
-	 public static void commit(String text){
-		 runQuery("delete node doc('mydocs.col')/log/a");
-		 append(text);
-		// runQuery("replace node doc('mydocs.col')/log/a with "+text);
-	 }
-	 
-	 
-	 
-	 public static void printAllVersions(){
-		 runQuery("doc('mydocs.col')/log/all-time::*");
-				
-	 }
-	 public static void runQuery(String query){
-		 try (final DBStore store = DBStore.newBuilder().isUpdatable().build()) {
-			 System.out.println("running query:"+query);
-			// Reuse store and query loaded document.
-			final QueryContext ctx2 = new QueryContext(store);
-			final XQuery q = new XQuery(query);
-			q.prettyPrint();
-			q.serialize(ctx2, System.out);
-			store.commitAll();
-				
-				
-		} catch (DocumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (QueryException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	 }
-	 
-	 
 
 }
