@@ -16,6 +16,7 @@ import java.util.Random;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
@@ -27,7 +28,25 @@ import models.XQueryUsage.Severity;
 import org.brackit.xquery.QueryContext;
 import org.brackit.xquery.QueryException;
 import org.brackit.xquery.XQuery;
+import org.brackit.xquery.atomic.QNm;
+import org.brackit.xquery.compiler.CompileChain;
 import org.brackit.xquery.xdm.DocumentException;
+import org.sirix.access.Databases;
+import org.sirix.access.conf.DatabaseConfiguration;
+import org.sirix.access.conf.ResourceConfiguration;
+import org.sirix.access.conf.SessionConfiguration;
+import org.sirix.api.Database;
+import org.sirix.api.NodeReadTrx;
+import org.sirix.api.NodeWriteTrx;
+import org.sirix.api.Session;
+import org.sirix.diff.DiffDepth;
+import org.sirix.diff.DiffFactory;
+import org.sirix.diff.DiffFactory.DiffOptimized;
+import org.sirix.diff.DiffFactory.DiffType;
+import org.sirix.diff.DiffObserver;
+import org.sirix.exception.SirixException;
+import org.sirix.service.xml.serialize.XMLSerializer;
+import org.sirix.xquery.SirixCompileChain;
 import org.sirix.xquery.node.DBStore;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -35,7 +54,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-public class SirixHandler extends BackendHandlerInterface {
+import com.google.common.collect.ImmutableSet;
+
+public class SirixHandler extends BackendHandlerInterface implements DiffObserver{
 	private static final String USER_HOME = System.getProperty("user.home");
 
 	/** Storage for databases: Sirix data in home directory. */
@@ -80,19 +101,23 @@ public class SirixHandler extends BackendHandlerInterface {
 		// Initialize query context and store.
 		try (final DBStore store = DBStore.newBuilder().build()) {
 			final QueryContext ctx = new QueryContext(store);
-
-			File doc1 = generateSampleDoc(tmpDir, "init commit", "sample1");
+			final CompileChain compileChain = new SirixCompileChain(store);
+			
+			File doc1 = generateSampleDoc(tmpDir, "<a.txt>init file</a.txt>", "sample1");
 			doc1.deleteOnExit();
 
 			// Use XQuery to load sample document into store.
 			System.out.println("Loading document:");
 			URI doc1Uri = doc1.toURI();
-			final String xq1 = String.format(
-					"bit:load('mydocs.col', io:ls('%s', '\\.xml$'))", doc1Uri.toString());
-			/*final String xq1 = String.format("bit:load('" + databaseName
-					+ "', '%s')", doc1Uri.toString());*/
-			System.out.println(xq1);
-			new XQuery(xq1).evaluate(ctx);
+			//final String xq1 = String.format(
+			//		"bit:load('mydocs.col', io:ls('%s', '\\.xml$'))", doc1Uri.toString());//old versions
+			final String xq1 = String.format("sdb:load('mydocs.col', 'resource1', '%s')",
+					doc1Uri.toString());
+
+			System.out.println("xq1"+xq1);
+			System.out.println("ctx"+ctx);
+			new XQuery(compileChain,xq1).evaluate(ctx);
+			
 		} catch (DocumentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -113,8 +138,9 @@ public class SirixHandler extends BackendHandlerInterface {
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		runQuery("delete node doc('" + databaseName + "')/log/content/"+url);
-		append(content,url);
+		runQuery("replace node doc('" + databaseName + "')/log/content/"+url+" with "+content);
+		//runQuery("delete node doc('" + databaseName + "')/log/content/"+url);
+		//append(content,url);
 		return true;
 	}
 
@@ -258,15 +284,22 @@ public class SirixHandler extends BackendHandlerInterface {
 	}
 
 	public static void printAllVersions() {
-		System.out.println(runQuery("doc('" + databaseName
-				+ "')/log/all-time::*"));
+		printAllVersions(databaseName);
 
 	}
+	public static void printAllVersions(String s){
+		System.out.println(runQuery("doc('" + s
+				+ "')/log/all-time::*"));
+	}
+	
+	
 	private static String runQuery(String query) { 
 		try (final DBStore store = DBStore.newBuilder().build()) {
 			System.out.println("running query:" + query);
+			
 			// Reuse store and query loaded document.
 			final QueryContext ctx2 = new QueryContext(store);
+			
 			final XQuery q = new XQuery(query);
 			q.prettyPrint();
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -330,6 +363,137 @@ public class SirixHandler extends BackendHandlerInterface {
 		return runQuery("for $a in doc('" + databaseName + "')/log/content/*/last::* "
 						+"return <file>{local-name($a)}</file>");
 	}
+	public static void datbaseSirix() {
+		
+		/** Storage for databases: Sirix data in home directory. */
+		try {
+			
+			//	final File doc = generateSampleDoc(tmpDir,  "<a.txt>init file</a.txt>", "sample1");
+			//	final DatabaseConfiguration dbConf = new DatabaseConfiguration(doc);
+			final DatabaseConfiguration dbConf = new DatabaseConfiguration(new File(
+					LOCATION, databaseName));
+			Databases.truncateDatabase(dbConf);
+			Databases.createDatabase(dbConf);
+			final Database database = Databases.openDatabase(dbConf.getFile());
+			
+			database.createResource(ResourceConfiguration
+					.newBuilder("resource1", dbConf).useDeweyIDs(true)
+					.useTextCompression(true).buildPathSummary(true)
+					.build());
+			
+			final Session session = database.getSession(new SessionConfiguration.Builder("resource1")
+						.build());
+			
+				try(final NodeWriteTrx wtx = session.beginNodeWriteTrx();){
+				
+				wtx.insertElementAsFirstChild(new QNm("hej"));
+				wtx.commit();
+				wtx.insertElementAsFirstChild(new QNm("nr2"));
+				wtx.commit();
+				
+				//wtx.moveToFirstChild();
+				wtx.moveToDocumentRoot();
+	//			wtx.insertCommentAsFirstChild("asdf");
+	//			wtx.commit();
+				wtx.insertElementAsFirstChild(new QNm("san"));
+				wtx.commit();
+				
+				wtx.insertElementAsFirstChild(new QNm("asdsaad"));
+				wtx.commit();
+				wtx.moveToParent();
+				wtx.replaceNode("tset");
+				wtx.commit();
+				System.out.println(wtx.getKind());
+				wtx.moveToNext();
+				System.out.println(wtx.getKind());
+				//wtx.insertTextAsLeftSibling("bbb");
+				wtx.insertAttribute(new QNm("aaaa"), "bar");
+				System.out.println(wtx.getKind());
+			
+				wtx.commit();
+				wtx.moveToParent();
+				System.out.println(wtx.getKind());
+				
+				
+				//	wtx.insertCommentAsFirstChild("comment").commit();
+				//wtx.moveTo(4);
+	//			wtx.revertTo(3);
+				
+				try(final NodeReadTrx rtx = session.beginNodeReadTrx();){
+					rtx.moveToDocumentRoot();
+					rtx.moveToFirstChild();
+					//wtx.copySubtreeAsFirstChild(rtx);
+					//wtx.commit();
+					final XMLSerializer serializer = XMLSerializer.newBuilder(session, System.out)
+							.prettyPrint().build();
+					serializer.call();
+//					String content = baos.toString("UTF8");
+//					System.out.println(content);
+				//	System.out.println(rtx.get.getLocalName());
+					
+				
+					
+					
+					DiffFactory.Builder diffb=new DiffFactory.Builder(session, 6,
+				            0, DiffOptimized.NO, ImmutableSet.of((DiffObserver)getInstance()));
+					DiffFactory.invokeFullDiff(diffb);
+					System.out.println("getName: "+rtx.getName());
+					System.out.println(rtx.getNamespaceURI());
+					
+					
+				//	System.out.println(rtx.getAttributeCount());
+				//	System.out.println(rtx.getNamespaceURI());
+				//	System.out.println(rtx.getNamespaceURI());
+				//	System.out.println(rtx.getItemList());
+					//final NodeWriteTrx wtx = session.beginNodeWriteTrx();
+					//wtx.insertTextAsFirstChild("foo");
+					//wtx.commit();
+					
+					System.out.println("valure: "+rtx.getValue());
+				}
+			}
+			System.out.println("db:"+session.getDatabase());
+			System.out.println(session.getResourceConfig());
+			//printAllVersions();
+			
+			//printAllVersions();
+			database.close();
+		} catch (SirixException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (XMLStreamException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+
+	}
+
+	@Override
+	public void diffDone() {
+		// TODO Auto-generated method stub
+		System.out.println("diffDone");
+	}
+
+	@Override
+	public void diffListener(DiffType arg0, long arg1, long arg2, DiffDepth arg3) {
+		// TODO Auto-generated method stub
+		System.out.println("diffListener");
+		//System.out.println(arg0.name());
+		//System.out.println(arg0.ordinal());
+		System.out.println(arg0);
+		//System.out.println(arg1);
+		//System.out.println(arg2);
+	//	System.out.println("deept");
+	//	System.out.println(arg3.getOldDepth());
+	//	System.out.println(arg3.getNewDepth());
+	}
+	
 	
 	
 }

@@ -10,8 +10,6 @@ import java.util.Map;
 
 import javax.xml.xquery.XQException;
 
-import org.brackit.xquery.QueryException;
-import org.sirix.exception.SirixException;
 
 import models.BackendHandlerInterface;
 import models.GitHandler;
@@ -280,19 +278,11 @@ public class Application extends Controller {
 
 	public static Result testSirix() {
 		
-		try {
-			XQueryUsage.loadDocumentAndQueryTemporal();
-		} catch (QueryException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SirixException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		SirixHandler.printAllVersions();
+		SirixHandler.datbaseSirix();
+		
+		//loadDocumentAndQueryTemporal();
+	
+		//SirixHandler.printAllVersions();
 		/*
 		 * try {
 		 * 
