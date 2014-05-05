@@ -363,7 +363,7 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		return runQuery("for $a in doc('" + databaseName + "')/log/content/*/last::* "
 						+"return <file>{local-name($a)}</file>");
 	}
-	public static void datbaseSirix() {
+	public static void databaseSirix() {
 		
 		/** Storage for databases: Sirix data in home directory. */
 		try {
