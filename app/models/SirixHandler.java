@@ -11,6 +11,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -26,6 +28,7 @@ import javax.xml.xpath.XPathFactory;
 import models.XQueryUsage.Severity;
 
 import org.brackit.xquery.QueryContext;
+import org.sirix.xquery.SirixQueryContext;
 import org.brackit.xquery.QueryException;
 import org.brackit.xquery.XQuery;
 import org.brackit.xquery.atomic.QNm;
@@ -44,6 +47,7 @@ import org.sirix.diff.DiffFactory;
 import org.sirix.diff.DiffFactory.DiffOptimized;
 import org.sirix.diff.DiffFactory.DiffType;
 import org.sirix.diff.DiffObserver;
+import org.sirix.diff.DiffTuple;
 import org.sirix.exception.SirixException;
 import org.sirix.service.xml.serialize.XMLSerializer;
 import org.sirix.xquery.SirixCompileChain;
@@ -64,13 +68,14 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 	private static final String databaseName = "mydocs.col";
 
+	
 	/** Severity used to build a random sample document. */
 	enum Severity {
 		low, high, critical
 	};
 
 	private SirixHandler() {
-
+		
 	}
 
 	/**
@@ -95,15 +100,19 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 	@Override
 	public boolean init() {
+		
+		
 		// Prepare sample document.
 		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 		System.out.println("saving temp in :" + tmpDir.getAbsolutePath());
 		// Initialize query context and store.
-		try (final DBStore store = DBStore.newBuilder().build()) {
-			final QueryContext ctx = new QueryContext(store);
-			final CompileChain compileChain = new SirixCompileChain(store);
+		try (DBStore store= DBStore.newBuilder().build();){
+			CompileChain compileChain = new SirixCompileChain(store);
 			
-			File doc1 = generateSampleDoc(tmpDir, "<a.txt>init file</a.txt>", "sample1");
+			//runQuery("delete node doc('" + databaseName + "')/log");
+			final QueryContext ctx = new SirixQueryContext(store);
+			
+			File doc1 = generateSampleDoc(tmpDir, "<a>init file</a>", "sample1");
 			doc1.deleteOnExit();
 
 			// Use XQuery to load sample document into store.
@@ -138,9 +147,32 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		runQuery("replace node doc('" + databaseName + "')/log/content/"+url+" with "+content);
-		//runQuery("delete node doc('" + databaseName + "')/log/content/"+url);
+		System.out.println("commit");
+		//runQueryWhithCommit("replace node doc('" + databaseName + "')/log/content/"+url+" with "+content);
+		printAllVersions();
+		//content="<"+url+">"+content+"</"+url+">";	
+		String selectFile=runQuery("doc('" + databaseName + "')/log/content/"+url);
+		System.out.println("before: |"+selectFile+"|");
+		if(!selectFile.equals("")){
+			String query="replace node doc('" + databaseName + "')/log/content/"+url+" with "+content;
+			runQueryWhithCommit(query);
+		}else{
+			content="<"+url+">"+content+"</"+url+">";	
+			String insertQuery="insert nodes " + content + " into doc('" + databaseName+ "')/log/content";
+			runQueryWhithCommit(insertQuery);
+		}
+		
+		//printAllVersions();
+		System.out.println("get version on XPath: "+getVersionOfXpath("/log", 0));
+		
+		//"replace node doc('" + databaseName + "')/log/content/"+url+" with "+content
+		
+			//	,"doc('" + databaseName + "')/log/all-time::*");
+		//runQueryWhithCommit("delete node doc('" + databaseName + "')/log/content/"+url,
+		//		"insert nodes " + content + " into doc('" + databaseName+ "')/log/content");
 		//append(content,url);
+		
+		
 		return true;
 	}
 
@@ -159,7 +191,7 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 	@Override
 	public Logs getLog() {
 		// TODO Auto-generated method stub
-		printAllVersions();
+		//printAllVersions();
 		return null;
 	}
 
@@ -183,45 +215,6 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 	@Override
 	public RepositoryRevision getRepositoryHEAD() {
-		
-		
-		/*DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder builder;
-		try {
-			builder = factory.newDocumentBuilder();
-			String xml = runQuery("doc('" + databaseName + "')/log/last::*");
-		
-			System.out.println("xpath");
-			System.out.println(xml);
-			Document doc = builder.parse(new InputSource(new ByteArrayInputStream(xml.getBytes("utf-8"))));
-			System.out.println(doc.);
-			//XPathFactory xPathfactory = XPathFactory.newInstance();
-			//XPath xpath = xPathfactory.newXPath();
-			
-			//Evaluate XPath against Document itself
-			XPath xPath = XPathFactory.newInstance().newXPath();
-			NodeList nodes = (NodeList)xPath.evaluate("/log",
-			        doc.getDocumentElement(), XPathConstants.NODESET);
-			for (int i = 0; i < nodes.getLength(); ++i) {
-			    Element e = (Element) nodes.item(i);
-			    System.out.println(e.getLocalName());
-			}
-			
-			
-			//XPathExpression expr = xpath.compile("/content");
-			//String s=(String) expr.evaluate(doc, XPathConstants.STRING);
-			//System.out.println(s);
-			
-		} catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
-			// TODO Auto-generated catch block
-			System.out.println("error in xPath");
-			e.printStackTrace();
-		}
-		
-		*/
-		
-		//System.out.println("running getRepositoryHEAD");
-		//System.out.println();
 		String fileString=GetListOfFiles();
 		System.out.println(fileString);
 		fileString=fileString.replace("<file>", "");
@@ -231,7 +224,6 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		RepositoryRevision rr=new RepositoryRevision();
 		rr.setLastCommitMessage(GetMsgHEAD());
 		
-		
 		for (String file : files) {
 			System.out.println("|"+file+"|");
 			if(file!="\n"){
@@ -239,7 +231,6 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 				rr.addRepositoryFile(new RepositoryFile(file,content));
 			}
 		}
-		
 		return rr;
 	}
 
@@ -270,17 +261,18 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		out.print(String.format("<log tstamp='%s' severity='%s' foo='bar'>",
 				tst, sev));
 		out.print(String.format("<src>%s</src>", src));
-		out.print(String.format("<msg>%s</msg>", msg));
-		out.print(String.format("<content>%s</content>", msg));
+		//out.print(String.format("<msg><bbb>%s</bbb></msg>", msg));
+		out.print(String.format("<content></content>", msg));
 		out.print("</log>");
 		out.close();
+		
 		return file;
 	}
 
 	public static void append(String text,String file) {
 		text="<"+file+">"+text+"</"+file+">";		
-		runQueryWhithCommit("insert nodes " + text + " into doc('" + databaseName
-				+ "')/log/content");
+	//	runQueryWhithCommit("insert nodes " + text + " into doc('" + databaseName
+	//				+ "')/log/content");
 	}
 
 	public static void printAllVersions() {
@@ -288,17 +280,20 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 	}
 	public static void printAllVersions(String s){
+		System.out.println("printAllVersions");
 		System.out.println(runQuery("doc('" + s
 				+ "')/log/all-time::*"));
 	}
 	
 	
 	private static String runQuery(String query) { 
-		try (final DBStore store = DBStore.newBuilder().build()) {
+		try (DBStore store= DBStore.newBuilder().build();){
+			CompileChain compileChain = new SirixCompileChain(store);
+			
 			System.out.println("running query:" + query);
 			
 			// Reuse store and query loaded document.
-			final QueryContext ctx2 = new QueryContext(store);
+			final QueryContext ctx2 = new SirixQueryContext(store);
 			
 			final XQuery q = new XQuery(query);
 			q.prettyPrint();
@@ -310,45 +305,35 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 			return content;
 		} catch (DocumentException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (QueryException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
 		
 	}
-	private static String runQueryWhithCommit(String query) {
-		try (final DBStore store = DBStore.newBuilder().build()) {
-			System.out.println("running query:" + query);
-			// Reuse store and query loaded document.
-			final QueryContext ctx2 = new QueryContext(store);
-			final XQuery q = new XQuery(query);
-			q.prettyPrint();
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			PrintStream writer = new PrintStream(baos);
-
-			q.serialize(ctx2, writer);
-			String content = baos.toString("UTF8");
-
-			store.commitAll();
-			System.out.println(content);
-			return content;
-		} catch (DocumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	private static void runQueryWhithCommit(String query) {
+		try (DBStore store= DBStore.newBuilder().build();){
+			CompileChain compileChain = new SirixCompileChain(store);
+			
+			System.out.println("runQueryWhithCommit"+query);
+			
+			final QueryContext ctx1 = new SirixQueryContext(store);
+			//replace node doc('" + databaseName + "')/log/content with '<hej />').evaluate(ctx1)
+			
+			new XQuery(compileChain, query).evaluate(ctx1);
+		//	try (final DBStore store2 = DBStore.newBuilder().build()) {
+		//		final QueryContext ctx2 = new QueryContext(store2);
+		//		new XQuery(compileChain, "doc('" +databaseName+ "')/log/all-time::*").evaluate(ctx2);
+		//	}
+			
 		} catch (QueryException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
+		// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return null;
+		
 	}
 	private static String GetContentHEAD(String url){
 		return runQuery("doc('" + databaseName + "')/log/content/"+url+"/*/last::*");
@@ -454,10 +439,7 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 			}
 			System.out.println("db:"+session.getDatabase());
 			System.out.println(session.getResourceConfig());
-			//printAllVersions();
-			
-			//printAllVersions();
-			database.close();
+				database.close();
 		} catch (SirixException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -473,6 +455,13 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		} 
 
 	}
+	public String getVersionOfXpath(String XPath,int version){
+		return runQuery("doc('mydocs.col',"+version+")"+XPath);
+	//	return runQuery("doc('mydoc.xml', 0)/log/all-time::*/*");
+		//return runQuery("doc('" + databaseName+ "',"+version+")"+XPath);
+	}
+	
+	
 
 	@Override
 	public void diffDone() {
@@ -480,18 +469,26 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		System.out.println("diffDone");
 	}
 
+	Map<Integer, DiffTuple> mDiffs= new HashMap<Integer, DiffTuple>();
+	
 	@Override
-	public void diffListener(DiffType arg0, long arg1, long arg2, DiffDepth arg3) {
-		// TODO Auto-generated method stub
-		System.out.println("diffListener");
-		//System.out.println(arg0.name());
-		//System.out.println(arg0.ordinal());
-		System.out.println(arg0);
-		//System.out.println(arg1);
-		//System.out.println(arg2);
-	//	System.out.println("deept");
-	//	System.out.println(arg3.getOldDepth());
-	//	System.out.println(arg3.getNewDepth());
+	public void diffListener(final DiffType diffType,
+		final long newNodeKey, final long oldNodeKey,
+			final DiffDepth depth) {
+		/*		
+		final DiffTuple diffCont = new DiffTuple(diffType, newNodeKey, oldNodeKey, depth);
+        
+		mDiffs.put(mEntries, diffCont);
+
+	    switch (diffType) {
+		case INSERTED:
+		    mNewKeys.put(newNodeKey, mEntries);
+		    break;
+		case DELETED:
+		    mOldKeys.put(oldNodeKey, mEntries);
+		    break;
+	     default:
+        }*/
 	}
 	
 	
