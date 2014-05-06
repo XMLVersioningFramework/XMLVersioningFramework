@@ -51,8 +51,8 @@ public class GitHandler extends BackendHandlerInterface {
 	public static boolean initCommandLine() {
 		// remove the current repo
 		System.out.println("init");
-		String remmove = "rm -rf " + REPOSITORY_URL;
-		System.out.println(runCommand(remmove));
+		String remove = "rm -rf " + REPOSITORY_URL;
+		System.out.println(runCommand(remove));
 		String mkdir = "mkdir " + REPOSITORY_URL;
 		System.out.println(mkdir);
 		System.out.println(runCommand(mkdir));
