@@ -165,7 +165,7 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		}
 		
 		//printAllVersions();
-		System.out.println("get version on XPath: "+getVersionOfXpath("/log", 0));
+	//	System.out.println("get version on XPath: "+getVersionOfXpath("/log", 0));
 		
 		//"replace node doc('" + databaseName + "')/log/content/"+url+" with "+content
 		
