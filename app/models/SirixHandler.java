@@ -426,9 +426,7 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 					rtx.moveToFirstChild();
 					//wtx.copySubtreeAsFirstChild(rtx);
 					//wtx.commit();
-					final XMLSerializer serializer = XMLSerializer.newBuilder(session, System.out)
-							.prettyPrint().build();
-					serializer.call();
+					prettyPrint(session);
 //					String content = baos.toString("UTF8");
 //					System.out.println(content);
 				//	System.out.println(rtx.get.getLocalName());
@@ -474,6 +472,18 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 			e.printStackTrace();
 		} 
 
+	}
+	
+	/**
+	 * @param session
+	 * @throws SirixException
+	 */
+	private static void prettyPrint(final Session session)
+			throws SirixException {
+		final XMLSerializer serializer = XMLSerializer
+				.newBuilder(session, System.out).prettyPrint()
+				.build();
+		serializer.call();
 	}
 
 	@Override
