@@ -27,6 +27,7 @@ import javax.xml.xpath.XPathFactory;
 
 import models.XQueryUsage.Severity;
 
+import org.apache.commons.io.FileUtils;
 import org.brackit.xquery.QueryContext;
 import org.sirix.xquery.SirixQueryContext;
 import org.brackit.xquery.QueryException;
@@ -142,7 +143,8 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 	@Override
 	public boolean removeExistingRepository() {
-		return init();
+			System.out.println("removeExistingRepository: " + LOCATION + "/" + databaseName);
+			return(FileUtils.deleteQuietly(new File(LOCATION, databaseName)));
 	}
 
 	@Override
@@ -348,7 +350,7 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		return runQuery("for $a in doc('" + databaseName + "')/log/content/*/last::* "
 						+"return <file>{local-name($a)}</file>");
 	}
-	public static void datbaseSirix() {
+	public static void databaseSirix() {
 		
 		/** Storage for databases: Sirix data in home directory. */
 		try {
@@ -409,9 +411,7 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 					rtx.moveToFirstChild();
 					//wtx.copySubtreeAsFirstChild(rtx);
 					//wtx.commit();
-					final XMLSerializer serializer = XMLSerializer.newBuilder(session, System.out)
-							.prettyPrint().build();
-					serializer.call();
+					prettyPrint(session);
 //					String content = baos.toString("UTF8");
 //					System.out.println(content);
 				//	System.out.println(rtx.get.getLocalName());
@@ -455,13 +455,19 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		} 
 
 	}
-	public String getVersionOfXpath(String XPath,int version){
-		return runQuery("doc('mydocs.col',"+version+")"+XPath);
-	//	return runQuery("doc('mydoc.xml', 0)/log/all-time::*/*");
-		//return runQuery("doc('" + databaseName+ "',"+version+")"+XPath);
+
+	
+	/**
+	 * @param session
+	 * @throws SirixException
+	 */
+	private static void prettyPrint(final Session session)
+			throws SirixException {
+		final XMLSerializer serializer = XMLSerializer
+				.newBuilder(session, System.out).prettyPrint()
+				.build();
+		serializer.call();
 	}
-	
-	
 
 	@Override
 	public void diffDone() {

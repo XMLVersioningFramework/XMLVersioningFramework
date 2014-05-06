@@ -278,7 +278,7 @@ public class Application extends Controller {
 
 	public static Result testSirix() {
 		
-		SirixHandler.datbaseSirix();
+		SirixHandler.databaseSirix();
 		
 		//loadDocumentAndQueryTemporal();
 	
