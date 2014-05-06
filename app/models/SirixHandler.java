@@ -25,6 +25,7 @@ import javax.xml.xpath.XPathFactory;
 
 import models.XQueryUsage.Severity;
 
+import org.apache.commons.io.FileUtils;
 import org.brackit.xquery.QueryContext;
 import org.brackit.xquery.QueryException;
 import org.brackit.xquery.XQuery;
@@ -133,7 +134,8 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 	@Override
 	public boolean removeExistingRepository() {
-		return init();
+			System.out.println("removeExistingRepository: " + LOCATION + "/" + databaseName);
+			return(FileUtils.deleteQuietly(new File(LOCATION, databaseName)));
 	}
 
 	@Override
