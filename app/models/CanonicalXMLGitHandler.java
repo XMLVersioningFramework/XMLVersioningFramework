@@ -8,6 +8,7 @@ import java.util.ArrayList;
  *
  */
 public class CanonicalXMLGitHandler extends BackendHandlerInterface {
+	BackendHandlerInterface gitHandler = GitHandler.getInstance(); 
 
 	private CanonicalXMLGitHandler() {
 	}
@@ -27,67 +28,67 @@ public class CanonicalXMLGitHandler extends BackendHandlerInterface {
 
 	@Override
 	public Object getRepository() {
-		// TODO Auto-generated method stub
-		return null;
+		//TODO: Stub, needs revision
+		return gitHandler.getRepository();
 	}
 
 	@Override
 	public boolean init() {
-		// TODO Auto-generated method stub
-		return false;
+		//TODO: Stub, needs revision
+		return gitHandler.init();
 	}
 
 	@Override
 	public boolean removeExistingRepository() {
-		// TODO Auto-generated method stub
-		return false;
+		//TODO: Stub, needs revision
+		return gitHandler.removeExistingRepository();
 	}
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		// TODO Auto-generated method stub
-		return false;
+		//TODO: Stub, needs revision
+		return gitHandler.commit(url, content, message, user);
 	}
 
 	@Override
 	public String commitAFile(TempFile tf) {
-		// TODO Auto-generated method stub
-		return null;
+		//TODO: Stub, needs revision
+		return gitHandler.commitAFile(tf);
 	}
 
 	@Override
 	public TempFile getFile(String url) {
-		// TODO Auto-generated method stub
-		return null;
+		//TODO: Stub, needs revision
+		return gitHandler.getFile(url);
 	}
 
 	@Override
 	public Logs getLog() {
-		// TODO Auto-generated method stub
-		return null;
+		//TODO: Stub, needs revision
+		return gitHandler.getLog();
 	}
 
 	@Override
 	public RepositoryRevision checkout(String revision) {
-		// TODO Auto-generated method stub
-		return null;
+		//TODO: Stub, needs revision
+		return gitHandler.checkout(revision);
 	}
 
 	@Override
 	public ArrayList<RepositoryFile> getWorkingDirFiles() {
-		// TODO Auto-generated method stub
-		return null;
+		//TODO: Stub, needs revision
+		return gitHandler.getWorkingDirFiles();
 	}
 
 	@Override
 	public String getRepositoryPath() {
-		// TODO Auto-generated method stub
-		return null;
+		//TODO: Stub, needs revision
+		return gitHandler.getRepositoryPath();
 	}
 
 	@Override
 	public RepositoryRevision getRepositoryHEAD() {
-		// TODO Auto-generated method stub
-		return null;
+		//TODO: Stub, needs revision
+		return gitHandler.getRepositoryHEAD();
 	}
 }
