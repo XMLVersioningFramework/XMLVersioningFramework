@@ -2,6 +2,11 @@ package models;
 
 import java.util.ArrayList;
 
+/**
+ * Encapsulates the canonicalization of XML through Git
+ * Heavily depends on GitHandler for the implementation
+ *
+ */
 public class CanonicalXMLGitHandler extends BackendHandlerInterface {
 
 	private CanonicalXMLGitHandler() {
