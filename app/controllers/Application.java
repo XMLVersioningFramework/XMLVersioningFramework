@@ -2,7 +2,6 @@ package controllers;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -11,21 +10,20 @@ import java.util.Map;
 
 import javax.xml.xquery.XQException;
 
+
 import models.BackendHandlerInterface;
 import models.GitHandler;
+import models.SirixHandler;
 import models.User;
 import models.UserHandler;
 import models.XChroniclerHandler;
-import play.libs.F.Function;
-import play.libs.F.Promise;
+import models.XQueryUsage;
 import play.libs.Json;
-import play.libs.WS;
 //import play.mvc.BodyParser.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import utils.JSONConstants;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Application extends Controller {
@@ -39,6 +37,8 @@ public class Application extends Controller {
 			return GitHandler.getInstance();
 		} else if (backendName.equals(BackendHandlerInterface.XCHRONICLER)) {
 			return XChroniclerHandler.getInstance();
+		} else if (backendName.equals(BackendHandlerInterface.SIRIX)) {
+			return SirixHandler.getInstance();
 		} else {
 			throw new UnsupportedOperationException();
 		}
@@ -103,6 +103,7 @@ public class Application extends Controller {
 		response().setHeader("Access-Control-Allow-Origin", "*");
 		return ok(backend.getRepositoryHEAD().toJSON());
 	}
+
 	/**
 	 * Uses HTTP/POST
 	 * 
@@ -112,15 +113,12 @@ public class Application extends Controller {
 		final Map<String, String[]> postInput = getPOSTData();
 		BackendHandlerInterface backend = getBackend(postInput
 				.get(JSONConstants.BACKEND)[0]);
-		String revision=postInput.get(JSONConstants.REVISION_ID)[0];
+		String revision = postInput.get(JSONConstants.REVISION_ID)[0];
 
 		response().setHeader("Access-Control-Allow-Origin", "*");
 		return ok(backend.checkout(revision).toJSON());
 	}
-	
-	
-	
-	
+
 	/**
 	 * Uses HTTP/POST
 	 * 
@@ -154,34 +152,35 @@ public class Application extends Controller {
 		return ok(JSONConstants.FAIL);
 	}
 
-	
 	public static Result commit() {
 		/**
 		 * Fetch content
-		 */		
+		 */
 		final Map<String, String[]> postInput = getPOSTData();
-		
+
 		String url = postInput.get(JSONConstants.URL)[0];
-		String content="";
-		if(postInput.get(JSONConstants.CONTENT)!=null){
+		String content = "";
+		if (postInput.get(JSONConstants.CONTENT) != null) {
 			content = postInput.get(JSONConstants.CONTENT)[0];
 		}
 		String message = postInput.get(JSONConstants.MESSAGE)[0];
 		String userId = postInput.get(JSONConstants.USER)[0];
 		String backendName = postInput.get(JSONConstants.BACKEND)[0];
-				
-		if(postInput.get(JSONConstants.COMMIT_FILE_URL)!=null){
-			String fileurl= postInput.get(JSONConstants.COMMIT_FILE_URL)[0];
-			if(fileurl!=null){
-				String pathToTest="../TestFramework/public/userStories/";
-				System.out.println("try to get "+pathToTest+fileurl);
-				File file=new File(pathToTest+fileurl);
+
+		if (postInput.get(JSONConstants.COMMIT_FILE_URL) != null) {
+			String fileurl = postInput.get(JSONConstants.COMMIT_FILE_URL)[0];
+			if (fileurl != null) {
+				String pathToTest = "../TestFramework/public/userStories/";
+				System.out.println("try to get " + pathToTest + fileurl);
+				File file = new File(pathToTest + fileurl);
 				System.out.println(file.getAbsolutePath());
-				try {					
-					List<String> lines = Files.readAllLines(Paths.get(pathToTest+fileurl), Charset.defaultCharset());
-					content="";
+				try {
+					List<String> lines = Files.readAllLines(
+							Paths.get(pathToTest + fileurl),
+							Charset.defaultCharset());
+					content = "";
 					for (String string : lines) {
-						content+=string;
+						content += string;
 					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
@@ -189,7 +188,7 @@ public class Application extends Controller {
 				}
 			}
 		}
-		
+
 		/**
 		 * Pre-processes the POST contents
 		 */
@@ -222,44 +221,48 @@ public class Application extends Controller {
 
 		return ok(returnJson);
 	}
-	
-	
-	public static Result testVfile(){
-		XChroniclerHandler backend = (XChroniclerHandler) XChroniclerHandler.getInstance();
+
+	public static Result testVfile() {
+		XChroniclerHandler backend = (XChroniclerHandler) XChroniclerHandler
+				.getInstance();
 
 		return ok(backend.generateVFileSimpleTest());
 	}
-	
-	public static Result testXGetHEAD(String fileURL){
+
+	public static Result testXGetHEAD(String fileURL) {
 		try {
 			String result = XChroniclerHandler.getHeadFile(fileURL);
-			if(result.isEmpty())
+			if (result.isEmpty())
 				throw new Exception("Result was empty");
 			return ok(result);
 		} catch (XQException e) {
 			e.printStackTrace();
-			return internalServerError("The URL you sent was malformed perhaps\n Exception information: " + e.toString());
+			return internalServerError("The URL you sent was malformed perhaps\n Exception information: "
+					+ e.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
-			return internalServerError("Apparently the file doesn't exist.\n Exception result: " + e.getMessage());
+			return internalServerError("Apparently the file doesn't exist.\n Exception result: "
+					+ e.getMessage());
 		}
 	}
-	
-	public static Result testXCheckoutRevision(String revision, String fileUrl){
+
+	public static Result testXCheckoutRevision(String revision, String fileUrl) {
 		try {
 			String result = XChroniclerHandler.checkout(revision, fileUrl);
-			if(result.isEmpty())
+			if (result.isEmpty())
 				throw new Exception("Result was empty");
 			return ok(result);
 		} catch (XQException e) {
 			e.printStackTrace();
-			return internalServerError("The URL you sent was malformed perhaps\n Exception information: " + e.toString());
+			return internalServerError("The URL you sent was malformed perhaps\n Exception information: "
+					+ e.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
-			return internalServerError("Apparently the file doesn't exist.\n Exception result: " + e.getMessage());
+			return internalServerError("Apparently the file doesn't exist.\n Exception result: "
+					+ e.getMessage());
 		}
 	}
-	
+
 	public static Result checkPreFlight() {
 		// Need to add the correct domain in here!!
 		response().setHeader("Access-Control-Allow-Origin", "*");
@@ -272,5 +275,25 @@ public class Application extends Controller {
 				"Origin, X-Requested-With, Content-Type, Accept");
 		return ok();
 	}
+
+	public static Result testSirix() {
+		
+		SirixHandler.databaseSirix();
+		
+		//loadDocumentAndQueryTemporal();
 	
+		//SirixHandler.printAllVersions();
+		/*
+		 * try {
+		 * 
+		 * //XQueryUsage.loadDocumentAndQuery(); //System.out.println(); //
+		 * XQueryUsage.loadDocumentAndUpdate(); //System.out.println(); //
+		 * XQueryUsage.loadCollectionAndQuery(); // System.out.println(); //
+		 * XQueryUsage.loadDocumentAndQueryTemporal(); } catch (QueryException
+		 * e) { // TODO Auto-generated catch block e.printStackTrace(); } catch
+		 * (IOException e) { // TODO Auto-generated catch block
+		 * e.printStackTrace(); }
+		 */
+		return ok();
+	}
 }

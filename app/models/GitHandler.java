@@ -1,21 +1,19 @@
 package models;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.InitCommand;
-import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
-import org.eclipse.jgit.api.errors.NoHeadException;
-import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
-import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.Constants;
@@ -56,8 +54,8 @@ public class GitHandler extends BackendHandlerInterface {
 	public static boolean initCommandLine() {
 		// remove the current repo
 		System.out.println("init");
-		String remmove = "rm -rf " + REPOSITORY_URL;
-		System.out.println(runCommand(remmove));
+		String remove = "rm -rf " + REPOSITORY_URL;
+		System.out.println(runCommand(remove));
 		String mkdir = "mkdir " + REPOSITORY_URL;
 		System.out.println(mkdir);
 		System.out.println(runCommand(mkdir));
@@ -348,7 +346,61 @@ public class GitHandler extends BackendHandlerInterface {
 		String fileName = url;
 		String fileContent = content;
 		String filePath = GitHandler.REPOSITORY_URL;
-		FileManager.createFile(fileContent, fileName, filePath);
+		try {
+			File file=FileManager.createFile(fileContent, fileName, filePath);
+			Runtime rt = Runtime.getRuntime();
+			System.out.println("running xmllint");
+			Process pr = rt.exec("/usr/bin/xmllint --c14n "+filePath+fileName);
+			System.out.println("create file "+filePath+fileName+".norm");
+			// hook up child process output to parent
+			InputStream lsOut = pr.getInputStream();
+			InputStreamReader r = new InputStreamReader(lsOut);
+			BufferedReader in = new BufferedReader(r);
+			
+			// read the child process' output
+			fileContent="";
+			char c;
+			int i;
+			boolean questionMark=false;
+			boolean inside=false;
+			while ((i = lsOut.read()) != -1) {
+				c=(char)i;
+				if(c=='<'){
+					inside=true;
+				}
+				if(c=='>'){
+					if(!questionMark){
+						fileContent+='\n';
+					}
+					inside=false;
+				}
+				
+				
+				
+				
+				
+				
+				if(inside&&c==' '){
+					fileContent+='\n';
+				}else{
+					fileContent+=c;
+				}
+				if(c=='?'){
+					questionMark=true;
+				}else{
+					questionMark=false;
+				}
+				
+			}
+			
+		
+			FileUtils.write(file, fileContent);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 	}
 
 	@Override
@@ -415,5 +467,8 @@ public class GitHandler extends BackendHandlerInterface {
 		}
 		return head;
 	}
+	
+	
+	
 
 }

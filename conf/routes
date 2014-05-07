@@ -18,6 +18,9 @@ OPTIONS /getLog								controllers.Application.checkPreFlight()
 POST    /getRevision						controllers.Application.getRevision()
 OPTIONS /getRevision								controllers.Application.checkPreFlight()
 
+GET     /testSirix	    						controllers.Application.testSirix()
+
+
 
 
 GET     /removeRepository/:backendName  controllers.Application.removeRepository(backendName: String)

@@ -8,7 +8,9 @@ import java.util.ArrayList;
 public abstract class BackendHandlerInterface {
 	public static final String GIT = "git";
 	public static final String XCHRONICLER = "XChronicler";
+	public static final String SIRIX = "sirix";
 	public static final String rootBackendFolder = "./backends/";
+	
 
 	public abstract Object getRepository();
 
