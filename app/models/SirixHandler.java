@@ -10,9 +10,12 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -60,8 +63,10 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import com.google.common.collect.ImmutableSet;
+import com.sleepycat.je.utilint.Timestamp;
 
-public class SirixHandler extends BackendHandlerInterface implements DiffObserver{
+public class SirixHandler extends BackendHandlerInterface implements
+		DiffObserver {
 	private static final String USER_HOME = System.getProperty("user.home");
 
 	/** Storage for databases: Sirix data in home directory. */
@@ -73,7 +78,15 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 	/** Severity used to build a random sample document. */
 	enum Severity {
 		low, high, critical
-	};
+	}
+
+	private static Map<Integer, DiffTuple> mDiffs = new HashMap<Integer, DiffTuple>();
+
+	private Integer mEntries = 0;
+
+	private Map<Long, Integer> mNewKeys = new HashMap<Long, Integer>();
+
+	private Map<Long, Integer> mOldKeys = new HashMap<Long, Integer>();
 
 	private SirixHandler() {
 		
@@ -114,20 +127,23 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 			final QueryContext ctx = new SirixQueryContext(store);
 			
 			File doc1 = generateSampleDoc(tmpDir, "<a>init file</a>", "sample1");
+
 			doc1.deleteOnExit();
 
 			// Use XQuery to load sample document into store.
 			System.out.println("Loading document:");
 			URI doc1Uri = doc1.toURI();
-			//final String xq1 = String.format(
-			//		"bit:load('mydocs.col', io:ls('%s', '\\.xml$'))", doc1Uri.toString());//old versions
-			final String xq1 = String.format("sdb:load('mydocs.col', 'resource1', '%s')",
+			// final String xq1 = String.format(
+			// "bit:load('mydocs.col', io:ls('%s', '\\.xml$'))",
+			// doc1Uri.toString());//old versions
+			final String xq1 = String.format(
+					"sdb:load('mydocs.col', 'resource1', '%s')",
 					doc1Uri.toString());
 
-			System.out.println("xq1"+xq1);
-			System.out.println("ctx"+ctx);
-			new XQuery(compileChain,xq1).evaluate(ctx);
-			
+			System.out.println("xq1" + xq1);
+			System.out.println("ctx" + ctx);
+			new XQuery(compileChain, xq1).evaluate(ctx);
+
 		} catch (DocumentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -232,9 +248,10 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		String fileString=GetListOfFiles();
 		fileString=fileString.replace("<file>", "");
 		fileString=fileString.trim();
+
 		String[] files = fileString.split("</file>");
-		
-		RepositoryRevision rr=new RepositoryRevision();
+
+		RepositoryRevision rr = new RepositoryRevision();
 		rr.setLastCommitMessage(GetMsgHEAD());
 		
 		for (String file : files) {
@@ -243,6 +260,7 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 				rr.addRepositoryFile(new RepositoryFile(file,content));
 			}
 		}
+
 		return rr;
 	}
 
@@ -291,19 +309,19 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		printAllVersions(databaseName);
 
 	}
+
 	public static void printAllVersions(String s){
 		System.out.println("printAllVersions");
 		System.out.println(runQuery("doc('" + s
 				+ "')/log/all-time::*"));
 	}
 	
-	
 	private static String runQuery(String query) { 
 		try (DBStore store= DBStore.newBuilder().build();){
 			CompileChain compileChain = new SirixCompileChain(store);
 			
 			System.out.println("running query:" + query);
-			
+
 			// Reuse store and query loaded document.
 			final QueryContext ctx2 = new SirixQueryContext(store);
 			
@@ -324,8 +342,9 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 			e.printStackTrace();
 		}
 		return null;
-		
+
 	}
+
 	private static void runQueryWhithCommit(String query) {
 		try (DBStore store= DBStore.newBuilder().build();){
 			
@@ -341,172 +360,231 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		
 			System.out.println("runQueryWhithCommit end");
 			printAllVersions();
-			
+
 		} catch (QueryException e) {
 		// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 	}
-	private static String GetContentHEAD(String url){
-		return runQuery("doc('" + databaseName + "')/log/content/"+url+"/*/last::*");
+
+	private static String GetContentHEAD(String url) {
+		return runQuery("doc('" + databaseName + "')/log/content/" + url
+				+ "/*/last::*");
 	}
-	private static String GetMsgHEAD(){
+
+	private static String GetMsgHEAD() {
 		return runQuery("doc('" + databaseName + "')/log/msg/last::*");
 	}
-	
-	
-	private static String GetListOfFiles(){
+
+	private static String GetListOfFiles() {
 		System.out.println("filelist");
-		return runQuery("for $a in doc('" + databaseName + "')/log/content/*/last::* "
-						+"return <file>{local-name($a)}</file>");
+		return runQuery("for $a in doc('" + databaseName
+				+ "')/log/content/*/last::* "
+				+ "return <file>{local-name($a)}</file>");
 	}
+
 	public static void databaseSirix() {
-		
+		SirixHandler.getInstance().removeExistingRepository();
+
 		/** Storage for databases: Sirix data in home directory. */
 		try {
-			
-			//	final File doc = generateSampleDoc(tmpDir,  "<a.txt>init file</a.txt>", "sample1");
-			//	final DatabaseConfiguration dbConf = new DatabaseConfiguration(doc);
-			final DatabaseConfiguration dbConf = new DatabaseConfiguration(new File(
-					LOCATION, databaseName));
+			// final File doc = generateSampleDoc(tmpDir,
+			// "<a.txt>init file</a.txt>", "sample1");
+			// final DatabaseConfiguration dbConf = new
+			// DatabaseConfiguration(doc);
+			final DatabaseConfiguration dbConf = new DatabaseConfiguration(
+					new File(LOCATION, databaseName));
 			Databases.truncateDatabase(dbConf);
 			Databases.createDatabase(dbConf);
 			final Database database = Databases.openDatabase(dbConf.getFile());
-			
+
 			database.createResource(ResourceConfiguration
 					.newBuilder("resource1", dbConf).useDeweyIDs(true)
-					.useTextCompression(true).buildPathSummary(true)
-					.build());
-			
-			final Session session = database.getSession(new SessionConfiguration.Builder("resource1")
-						.build());
-			
-			try(final NodeWriteTrx wtx = session.beginNodeWriteTrx();){
+					.useTextCompression(true).buildPathSummary(false).build());
+
+			final Session session = database
+					.getSession(new SessionConfiguration.Builder("resource1")
+							.build());
+
+			try (final NodeWriteTrx wtx = session.beginNodeWriteTrx();) {
 				
-				wtx.insertElementAsFirstChild(new QNm("hej"));
-				wtx.commit();
-				wtx.insertElementAsFirstChild(new QNm("nr2"));
-				wtx.commit();
+				wtx.insertElementAsFirstChild(new QNm("bar"));
 				
-				//wtx.moveToFirstChild();
-				wtx.moveToDocumentRoot();
-	//			wtx.insertCommentAsFirstChild("asdf");
-	//			wtx.commit();
-				wtx.insertElementAsFirstChild(new QNm("san"));
-				wtx.commit();
-				
-				wtx.insertElementAsFirstChild(new QNm("asdsaad"));
-				wtx.commit();
+				wtx.insertElementAsFirstChild(new QNm("foo"));
+				wtx.insertElementAsFirstChild(new QNm("bao")).commit();
+
 				wtx.moveToParent();
-				wtx.replaceNode("tset");
-				wtx.commit();
-				System.out.println(wtx.getKind());
-				wtx.moveToNext();
-				System.out.println(wtx.getKind());
-				//wtx.insertTextAsLeftSibling("bbb");
-				wtx.insertAttribute(new QNm("aaaa"), "bar");
-				System.out.println(wtx.getKind());
-			
-				wtx.commit();
-				wtx.moveToParent();
-				System.out.println(wtx.getKind());
-				
-				
-				//	wtx.insertCommentAsFirstChild("comment").commit();
-				//wtx.moveTo(4);
-	//			wtx.revertTo(3);
-				
-				try(final NodeReadTrx rtx = session.beginNodeReadTrx();){
+				wtx.moveToParent(); //moves wtx to <bar>
+				wtx.insertElementAsFirstChild(new QNm("foz"));
+				System.out.println("revision: " + wtx.getRevisionNumber() + " @" + wtx.getRevisionTimestamp());
+				wtx.insertElementAsFirstChild(new QNm("baz")).commit();
+				System.out.println("revision: " + wtx.getRevisionNumber() + " @" + wtx.getRevisionTimestamp());
+//				wtx.moveToParent();
+//				wtx.replaceNode("newThirdu0").commit();
+
+//				System.out.println(wtx.getKind());
+//				wtx.moveToNext();
+//				System.out.println(wtx.getKind());
+//				// wtx.insertTextAsLeftSibling("bbb");
+//				wtx.insertAttribute(new QNm("undernewThirdSibling"), "bar");
+
+//				System.out.println(wtx.getKind());
+//
+//				wtx.commit();
+//				wtx.moveToParent();
+//				System.out.println(wtx.getKind());
+
+				try (final NodeReadTrx rtx = session.beginNodeReadTrx();) {
 					rtx.moveToDocumentRoot();
 					rtx.moveToFirstChild();
-					//wtx.copySubtreeAsFirstChild(rtx);
-					//wtx.commit();
-					prettyPrint(session);
-//					String content = baos.toString("UTF8");
-//					System.out.println(content);
-				//	System.out.println(rtx.get.getLocalName());
+					rtx.moveToFirstChild();
+					rtx.moveToRightSibling();
+
+					wtx.moveToDocumentRoot();
+					wtx.moveToFirstChild();
+					wtx.moveToFirstChild();
+					//wtx.moveToRightSibling();
 					
-				
+					prettyPrint(session, System.out);
 					
+					/*DiffFactory.Builder diffb = new DiffFactory.Builder(
+							session, 5, 0, DiffOptimized.NO,
+							ImmutableSet.of((DiffObserver) getInstance()));
+					DiffFactory.invokeFullDiff(diffb);*/
 					
-					DiffFactory.Builder diffb=new DiffFactory.Builder(session, 6,
-				            0, DiffOptimized.NO, ImmutableSet.of((DiffObserver)getInstance()));
-					DiffFactory.invokeFullDiff(diffb);
-					System.out.println("getName: "+rtx.getName());
-					System.out.println(rtx.getNamespaceURI());
+					System.out.println("rtx is at:" + rtx.getName().toString()); //foo
+					System.out.println("wtx is at:" + wtx.getName().toString()); //foz
 					
+					//Not working atm, issue #27 on github
+					long fromKey = rtx.getNodeKey();
+					System.out.println("revision: " + wtx.getRevisionNumber() + " @" + wtx.getRevisionTimestamp());
+					wtx.moveSubtreeToFirstChild(fromKey).commit(); 
+					System.out.println("revision: " + wtx.getRevisionNumber() + " @" + wtx.getRevisionTimestamp());
 					
-				//	System.out.println(rtx.getAttributeCount());
-				//	System.out.println(rtx.getNamespaceURI());
-				//	System.out.println(rtx.getNamespaceURI());
-				//	System.out.println(rtx.getItemList());
-					//final NodeWriteTrx wtx = session.beginNodeWriteTrx();
-					//wtx.insertTextAsFirstChild("foo");
-					//wtx.commit();
+					//wtx.copySubtreeAsFirstChild(rtx).commit();
 					
-					System.out.println("valure: "+rtx.getValue());
+					prettyPrint(session, System.out);
+
+					DiffFactory.Builder diffc = new DiffFactory.Builder(
+							session, 3, 2, DiffOptimized.NO,
+							ImmutableSet.of((DiffObserver) getInstance()));
+					DiffFactory.invokeFullDiff(diffc);
+					displayDiffs(session);
+
+					// System.out.println(rtx.getAttributeCount());
+					// System.out.println(rtx.getNamespaceURI());
+					// System.out.println(rtx.getNamespaceURI());
+					// System.out.println(rtx.getItemList());
+
 				}
+				
+				System.out.println(mDiffs.entrySet().toString());
+				
+				
 			}
-			System.out.println("db:"+session.getDatabase());
+			System.out.println("db:" + session.getDatabase());
 			System.out.println(session.getResourceConfig());
-				database.close();
+
+			database.close();
 		} catch (SirixException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (XMLStreamException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
+//		} catch (UnsupportedEncodingException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (XMLStreamException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+		}
 
 	}
 
-	
+	private static void displayDiffs(Session session) throws SirixException {
+		//if i have the oldversion db and the new version then
+		// i can search the old node source and show from where the change happened
+		
+		
+		final NodeReadTrx rtx = session.beginNodeReadTrx();
+		for (Map.Entry<Integer, DiffTuple> diff : mDiffs.entrySet()) {
+			DiffTuple diffTuple = diff.getValue();
+			DiffType diffType = diffTuple.getDiff();
+			
+			if (diffType != DiffType.SAME && diffType != DiffType.SAMEHASH) {
+				rtx.moveTo(diffTuple.getOldNodeKey());
+				if(rtx.isNameNode()){
+					System.out.println("old node current name: " + rtx.getName().toString());
+				}
+				
+				rtx.moveTo(diffTuple.getNewNodeKey());
+				if(rtx.isNameNode()){
+					System.out.println("element changed: " + rtx.getName().toString());
+				}
+				System.out.println("diff type:"+ diffTuple.getDiff());
+			}
+		}
+		
+	}
+
 	/**
 	 * @param session
 	 * @throws SirixException
 	 */
-	private static void prettyPrint(final Session session)
+	private static void prettyPrint(final Session session, PrintStream out)
 			throws SirixException {
 		final XMLSerializer serializer = XMLSerializer
-				.newBuilder(session, System.out).prettyPrint()
+				.newBuilder(session, out).prettyPrint()
 				.build();
 		serializer.call();
 	}
 
 	@Override
 	public void diffDone() {
-		System.out.println("diffDone");
+		System.out.println("detecting moves...");
+		detectMoves();
 	}
-
-	Map<Integer, DiffTuple> mDiffs= new HashMap<Integer, DiffTuple>();
 	
 	@Override
-	public void diffListener(final DiffType diffType,
-		final long newNodeKey, final long oldNodeKey,
-			final DiffDepth depth) {
-		/*		
-		final DiffTuple diffCont = new DiffTuple(diffType, newNodeKey, oldNodeKey, depth);
-        
+	public void diffListener(final DiffType diffType, final long newNodeKey,
+			final long oldNodeKey, final DiffDepth depth) {
+		final DiffTuple diffCont = new DiffTuple(diffType, newNodeKey,
+				oldNodeKey, depth);
+		mEntries++;
 		mDiffs.put(mEntries, diffCont);
+		System.out.println("mEntries:" + mEntries);
 
-	    switch (diffType) {
+		switch (diffType) {
 		case INSERTED:
-		    mNewKeys.put(newNodeKey, mEntries);
-		    break;
+			mNewKeys.put(newNodeKey, mEntries);
+			break;
 		case DELETED:
-		    mOldKeys.put(oldNodeKey, mEntries);
-		    break;
-	     default:
-        }*/
+			mOldKeys.put(oldNodeKey, mEntries);
+			break;
+		default:
+		}
 	}
-	
-	
-	
+
+	private void detectMoves() {
+		for (final DiffTuple diffCont : mDiffs.values()) {
+			final Integer newIndex = mNewKeys.get(diffCont.getOldNodeKey());
+			if (newIndex != null
+					&& (diffCont.getDiff() == DiffType.DELETED || diffCont
+							.getDiff() == DiffType.MOVEDFROM)) {
+				System.out.println("new node key: "
+						+ mDiffs.get(newIndex).getNewNodeKey());
+				mDiffs.get(newIndex).setDiff(DiffType.MOVEDTO);
+			}
+			final Integer oldIndex = mOldKeys.get(diffCont.getNewNodeKey());
+			if (oldIndex != null
+					&& (diffCont.getDiff() == DiffType.INSERTED || diffCont
+							.getDiff() == DiffType.MOVEDTO)) {
+				mDiffs.get(oldIndex).setDiff(DiffType.MOVEDFROM)
+						.setIndex(mNewKeys.get(diffCont.getNewNodeKey()));
+			}
+		}
+	}
+
 }
