@@ -84,15 +84,12 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public Object getRepository() {
-
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean init() {
-		
-		
 		// Prepare sample document.
 		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 		System.out.println("saving temp in :" + tmpDir.getAbsolutePath());
@@ -110,9 +107,9 @@ public class SirixHandler extends BackendHandlerInterface implements
 			// Use XQuery to load sample document into store.
 			System.out.println("Loading document:");
 			URI doc1Uri = doc1.toURI();
-			// final String xq1 = String.format(
-			// "bit:load('mydocs.col', io:ls('%s', '\\.xml$'))",
-			// doc1Uri.toString());//old versions
+//			final String xq1 = String.format(
+//					"bit:load('mydocs.col', io:ls('%s', '\\.xml$'))",
+//					doc1Uri.toString());//old versions
 			final String xq1 = String.format(
 					"sdb:load('mydocs.col', 'resource1', '%s')",
 					doc1Uri.toString());
@@ -143,7 +140,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
 		System.out.println("commit");
-		//runQueryWhithCommit("replace node doc('" + databaseName + "')/log/content/"+url+" with "+content);
+//		runQueryWhithCommit("replace node doc('" + databaseName + "')/log/content/"+url+" with "+content);
 		printAllVersions();	
 		String selectFile=runQuery("doc('" + databaseName + "')/log/content/"+url);
 		System.out.println("before: |"+selectFile+"|");
@@ -160,14 +157,13 @@ public class SirixHandler extends BackendHandlerInterface implements
 		}
 		System.out.println("end of commit");
 		
-		//printAllVersions();
-
-		//"replace node doc('" + databaseName + "')/log/content/"+url+" with "+content
-		
-			//	,"doc('" + databaseName + "')/log/all-time::*");
-		//runQueryWhithCommit("delete node doc('" + databaseName + "')/log/content/"+url,
-		//		"insert nodes " + content + " into doc('" + databaseName+ "')/log/content");
-		//append(content,url);
+//		printAllVersions();
+//
+//		"replace node doc('" + databaseName + "')/log/content/"+url+" with "+content
+//		,"doc('" + databaseName + "')/log/all-time::*");
+//		runQueryWhithCommit("delete node doc('" + databaseName + "')/log/content/"+url,
+//				"insert nodes " + content + " into doc('" + databaseName+ "')/log/content");
+//		append(content,url);
 		
 		
 		return true;
@@ -175,12 +171,12 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public String commitAFile(TempFile tf) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public TempFile getFile(String url) {
-
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -189,7 +185,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	public Logs getLog() {
 		System.out.println("running get Log");
 		Logs logs =new Logs();
-		//System.out.println("doc('" +databaseName+ "')/log/all-time::*");
+//		System.out.println("doc('" +databaseName+ "')/log/all-time::*");
 		String msgs=runQuery("doc('" +databaseName+ "')/log/src/all-time::*");
 		String[] msgArr=msgs.split("\n");
 		for (int i = 0; i < msgArr.length; i++) {
@@ -268,7 +264,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 		out.print(String.format("<log tstamp='%s' severity='%s' foo='bar'>",
 				tst, sev));
 		out.print(String.format("<src>%s</src>", src));
-		//out.print(String.format("<msg><bbb>%s</bbb></msg>", msg));
+//		out.print(String.format("<msg><bbb>%s</bbb></msg>", msg));
 		out.print(String.format("<content><a.txt></a.txt></content>", msg));
 		out.print("</log>");
 		out.close();
@@ -279,7 +275,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	public static void append(String text,String file) {
 		text="<"+file+">"+text+"</"+file+">";		
 		runQueryWhithCommit("insert nodes " + text + " into doc('" + databaseName
-					+ "')/log/content");
+				+ "')/log/content");
 	}
 
 	public static void printAllVersions() {
@@ -330,7 +326,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 			System.out.println("runQueryWhithCommit"+query);
 			
 			QueryContext ctx1 = new SirixQueryContext(store);
-			//replace node doc('" + databaseName + "')/log/content with '<hej />').evaluate(ctx1)
+//			replace node doc('" + databaseName + "')/log/content with '<hej />').evaluate(ctx1)
 			System.out.println("runQueryWhithCommit mid");
 			new XQuery(compileChain, query).evaluate(ctx1);
 			System.out.println("intsert node");
@@ -339,7 +335,6 @@ public class SirixHandler extends BackendHandlerInterface implements
 			printAllVersions();
 
 		} catch (QueryException e) {
-		// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -366,10 +361,10 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 		/** Storage for databases: Sirix data in home directory. */
 		try {
-			// final File doc = generateSampleDoc(tmpDir,
-			// "<a.txt>init file</a.txt>", "sample1");
-			// final DatabaseConfiguration dbConf = new
-			// DatabaseConfiguration(doc);
+//			final File doc = generateSampleDoc(tmpDir,
+//					"<a.txt>init file</a.txt>", "sample1");
+//			final DatabaseConfiguration dbConf = new
+//					DatabaseConfiguration(doc);
 			final DatabaseConfiguration dbConf = new DatabaseConfiguration(
 					new File(LOCATION, databaseName));
 			Databases.truncateDatabase(dbConf);
@@ -399,13 +394,13 @@ public class SirixHandler extends BackendHandlerInterface implements
 				System.out.println("revision: " + wtx.getRevisionNumber() + " @" + wtx.getRevisionTimestamp());
 //				wtx.moveToParent();
 //				wtx.replaceNode("newThirdu0").commit();
-
+//
 //				System.out.println(wtx.getKind());
 //				wtx.moveToNext();
 //				System.out.println(wtx.getKind());
-//				// wtx.insertTextAsLeftSibling("bbb");
+//				wtx.insertTextAsLeftSibling("bbb");
 //				wtx.insertAttribute(new QNm("undernewThirdSibling"), "bar");
-
+//
 //				System.out.println(wtx.getKind());
 //
 //				wtx.commit();
@@ -421,14 +416,14 @@ public class SirixHandler extends BackendHandlerInterface implements
 					wtx.moveToDocumentRoot();
 					wtx.moveToFirstChild();
 					wtx.moveToFirstChild();
-					//wtx.moveToRightSibling();
+//					wtx.moveToRightSibling();
 					
 					prettyPrint(session, System.out);
 					
-					/*DiffFactory.Builder diffb = new DiffFactory.Builder(
-							session, 5, 0, DiffOptimized.NO,
-							ImmutableSet.of((DiffObserver) getInstance()));
-					DiffFactory.invokeFullDiff(diffb);*/
+//					DiffFactory.Builder diffb = new DiffFactory.Builder(
+//							session, 5, 0, DiffOptimized.NO,
+//							ImmutableSet.of((DiffObserver) getInstance()));
+//					DiffFactory.invokeFullDiff(diffb);
 					
 					System.out.println("rtx is at:" + rtx.getName().toString()); //foo
 					System.out.println("wtx is at:" + wtx.getName().toString()); //foz
@@ -439,7 +434,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 					wtx.moveSubtreeToFirstChild(fromKey).commit(); 
 					System.out.println("revision: " + wtx.getRevisionNumber() + " @" + wtx.getRevisionTimestamp());
 					
-					//wtx.copySubtreeAsFirstChild(rtx).commit();
+//					wtx.copySubtreeAsFirstChild(rtx).commit();
 					
 					prettyPrint(session, System.out);
 
@@ -449,10 +444,10 @@ public class SirixHandler extends BackendHandlerInterface implements
 					DiffFactory.invokeFullDiff(diffc);
 					displayDiffs(session);
 
-					// System.out.println(rtx.getAttributeCount());
-					// System.out.println(rtx.getNamespaceURI());
-					// System.out.println(rtx.getNamespaceURI());
-					// System.out.println(rtx.getItemList());
+//					System.out.println(rtx.getAttributeCount());
+//					System.out.println(rtx.getNamespaceURI());
+//					System.out.println(rtx.getNamespaceURI());
+//					System.out.println(rtx.getItemList());
 
 				}
 				
@@ -465,26 +460,17 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 			database.close();
 		} catch (SirixException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-//		} catch (UnsupportedEncodingException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (XMLStreamException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
 		}
 
 	}
 
 	private static void displayDiffs(Session session) throws SirixException {
-		//if i have the oldversion db and the new version then
-		// i can search the old node source and show from where the change happened
-		
-		
+		/*
+		 * TODO: if i have the oldversion db and the new version then
+		 * i can search the old node source and show from where the change happened
+		 */
+
 		final NodeReadTrx rtx = session.beginNodeReadTrx();
 		for (Map.Entry<Integer, DiffTuple> diff : mDiffs.entrySet()) {
 			DiffTuple diffTuple = diff.getValue();
