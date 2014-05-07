@@ -140,20 +140,20 @@ public class SirixHandler extends BackendHandlerInterface implements
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
 		System.out.println("commit");
-//		runQueryWhithCommit("replace node doc('" + databaseName + "')/log/content/"+url+" with "+content);
+//		runQueryWithCommit("replace node doc('" + databaseName + "')/log/content/"+url+" with "+content);
 		printAllVersions();	
 		String selectFile=runQuery("doc('" + databaseName + "')/log/content/"+url);
 		System.out.println("before: |"+selectFile+"|");
 		if(!selectFile.equals("")){
 			System.out.println("replace node");
 			String query="replace node doc('" + databaseName + "')/log/content/"+url+" with <node>replace1</node>";
-			runQueryWhithCommit(query);
+			runQueryWithCommit(query);
 		}else{
 			append(content,url);
 			System.out.println("insert node");
 			content="<"+url+">"+content+"</"+url+">";	
 			String insertQuery="insert nodes " + content + " into doc('" + databaseName+ "')/log/content";
-			runQueryWhithCommit(insertQuery);
+			runQueryWithCommit(insertQuery);
 		}
 		System.out.println("end of commit");
 		
@@ -161,7 +161,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 //
 //		"replace node doc('" + databaseName + "')/log/content/"+url+" with "+content
 //		,"doc('" + databaseName + "')/log/all-time::*");
-//		runQueryWhithCommit("delete node doc('" + databaseName + "')/log/content/"+url,
+//		runQueryWithCommit("delete node doc('" + databaseName + "')/log/content/"+url,
 //				"insert nodes " + content + " into doc('" + databaseName+ "')/log/content");
 //		append(content,url);
 		
@@ -274,7 +274,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	public static void append(String text,String file) {
 		text="<"+file+">"+text+"</"+file+">";		
-		runQueryWhithCommit("insert nodes " + text + " into doc('" + databaseName
+		runQueryWithCommit("insert nodes " + text + " into doc('" + databaseName
 				+ "')/log/content");
 	}
 
@@ -318,20 +318,20 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	}
 
-	private static void runQueryWhithCommit(String query) {
+	private static void runQueryWithCommit(String query) {
 		try (DBStore store= DBStore.newBuilder().build();){
 			
 			CompileChain compileChain = new SirixCompileChain(store);
 			
-			System.out.println("runQueryWhithCommit"+query);
+			System.out.println("runQueryWithCommit"+query);
 			
 			QueryContext ctx1 = new SirixQueryContext(store);
 //			replace node doc('" + databaseName + "')/log/content with '<hej />').evaluate(ctx1)
-			System.out.println("runQueryWhithCommit mid");
+			System.out.println("runQueryWithCommit mid");
 			new XQuery(compileChain, query).evaluate(ctx1);
 			System.out.println("intsert node");
 		
-			System.out.println("runQueryWhithCommit end");
+			System.out.println("runQueryWithCommit end");
 			printAllVersions();
 
 		} catch (QueryException e) {
