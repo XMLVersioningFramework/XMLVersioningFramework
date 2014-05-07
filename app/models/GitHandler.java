@@ -1,7 +1,10 @@
 package models;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
@@ -343,7 +346,61 @@ public class GitHandler extends BackendHandlerInterface {
 		String fileName = url;
 		String fileContent = content;
 		String filePath = GitHandler.REPOSITORY_URL;
-		FileManager.createFile(fileContent, fileName, filePath);
+		try {
+			File file=FileManager.createFile(fileContent, fileName, filePath);
+			Runtime rt = Runtime.getRuntime();
+			System.out.println("running xmllint");
+			Process pr = rt.exec("/usr/bin/xmllint --c14n "+filePath+fileName);
+			System.out.println("create file "+filePath+fileName+".norm");
+			// hook up child process output to parent
+			InputStream lsOut = pr.getInputStream();
+			InputStreamReader r = new InputStreamReader(lsOut);
+			BufferedReader in = new BufferedReader(r);
+			
+			// read the child process' output
+			fileContent="";
+			char c;
+			int i;
+			boolean questionMark=false;
+			boolean inside=false;
+			while ((i = lsOut.read()) != -1) {
+				c=(char)i;
+				if(c=='<'){
+					inside=true;
+				}
+				if(c=='>'){
+					if(!questionMark){
+						fileContent+='\n';
+					}
+					inside=false;
+				}
+				
+				
+				
+				
+				
+				
+				if(inside&&c==' '){
+					fileContent+='\n';
+				}else{
+					fileContent+=c;
+				}
+				if(c=='?'){
+					questionMark=true;
+				}else{
+					questionMark=false;
+				}
+				
+			}
+			
+		
+			FileUtils.write(file, fileContent);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 	}
 
 	@Override
