@@ -343,12 +343,19 @@ public class GitHandler extends BackendHandlerInterface {
 	 */
 	// TODO: Should be moved away from here
 	private static void buildFile(String url, String content) {
+		System.out.println("running buildFile");
 		String fileName = url;
 		String fileContent = content;
+//				"<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"yes\"?>"
+//				+ "<!--asdasd-->"
+//				+ "<a><div a=\"aa\" b=\"bb\" c=\"cc\">hej</div></a>";
 		String filePath = GitHandler.REPOSITORY_URL;
+		File file=FileManager.createFile(fileContent, fileName, filePath);
+		
+		System.out.println("writning to file"+fileContent);
+		Runtime rt = Runtime.getRuntime();
+		
 		try {
-			File file=FileManager.createFile(fileContent, fileName, filePath);
-			Runtime rt = Runtime.getRuntime();
 			System.out.println("running xmllint");
 			Process pr = rt.exec("/usr/bin/xmllint --c14n "+filePath+fileName);
 			System.out.println("create file "+filePath+fileName+".norm");
@@ -356,7 +363,50 @@ public class GitHandler extends BackendHandlerInterface {
 			InputStream lsOut = pr.getInputStream();
 			InputStreamReader r = new InputStreamReader(lsOut);
 			BufferedReader in = new BufferedReader(r);
+			String line="";
+			String unSplitText="";
+			while((line=in.readLine())!= null){
+				unSplitText+=line;
+			}
 			
+			unSplitText=fileContent;
+			boolean inTag=false;
+			String outPutString="";
+			System.out.println("before"+unSplitText);
+			for (int i = 0; i < unSplitText.length(); i++) {
+				char c=(char)unSplitText.getBytes()[i];
+				
+				if(c=='<'){
+					if(((char)unSplitText.getBytes()[i+1])=='!'||((char)unSplitText.getBytes()[i+1]=='?')){
+						outPutString+=c;//if it is comment or <?
+					}else{
+						inTag=true;
+						outPutString+="<\n";
+					}
+					
+				}else if(c=='>'){
+					inTag=false;
+					outPutString+=c;
+				}else if(inTag){
+					if(c==' '){
+						outPutString+="\n";
+					}else{
+						outPutString+=c;
+					}
+				}else{
+					outPutString+=c;
+				}
+				System.out.println(outPutString+"\n\n\n");
+			}
+			
+		
+			
+			
+			
+			
+			
+			
+			/*
 			// read the child process' output
 			fileContent="";
 			char c;
@@ -374,12 +424,6 @@ public class GitHandler extends BackendHandlerInterface {
 					}
 					inside=false;
 				}
-				
-				
-				
-				
-				
-				
 				if(inside&&c==' '){
 					fileContent+='\n';
 				}else{
@@ -391,10 +435,11 @@ public class GitHandler extends BackendHandlerInterface {
 					questionMark=false;
 				}
 				
-			}
+			}*/
+			
 			
 		
-			FileUtils.write(file, fileContent);
+			FileUtils.write(file, outPutString);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
