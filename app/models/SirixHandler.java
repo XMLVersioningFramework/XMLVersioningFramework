@@ -109,7 +109,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 			URI doc1Uri = doc1.toURI();
 //			final String xq1 = String.format(
 //					"bit:load('mydocs.col', io:ls('%s', '\\.xml$'))",
-//					doc1Uri.toString());//old versions
+//					doc1Uri.toString()); //old versions
 			final String xq1 = String.format(
 					"sdb:load('mydocs.col', 'resource1', '%s')",
 					doc1Uri.toString());
