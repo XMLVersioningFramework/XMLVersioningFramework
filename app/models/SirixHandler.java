@@ -151,22 +151,24 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 	public boolean commit(String url, String content, String message, User user) {
 		System.out.println("commit");
 		//runQueryWhithCommit("replace node doc('" + databaseName + "')/log/content/"+url+" with "+content);
-		printAllVersions();
-		//content="<"+url+">"+content+"</"+url+">";	
+		printAllVersions();	
 		String selectFile=runQuery("doc('" + databaseName + "')/log/content/"+url);
 		System.out.println("before: |"+selectFile+"|");
 		if(!selectFile.equals("")){
-			String query="replace node doc('" + databaseName + "')/log/content/"+url+" with "+content;
+			System.out.println("replace node");
+			String query="replace node doc('" + databaseName + "')/log/content/"+url+" with <node>replace1</node>";
 			runQueryWhithCommit(query);
 		}else{
+			append(content,url);
+			System.out.println("insert node");
 			content="<"+url+">"+content+"</"+url+">";	
 			String insertQuery="insert nodes " + content + " into doc('" + databaseName+ "')/log/content";
 			runQueryWhithCommit(insertQuery);
 		}
+		System.out.println("end of commit");
 		
 		//printAllVersions();
-	//	System.out.println("get version on XPath: "+getVersionOfXpath("/log", 0));
-		
+
 		//"replace node doc('" + databaseName + "')/log/content/"+url+" with "+content
 		
 			//	,"doc('" + databaseName + "')/log/all-time::*");
@@ -192,9 +194,18 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 	@Override
 	public Logs getLog() {
-		// TODO Auto-generated method stub
-		//printAllVersions();
-		return null;
+		System.out.println("running get Log");
+		Logs logs =new Logs();
+		//System.out.println("doc('" +databaseName+ "')/log/all-time::*");
+		String msgs=runQuery("doc('" +databaseName+ "')/log/src/all-time::*");
+		String[] msgArr=msgs.split("\n");
+		for (int i = 0; i < msgArr.length; i++) {
+			Log log=new Log(""+i, msgArr[1]);
+			logs.addLog(log);
+		}
+		System.out.println(msgs);
+		
+		return logs;
 	}
 
 	@Override
@@ -217,8 +228,8 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 	@Override
 	public RepositoryRevision getRepositoryHEAD() {
+		System.out.println("getRepositoryHEAD");
 		String fileString=GetListOfFiles();
-		System.out.println(fileString);
 		fileString=fileString.replace("<file>", "");
 		fileString=fileString.trim();
 		String[] files = fileString.split("</file>");
@@ -227,8 +238,7 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 		rr.setLastCommitMessage(GetMsgHEAD());
 		
 		for (String file : files) {
-			System.out.println("|"+file+"|");
-			if(file!="\n"){
+				if(file!="\n"){
 				String content=GetContentHEAD(file);
 				rr.addRepositoryFile(new RepositoryFile(file,content));
 			}
@@ -264,7 +274,7 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 				tst, sev));
 		out.print(String.format("<src>%s</src>", src));
 		//out.print(String.format("<msg><bbb>%s</bbb></msg>", msg));
-		out.print(String.format("<content></content>", msg));
+		out.print(String.format("<content><a.txt></a.txt></content>", msg));
 		out.print("</log>");
 		out.close();
 		
@@ -273,8 +283,8 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 	public static void append(String text,String file) {
 		text="<"+file+">"+text+"</"+file+">";		
-	//	runQueryWhithCommit("insert nodes " + text + " into doc('" + databaseName
-	//				+ "')/log/content");
+		runQueryWhithCommit("insert nodes " + text + " into doc('" + databaseName
+					+ "')/log/content");
 	}
 
 	public static void printAllVersions() {
@@ -318,18 +328,19 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 	}
 	private static void runQueryWhithCommit(String query) {
 		try (DBStore store= DBStore.newBuilder().build();){
+			
 			CompileChain compileChain = new SirixCompileChain(store);
 			
 			System.out.println("runQueryWhithCommit"+query);
 			
-			final QueryContext ctx1 = new SirixQueryContext(store);
+			QueryContext ctx1 = new SirixQueryContext(store);
 			//replace node doc('" + databaseName + "')/log/content with '<hej />').evaluate(ctx1)
-			
+			System.out.println("runQueryWhithCommit mid");
 			new XQuery(compileChain, query).evaluate(ctx1);
-		//	try (final DBStore store2 = DBStore.newBuilder().build()) {
-		//		final QueryContext ctx2 = new QueryContext(store2);
-		//		new XQuery(compileChain, "doc('" +databaseName+ "')/log/all-time::*").evaluate(ctx2);
-		//	}
+			System.out.println("intsert node");
+		
+			System.out.println("runQueryWhithCommit end");
+			printAllVersions();
 			
 		} catch (QueryException e) {
 		// TODO Auto-generated catch block
@@ -371,7 +382,7 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 			final Session session = database.getSession(new SessionConfiguration.Builder("resource1")
 						.build());
 			
-				try(final NodeWriteTrx wtx = session.beginNodeWriteTrx();){
+			try(final NodeWriteTrx wtx = session.beginNodeWriteTrx();){
 				
 				wtx.insertElementAsFirstChild(new QNm("hej"));
 				wtx.commit();
@@ -471,7 +482,6 @@ public class SirixHandler extends BackendHandlerInterface implements DiffObserve
 
 	@Override
 	public void diffDone() {
-		// TODO Auto-generated method stub
 		System.out.println("diffDone");
 	}
 
