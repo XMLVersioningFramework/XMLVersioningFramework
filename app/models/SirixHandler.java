@@ -51,7 +51,6 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	private static final String databaseName = "mydocs.col";
 
-	
 	/** Severity used to build a random sample document. */
 	enum Severity {
 		low, high, critical
@@ -157,14 +156,11 @@ public class SirixHandler extends BackendHandlerInterface implements
 		}
 		System.out.println("end of commit");
 		
-//		printAllVersions();
-//
 //		"replace node doc('" + databaseName + "')/log/content/"+url+" with "+content
 //		,"doc('" + databaseName + "')/log/all-time::*");
 //		runQueryWithCommit("delete node doc('" + databaseName + "')/log/content/"+url,
 //				"insert nodes " + content + " into doc('" + databaseName+ "')/log/content");
 //		append(content,url);
-		
 		
 		return true;
 	}
@@ -228,7 +224,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 		rr.setLastCommitMessage(GetMsgHEAD());
 		
 		for (String file : files) {
-				if(file!="\n"){
+			if(file!="\n"){
 				String content=GetContentHEAD(file);
 				rr.addRepositoryFile(new RepositoryFile(file,content));
 			}
@@ -238,7 +234,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	}
 
 	/**
-	 * Generate a small sample document. Neaded?
+	 * Generate a small sample document. Needed?
 	 * 
 	 * @param dir
 	 *            the directory
@@ -246,7 +242,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	 *            prefix of name to use
 	 * @return the generated file
 	 * @throws IOException
-	 *             if any I/O exception occured
+	 *             if any I/O exception occurred
 	 */
 	static File generateSampleDoc(final File dir, final String msg,
 			final String prefix) throws IOException {
@@ -361,10 +357,6 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 		/** Storage for databases: Sirix data in home directory. */
 		try {
-//			final File doc = generateSampleDoc(tmpDir,
-//					"<a.txt>init file</a.txt>", "sample1");
-//			final DatabaseConfiguration dbConf = new
-//					DatabaseConfiguration(doc);
 			final DatabaseConfiguration dbConf = new DatabaseConfiguration(
 					new File(LOCATION, databaseName));
 			Databases.truncateDatabase(dbConf);
@@ -392,20 +384,6 @@ public class SirixHandler extends BackendHandlerInterface implements
 				System.out.println("revision: " + wtx.getRevisionNumber() + " @" + wtx.getRevisionTimestamp());
 				wtx.insertElementAsFirstChild(new QNm("baz")).commit();
 				System.out.println("revision: " + wtx.getRevisionNumber() + " @" + wtx.getRevisionTimestamp());
-//				wtx.moveToParent();
-//				wtx.replaceNode("newThirdu0").commit();
-//
-//				System.out.println(wtx.getKind());
-//				wtx.moveToNext();
-//				System.out.println(wtx.getKind());
-//				wtx.insertTextAsLeftSibling("bbb");
-//				wtx.insertAttribute(new QNm("undernewThirdSibling"), "bar");
-//
-//				System.out.println(wtx.getKind());
-//
-//				wtx.commit();
-//				wtx.moveToParent();
-//				System.out.println(wtx.getKind());
 
 				try (final NodeReadTrx rtx = session.beginNodeReadTrx();) {
 					rtx.moveToDocumentRoot();
@@ -416,14 +394,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 					wtx.moveToDocumentRoot();
 					wtx.moveToFirstChild();
 					wtx.moveToFirstChild();
-//					wtx.moveToRightSibling();
 					
 					prettyPrint(session, System.out);
-					
-//					DiffFactory.Builder diffb = new DiffFactory.Builder(
-//							session, 5, 0, DiffOptimized.NO,
-//							ImmutableSet.of((DiffObserver) getInstance()));
-//					DiffFactory.invokeFullDiff(diffb);
 					
 					System.out.println("rtx is at:" + rtx.getName().toString()); //foo
 					System.out.println("wtx is at:" + wtx.getName().toString()); //foz
@@ -434,8 +406,6 @@ public class SirixHandler extends BackendHandlerInterface implements
 					wtx.moveSubtreeToFirstChild(fromKey).commit(); 
 					System.out.println("revision: " + wtx.getRevisionNumber() + " @" + wtx.getRevisionTimestamp());
 					
-//					wtx.copySubtreeAsFirstChild(rtx).commit();
-					
 					prettyPrint(session, System.out);
 
 					DiffFactory.Builder diffc = new DiffFactory.Builder(
@@ -444,15 +414,9 @@ public class SirixHandler extends BackendHandlerInterface implements
 					DiffFactory.invokeFullDiff(diffc);
 					displayDiffs(session);
 
-//					System.out.println(rtx.getAttributeCount());
-//					System.out.println(rtx.getNamespaceURI());
-//					System.out.println(rtx.getNamespaceURI());
-//					System.out.println(rtx.getItemList());
-
 				}
 				
 				System.out.println(mDiffs.entrySet().toString());
-				
 				
 			}
 			System.out.println("db:" + session.getDatabase());
