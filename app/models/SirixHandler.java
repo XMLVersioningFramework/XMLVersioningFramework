@@ -145,14 +145,15 @@ public class SirixHandler extends BackendHandlerInterface implements
 		System.out.println("before: |"+selectFile+"|");
 		if(!selectFile.equals("")){
 			System.out.println("replace node");
-			String query="replace node doc('" + databaseName + "')/log/content/"+url+" with <node>replace1</node>";
+			String query="replace node doc('" + databaseName + "')/log/content/"+url+" with "+content;
 			runQueryWithCommit(query);
 		}else{
 			append(content,url);
 			System.out.println("insert node");
-			content="<"+url+">"+content+"</"+url+">";	
-			String insertQuery="insert nodes " + content + " into doc('" + databaseName+ "')/log/content";
-			runQueryWithCommit(insertQuery);
+			//content="<"+url+">"+content+"</"+url+">";	
+			//String insertQuery="insert nodes " + content + " into doc('" + databaseName+ "')/log/content";
+			//runQueryWhithCommit(insertQuery);
+
 		}
 		System.out.println("end of commit");
 		
