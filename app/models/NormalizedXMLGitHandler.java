@@ -7,10 +7,10 @@ import java.util.ArrayList;
  * Heavily depends on GitHandler for the implementation
  *
  */
-public class CanonicalXMLGitHandler extends BackendHandlerInterface {
+public class NormalizedXMLGitHandler extends BackendHandlerInterface {
 	BackendHandlerInterface gitHandler = GitHandler.getInstance(); 
 
-	private CanonicalXMLGitHandler() {
+	private NormalizedXMLGitHandler() {
 	}
 
 	/**
@@ -19,7 +19,7 @@ public class CanonicalXMLGitHandler extends BackendHandlerInterface {
 	 * not before.
 	 */
 	private static class SingletonHolder {
-		private static final BackendHandlerInterface INSTANCE = new CanonicalXMLGitHandler();
+		private static final BackendHandlerInterface INSTANCE = new NormalizedXMLGitHandler();
 	}
 
 	public static BackendHandlerInterface getInstance() {
