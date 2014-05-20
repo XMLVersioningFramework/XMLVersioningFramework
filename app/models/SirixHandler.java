@@ -20,9 +20,6 @@ import org.brackit.xquery.XQuery;
 import org.brackit.xquery.atomic.QNm;
 import org.brackit.xquery.compiler.CompileChain;
 import org.brackit.xquery.xdm.DocumentException;
-import org.brackit.xquery.xdm.Item;
-import org.brackit.xquery.xdm.Iter;
-import org.brackit.xquery.xdm.Sequence;
 import org.sirix.access.Databases;
 import org.sirix.access.conf.DatabaseConfiguration;
 import org.sirix.access.conf.ResourceConfiguration;
@@ -41,7 +38,6 @@ import org.sirix.exception.SirixException;
 import org.sirix.service.xml.serialize.XMLSerializer;
 import org.sirix.xquery.SirixCompileChain;
 import org.sirix.xquery.SirixQueryContext;
-import org.sirix.xquery.node.DBNode;
 import org.sirix.xquery.node.DBStore;
 
 import com.google.common.collect.ImmutableSet;
@@ -435,7 +431,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 					
 					prettyPrint(session, System.out);
 
-					generateDiffs(session, 3, 4);
+					generateDiffs(session, 4, 3);
 
 				}
 				
