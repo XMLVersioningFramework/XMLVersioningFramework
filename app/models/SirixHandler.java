@@ -20,6 +20,9 @@ import org.brackit.xquery.XQuery;
 import org.brackit.xquery.atomic.QNm;
 import org.brackit.xquery.compiler.CompileChain;
 import org.brackit.xquery.xdm.DocumentException;
+import org.brackit.xquery.xdm.Item;
+import org.brackit.xquery.xdm.Iter;
+import org.brackit.xquery.xdm.Sequence;
 import org.sirix.access.Databases;
 import org.sirix.access.conf.DatabaseConfiguration;
 import org.sirix.access.conf.ResourceConfiguration;
@@ -38,6 +41,7 @@ import org.sirix.exception.SirixException;
 import org.sirix.service.xml.serialize.XMLSerializer;
 import org.sirix.xquery.SirixCompileChain;
 import org.sirix.xquery.SirixQueryContext;
+import org.sirix.xquery.node.DBNode;
 import org.sirix.xquery.node.DBStore;
 
 import com.google.common.collect.ImmutableSet;
@@ -180,20 +184,42 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public Logs getLog() {
-		System.out.println("running get Log");
-		Logs logs =new Logs();
-//		System.out.println("doc('" +databaseName+ "')/log/all-time::*");
-		String msgs=runQuery("doc('" +databaseName+ "')/log/src/all-time::*");
-		String[] msgArr=msgs.split("\n");
-		for (int i = 0; i < msgArr.length; i++) {
-			Log log=new Log(""+i, msgArr[1]);
-			logs.addLog(log);
-		}
-		System.out.println(msgs);
+//		System.out.println("running get Log");
+//		Logs logs =new Logs();
+////		System.out.println("doc('" +databaseName+ "')/log/all-time::*");
+//		String msgs=runQuery("doc('" +databaseName+ "')/log/src/all-time::*");
+//		String[] msgArr=msgs.split("\n");
+//		for (int i = 0; i < msgArr.length; i++) {
+//			Log log=new Log(""+i, msgArr[1]);
+//			logs.addLog(log);
+//		}
+//		System.out.println(msgs);
+//		
+//		return logs;
 		
-		return logs;
+		try {
+			testDiff();
+		} catch (SirixException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return new Logs();
 	}
 
+	public void testDiff() throws SirixException {
+		final DatabaseConfiguration dbConf = new DatabaseConfiguration(
+				new File(LOCATION, databaseName));
+
+		final Database database = Databases.openDatabase(dbConf.getFile());
+
+		final Session session = database
+				.getSession(new SessionConfiguration.Builder("resource1")
+						.build());
+
+	   generateDiffs(session, 2, 1);
+
+	}
+	
 	@Override
 	public RepositoryRevision checkout(String revision) {
 		// TODO Auto-generated method stub
@@ -409,11 +435,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 					
 					prettyPrint(session, System.out);
 
-					DiffFactory.Builder diffc = new DiffFactory.Builder(
-							session, 3, 2, DiffOptimized.NO,
-							ImmutableSet.of((DiffObserver) getInstance()));
-					DiffFactory.invokeFullDiff(diffc);
-					displayDiffs(session);
+					generateDiffs(session, 3, 4);
 
 				}
 				
@@ -428,6 +450,19 @@ public class SirixHandler extends BackendHandlerInterface implements
 			e.printStackTrace();
 		}
 
+	}
+
+	/**
+	 * @param session
+	 * @throws SirixException
+	 */
+	private static void generateDiffs(final Session session, int newRev, int oldRev)
+			throws SirixException {
+		DiffFactory.Builder diffc = new DiffFactory.Builder(
+				session, newRev, oldRev, DiffOptimized.NO,
+				ImmutableSet.of((DiffObserver) getInstance()));
+		DiffFactory.invokeFullDiff(diffc);
+		displayDiffs(session);
 	}
 
 	private static void displayDiffs(Session session) throws SirixException {
