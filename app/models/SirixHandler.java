@@ -198,20 +198,42 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public Logs getLog() {
-		System.out.println("running get Log");
-		Logs logs =new Logs();
-//		System.out.println("doc('" +databaseName+ "')/log/all-time::*");
-		String msgs=runQuery("doc('" +databaseName+ "')/log/src/all-time::*");
-		String[] msgArr=msgs.split("\n");
-		for (int i = 0; i < msgArr.length; i++) {
-			Log log=new Log(""+i, msgArr[1]);
-			logs.addLog(log);
-		}
-		System.out.println(msgs);
+//		System.out.println("running get Log");
+//		Logs logs =new Logs();
+////		System.out.println("doc('" +databaseName+ "')/log/all-time::*");
+//		String msgs=runQuery("doc('" +databaseName+ "')/log/src/all-time::*");
+//		String[] msgArr=msgs.split("\n");
+//		for (int i = 0; i < msgArr.length; i++) {
+//			Log log=new Log(""+i, msgArr[1]);
+//			logs.addLog(log);
+//		}
+//		System.out.println(msgs);
+//		
+//		return logs;
 		
-		return logs;
+		try {
+			testDiff();
+		} catch (SirixException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return new Logs();
 	}
 
+	public void testDiff() throws SirixException {
+		final DatabaseConfiguration dbConf = new DatabaseConfiguration(
+				new File(LOCATION, databaseName));
+
+		final Database database = Databases.openDatabase(dbConf.getFile());
+
+		final Session session = database
+				.getSession(new SessionConfiguration.Builder("resource1")
+						.build());
+
+	   generateDiffs(session, 2, 1);
+
+	}
+	
 	@Override
 	public RepositoryRevision checkout(String revision) {
 		// TODO Auto-generated method stub
@@ -456,11 +478,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 					
 					prettyPrint(session, System.out);
 
-					DiffFactory.Builder diffc = new DiffFactory.Builder(
-							session, 2, 0, DiffOptimized.NO,
-							ImmutableSet.of((DiffObserver) getInstance()));
-					DiffFactory.invokeFullDiff(diffc);
-					displayDiffs(session);
+					generateDiffs(session, 4, 3);
+
 
 				}
 				System.out.println(mDiffs.entrySet().toString());
@@ -473,6 +492,19 @@ public class SirixHandler extends BackendHandlerInterface implements
 			e.printStackTrace();
 		}
 
+	}
+
+	/**
+	 * @param session
+	 * @throws SirixException
+	 */
+	private static void generateDiffs(final Session session, int newRev, int oldRev)
+			throws SirixException {
+		DiffFactory.Builder diffc = new DiffFactory.Builder(
+				session, newRev, oldRev, DiffOptimized.NO,
+				ImmutableSet.of((DiffObserver) getInstance()));
+		DiffFactory.invokeFullDiff(diffc);
+		displayDiffs(session);
 	}
 
 	private static void displayDiffs(Session session) throws SirixException {
