@@ -35,6 +35,12 @@ public abstract class BackendHandlerInterface {
 
 	public abstract RepositoryRevision getRepositoryHEAD();
 
+	
+	public abstract ArrayList<String> getDiff(int relativeRevisionId);
+	
+	public abstract int getVersionId();
+	
+	
 	/**
 	 * removes the relative path to the working directory and replaces with '.'
 	 * 

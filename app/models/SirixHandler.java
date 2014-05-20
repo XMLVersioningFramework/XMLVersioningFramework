@@ -154,8 +154,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 				//+ "where 5=sdb:getNodeKey($a) "
 				+ "return  sdb:getNodeKey($a) ";
 		String aQuery="let $doc:=doc('" + databaseName + "')/log "
-				+ "return sdb:select-node($doc,2) ";
-		String insertInto= "insert nodes " + content + " into sdb:select-node(doc('mydocs.col')/log,2)";	
+				+ "return sdb:select-node($doc,7) ";
+		String insertInto= "insert nodes " + content + " into sdb:select-node(doc('mydocs.col')/log,7)";	
 		String URL=runQuery(aQuery);
 		String insertQuery="insert nodes " + content + " into doc('" + databaseName+ "')"+URL;
 		runQueryWithCommit(insertInto);
@@ -498,16 +498,16 @@ public class SirixHandler extends BackendHandlerInterface implements
 	 * @param session
 	 * @throws SirixException
 	 */
-	private static void generateDiffs(final Session session, int newRev, int oldRev)
+	private static ArrayList<String> generateDiffs(final Session session, int newRev, int oldRev)
 			throws SirixException {
 		DiffFactory.Builder diffc = new DiffFactory.Builder(
 				session, newRev, oldRev, DiffOptimized.NO,
 				ImmutableSet.of((DiffObserver) getInstance()));
 		DiffFactory.invokeFullDiff(diffc);
-		displayDiffs(session);
+		return getDiffs(session);
 	}
 
-	private static void displayDiffs(Session session) throws SirixException {
+	private static ArrayList<String> getDiffs(Session session) throws SirixException {
 		/*
 		 * TODO: if i have the oldversion db and the new version then
 		 * i can search the old node source and show from where the change happened
@@ -567,6 +567,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 				//System.out.println("diff type:"+ diffTuple.getDiff());
 			}
 			
+			
 		}
 		System.out.println("print Arr");
 		for (Iterator iterator = xQueryList.iterator(); iterator
@@ -574,7 +575,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 			System.out.println((String) iterator.next());
 			
 		}
-		
+		return xQueryList;
 	}
 
 	/**
@@ -633,6 +634,18 @@ public class SirixHandler extends BackendHandlerInterface implements
 						.setIndex(mNewKeys.get(diffCont.getNewNodeKey()));
 			}
 		}
+	}
+
+	@Override
+	public ArrayList<String> getDiff(int relativeRevisionId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getVersionId() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

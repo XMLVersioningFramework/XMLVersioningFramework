@@ -467,6 +467,19 @@ public class GitHandler extends BackendHandlerInterface {
 		}
 		return head;
 	}
+
+
+	@Override
+	public ArrayList<String> getDiff(int relativeRevisionId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getVersionId() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 	
 	
 	
