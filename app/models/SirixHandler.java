@@ -10,6 +10,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
@@ -20,6 +21,9 @@ import org.brackit.xquery.XQuery;
 import org.brackit.xquery.atomic.QNm;
 import org.brackit.xquery.compiler.CompileChain;
 import org.brackit.xquery.xdm.DocumentException;
+import org.brackit.xquery.xdm.Item;
+import org.brackit.xquery.xdm.Iter;
+import org.brackit.xquery.xdm.Sequence;
 import org.sirix.access.Databases;
 import org.sirix.access.conf.DatabaseConfiguration;
 import org.sirix.access.conf.ResourceConfiguration;
@@ -38,6 +42,7 @@ import org.sirix.exception.SirixException;
 import org.sirix.service.xml.serialize.XMLSerializer;
 import org.sirix.xquery.SirixCompileChain;
 import org.sirix.xquery.SirixQueryContext;
+import org.sirix.xquery.node.DBNode;
 import org.sirix.xquery.node.DBStore;
 
 import com.google.common.collect.ImmutableSet;
@@ -89,6 +94,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public boolean init() {
+		
 		// Prepare sample document.
 		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 		System.out.println("saving temp in :" + tmpDir.getAbsolutePath());
@@ -141,7 +147,18 @@ public class SirixHandler extends BackendHandlerInterface implements
 		System.out.println("commit");
 //		runQueryWithCommit("replace node doc('" + databaseName + "')/log/content/"+url+" with "+content);
 		printAllVersions();	
-		String selectFile=runQuery("doc('" + databaseName + "')/log/content/"+url);
+		
+		
+		String pathQuery= "for $a in doc('" + databaseName + "')//* "
+				//+ "where 5=sdb:getNodeKey($a) "
+				+ "return  sdb:getNodeKey($a) ";
+		String aQuery="let $doc:=doc('" + databaseName + "')/log "
+				+ "return sdb:select-node($doc,2) ";
+		String insertInto= "insert nodes " + content + " into sdb:select-node(doc('mydocs.col')/log,2)";	
+		String URL=runQuery(aQuery);
+		String insertQuery="insert nodes " + content + " into doc('" + databaseName+ "')"+URL;
+		runQueryWithCommit(insertInto);
+		/*String selectFile=runQuery("doc('" + databaseName + "')/log/content/"+url);
 		System.out.println("before: |"+selectFile+"|");
 		if(!selectFile.equals("")){
 			System.out.println("replace node");
@@ -162,7 +179,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 //		runQueryWithCommit("delete node doc('" + databaseName + "')/log/content/"+url,
 //				"insert nodes " + content + " into doc('" + databaseName+ "')/log/content");
 //		append(content,url);
-		
+		*/
 		return true;
 	}
 
@@ -294,15 +311,29 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 			// Reuse store and query loaded document.
 			final QueryContext ctx2 = new SirixQueryContext(store);
+
+			String printAllFunctions="for $a in sdb return $a";
 			
+		/*	String pathQuery="let $doc := sdb:doc('mydocs.col', 'resource1')/log/content "
+					//	+ "for $a in doc('" + databaseName + "')/log/content "
+						+ "return  sdb:moveTo($doc,5)";*/
+			
+		//	String pathQuery="let $doc := sdb:doc('mydocs.col', 'resource1')/log/content "
+			
+			
+			//sdb:getNodeKey($a)
+				//+ "return $doc";
+					//+"return fn:base-uri($a)";
 			final XQuery q = new XQuery(query);
 			q.prettyPrint();
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			PrintStream writer = new PrintStream(baos);
-
+			
 			q.serialize(ctx2, writer);
 			String content = baos.toString("UTF8");
-
+			System.out.println("*********************\n "+content);
+			//final Sequence seq = new XQuery(new SirixCompileChain(store), query);
+			
 			return content;
 		} catch (DocumentException e) {
 			e.printStackTrace();
@@ -314,7 +345,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 		return null;
 
 	}
-
+	
+	
 	private static void runQueryWithCommit(String query) {
 		try (DBStore store= DBStore.newBuilder().build();){
 			
@@ -325,15 +357,29 @@ public class SirixHandler extends BackendHandlerInterface implements
 			QueryContext ctx1 = new SirixQueryContext(store);
 //			replace node doc('" + databaseName + "')/log/content with '<hej />').evaluate(ctx1)
 			System.out.println("runQueryWithCommit mid");
-			new XQuery(compileChain, query).evaluate(ctx1);
-			System.out.println("intsert node");
-		
-			System.out.println("runQueryWithCommit end");
+			//String selectQuery="doc('" + databaseName+ "')/log/all-time::*";
+		//	String insertQuery="insert nodes <aa></aa> into doc('" + databaseName+ "')/log/content";
+			final Sequence seq =new XQuery(compileChain, query).evaluate(ctx1);
+			
+			/*System.out.println(seq);
+						Iter t=seq.iterate();
+			Item item = t.next();
+			
+			while (item !=null) {
+				final DBNode node = (DBNode) item;
+                final NodeReadTrx rtx = node.getTrx();
+                
+                System.out.println("iterator getName: "+rtx.getName());
+                item = t.next();
+            	prettyPrint(rtx.getSession(), System.out);
+			}
+			
+			 */
 			printAllVersions();
-
+			
 		} catch (QueryException e) {
 			e.printStackTrace();
-		}
+		} 
 		
 	}
 
@@ -375,10 +421,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 			try (final NodeWriteTrx wtx = session.beginNodeWriteTrx();) {
 				
 				wtx.insertElementAsFirstChild(new QNm("bar"));
-				
 				wtx.insertElementAsFirstChild(new QNm("foo"));
 				wtx.insertElementAsFirstChild(new QNm("bao")).commit();
-
 				wtx.moveToParent();
 				wtx.moveToParent(); //moves wtx to <bar>
 				wtx.insertElementAsFirstChild(new QNm("foz"));
@@ -396,6 +440,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 					wtx.moveToFirstChild();
 					wtx.moveToFirstChild();
 					
+					System.out.println("getDeweyID: "+wtx.getDeweyID());
+					
 					prettyPrint(session, System.out);
 					
 					System.out.println("rtx is at:" + rtx.getName().toString()); //foo
@@ -410,15 +456,13 @@ public class SirixHandler extends BackendHandlerInterface implements
 					prettyPrint(session, System.out);
 
 					DiffFactory.Builder diffc = new DiffFactory.Builder(
-							session, 3, 2, DiffOptimized.NO,
+							session, 2, 0, DiffOptimized.NO,
 							ImmutableSet.of((DiffObserver) getInstance()));
 					DiffFactory.invokeFullDiff(diffc);
 					displayDiffs(session);
 
 				}
-				
 				System.out.println(mDiffs.entrySet().toString());
-				
 			}
 			System.out.println("db:" + session.getDatabase());
 			System.out.println(session.getResourceConfig());
@@ -435,7 +479,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 		 * TODO: if i have the oldversion db and the new version then
 		 * i can search the old node source and show from where the change happened
 		 */
-
+		//printAllVersions();
+		
 		final NodeReadTrx rtx = session.beginNodeReadTrx();
 		for (Map.Entry<Integer, DiffTuple> diff : mDiffs.entrySet()) {
 			DiffTuple diffTuple = diff.getValue();
@@ -450,6 +495,18 @@ public class SirixHandler extends BackendHandlerInterface implements
 				rtx.moveTo(diffTuple.getNewNodeKey());
 				if(rtx.isNameNode()){
 					System.out.println("element changed: " + rtx.getName().toString());
+					System.out.println("getDeweyID: "+rtx.getDeweyID().get());
+					System.out.println("getDeweyID list: "+rtx.getDeweyID().get().list());
+					
+					
+					
+					//rtx.getSession();
+					//session.getDatabase().getDatabaseConfig();
+					
+					//for (int i = 0; i < rtx.getDeweyID().get().list().length(); i++) {
+				//		rtx.getDeweyID().get().list().;
+				//	}
+					
 				}
 				System.out.println("diff type:"+ diffTuple.getDiff());
 			}
