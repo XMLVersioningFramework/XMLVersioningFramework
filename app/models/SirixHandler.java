@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -482,6 +483,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 		//printAllVersions();
 		
 		final NodeReadTrx rtx = session.beginNodeReadTrx();
+		
+		ArrayList<String> xQueryList = new ArrayList<String>();
 		for (Map.Entry<Integer, DiffTuple> diff : mDiffs.entrySet()) {
 			DiffTuple diffTuple = diff.getValue();
 			DiffType diffType = diffTuple.getDiff();
@@ -494,22 +497,50 @@ public class SirixHandler extends BackendHandlerInterface implements
 				
 				rtx.moveTo(diffTuple.getNewNodeKey());
 				if(rtx.isNameNode()){
-					System.out.println("element changed: " + rtx.getName().toString());
-					System.out.println("getDeweyID: "+rtx.getDeweyID().get());
-					System.out.println("getDeweyID list: "+rtx.getDeweyID().get().list());
+				//	System.out.println("element changed: " + rtx.getName().toString());
+				//	System.out.println("getDeweyID: "+rtx.getDeweyID().get());
+				//	System.out.println("getDeweyID list: "+rtx.getDeweyID().get().list());
+					
+					String xQuery="";
+					if(diffType==DiffType.INSERTED){
+						xQuery+="insert node"; 
+						
+						
+					
+						xQuery+="<"+rtx.getName()+"></"+rtx.getName()+">";
+						
+						
+						xQuery+="into sdb:select-node(doc('mydocs.col')/log ,"+rtx.getNodeKey()+")";
+						
+					}else if(diffType==DiffType.DELETED){
+						xQuery+="delete node ";
+						xQuery+="sdb:select-node(doc('mydocs.col')/log ,"+rtx.getNodeKey()+")";
+						
+					}else if(diffType==DiffType.REPLACEDNEW){
+						xQuery+="replaceNew";
+					}
 					
 					
 					
+					//System.out.println(xQuery);	
 					//rtx.getSession();
 					//session.getDatabase().getDatabaseConfig();
 					
 					//for (int i = 0; i < rtx.getDeweyID().get().list().length(); i++) {
 				//		rtx.getDeweyID().get().list().;
 				//	}
-					
+					xQueryList.add(xQuery);
 				}
-				System.out.println("diff type:"+ diffTuple.getDiff());
+				
+				//System.out.println("diff type:"+ diffTuple.getDiff());
 			}
+			
+		}
+		System.out.println("print Arr");
+		for (Iterator iterator = xQueryList.iterator(); iterator
+				.hasNext();) {
+			System.out.println((String) iterator.next());
+			
 		}
 		
 	}
