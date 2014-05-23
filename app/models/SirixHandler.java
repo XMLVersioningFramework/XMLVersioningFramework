@@ -25,6 +25,7 @@ import org.brackit.xquery.xdm.DocumentException;
 import org.brackit.xquery.xdm.Item;
 import org.brackit.xquery.xdm.Iter;
 import org.brackit.xquery.xdm.Sequence;
+import org.h2.constant.SysProperties;
 import org.sirix.access.Databases;
 import org.sirix.access.conf.DatabaseConfiguration;
 import org.sirix.access.conf.ResourceConfiguration;
@@ -411,10 +412,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 	}
 
 	private String GetContentHEAD(String url) {
-		
-	      String content="<a>      <div b=\"bb\" c=\"cc\" a=\"aa\">hej</div>     </a>";
-	      commit("a.txt", content,"asdasd" ,new User("das","email"));
-		
+		printAllVersions();
+	     
 		return runQuery("doc('" + databaseName + "')/log/content/" + url
 				+ "/*/last::*");
 	}
