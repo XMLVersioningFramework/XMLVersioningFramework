@@ -148,26 +148,9 @@ public class SirixHandler extends BackendHandlerInterface implements
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
 		System.out.println("commit");
-//		runQueryWithCommit("replace node doc('" + databaseName + "')/log/content/"+url+" with "+content);
-	//	printAllVersions();	
-		
-		
-		/*String pathQuery= "for $a in doc('" + databaseName + "')//* "
-				//+ "where 5=sdb:getNodeKey($a) "
-				+ "return  sdb:getNodeKey($a) ";
-		String aQuery="let $doc:=doc('" + databaseName + "')/log "
-				+ "return sdb:select-node($doc,7) ";
-		String insertInto= "insert nodes " + content + " into sdb:select-node(doc('mydocs.col')/log,7)";	
-		String URL=runQuery(aQuery);
-		String insertQuery="insert nodes " + content + " into doc('" + databaseName+ "')"+URL;
-		runQueryWithCommit(insertInto);
-		*/
 		String selectFile=runQuery("doc('" + databaseName + "')/log/content/"+url);
-		System.out.println("before: |"+selectFile+"|");
-		
 		if(!selectFile.equals("")){
-			//System.out.println("replace node");
-			//content="<"+url+">"+content+"</"+url+">";	
+			content="<"+url+">"+content+"</"+url+">";	
 			String query="replace node doc('" + databaseName + "')/log/content/"+url+" with "+content;
 			runQueryWithCommit(query);
 		}else{
@@ -315,6 +298,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	}
 
 	public static void append(String text,String file) {
+		System.out.println("append");
 		text="<"+file+">"+text+"</"+file+">";		
 		runQueryWithCommit("insert nodes " + text + " into doc('" + databaseName
 				+ "')/log/content");
@@ -377,10 +361,12 @@ public class SirixHandler extends BackendHandlerInterface implements
 	
 	private static void runQueryWithCommit(String query) {
 		try (DBStore store= DBStore.newBuilder().build();){
-			
+			System.out.println("-------------------------------------------------");
+			printHead();
+			System.out.println("-------------------------------------------------");
 			CompileChain compileChain = new SirixCompileChain(store);
 			
-			System.out.println("runQueryWithCommit"+query);
+			System.out.println("runQueryWithCommit:  "+query);
 			
 			QueryContext ctx1 = new SirixQueryContext(store);
 //			replace node doc('" + databaseName + "')/log/content with '<hej />').evaluate(ctx1)
@@ -410,6 +396,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 		} 
 		
 	}
+	
 
 	private String GetContentHEAD(String url) {
 		printAllVersions();
@@ -417,9 +404,13 @@ public class SirixHandler extends BackendHandlerInterface implements
 		return runQuery("doc('" + databaseName + "')/log/content/" + url
 				+ "/*/last::*");
 	}
+	private static void printHead(){
+		System.out.println(	runQuery("doc('" + databaseName + "')"));
+	}
+	
 
 	private String GetMsgHEAD() {
-		getDiff(1);
+		//getDiff(1);
 		return runQuery("doc('" + databaseName + "')/log/msg/last::*");
 	}
 
@@ -536,9 +527,9 @@ public class SirixHandler extends BackendHandlerInterface implements
 			
 			if (diffType != DiffType.SAME && diffType != DiffType.SAMEHASH) {
 				rtx.moveTo(diffTuple.getOldNodeKey());
-				if(rtx.isNameNode()){
-					System.out.println("old node current name: " + rtx.getName().toString());
-				}
+				//if(rtx.isNameNode()){
+				//	System.out.println("old node current name: " + rtx.getName().toString());
+				//}
 				
 				rtx.moveTo(diffTuple.getNewNodeKey());
 				if(rtx.isNameNode()){
@@ -562,7 +553,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 						xQuery+="sdb:select-node(doc('mydocs.col')/log ,"+rtx.getNodeKey()+")";
 						
 					}else if(diffType==DiffType.REPLACEDNEW){
-						xQuery+="replaceNew";
+						System.out.println("replaceNew ");
 					}
 					
 					
@@ -574,7 +565,9 @@ public class SirixHandler extends BackendHandlerInterface implements
 					//for (int i = 0; i < rtx.getDeweyID().get().list().length(); i++) {
 				//		rtx.getDeweyID().get().list().;
 				//	}
-					xQueryList.add(xQuery);
+					if(xQuery!=""){
+						xQueryList.add(xQuery);
+					}
 				}
 				
 				//System.out.println("diff type:"+ diffTuple.getDiff());
@@ -637,8 +630,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 			if (newIndex != null
 					&& (diffCont.getDiff() == DiffType.DELETED || diffCont
 							.getDiff() == DiffType.MOVEDFROM)) {
-				System.out.println("new node key: "
-						+ mDiffs.get(newIndex).getNewNodeKey());
+			//	System.out.println("new node key: "
+			//			+ mDiffs.get(newIndex).getNewNodeKey());
 				mDiffs.get(newIndex).setDiff(DiffType.MOVEDTO);
 			}
 			final Integer oldIndex = mOldKeys.get(diffCont.getNewNodeKey());
@@ -653,7 +646,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public ArrayList<String> getDiff(int relativeRevisionId) {
-		System.out.println("getDiff");
+		System.out.println("getDiff betwine version "+getVersionId()+" : "+(getVersionId()-relativeRevisionId));
 		try {
 			return generateDiffs(getSession(), getVersionId()-relativeRevisionId,getVersionId());
 		} catch (SirixException e) {

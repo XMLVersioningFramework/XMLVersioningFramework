@@ -210,7 +210,7 @@ public class Application extends Controller {
 		long start = System.nanoTime();
 		
 		
-		if(relativeVersion==null){
+		if(relativeVersion==null || relativeVersion=="0"){
 			if (backend.commit(url, content, message, user)) {
 				answer = JSONConstants.SUCCESS;
 				elapsedTime = System.nanoTime() - start;
