@@ -177,7 +177,7 @@ public class Application extends Controller {
 		if (postInput.get(JSONConstants.COMMIT_FILE_URL) != null) {
 			String fileurl = postInput.get(JSONConstants.COMMIT_FILE_URL)[0];
 			if (fileurl != null) {
-				String pathToTest = "../TestFramework/public/userStories/";
+				String pathToTest = "../XMLTestFramework/public/userStories/";
 				System.out.println("try to get " + pathToTest + fileurl);
 				File file = new File(pathToTest + fileurl);
 				System.out.println(file.getAbsolutePath());
