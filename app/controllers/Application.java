@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.xml.xquery.XQException;
 
+import org.brackit.xquery.atomic.Int;
 
 import models.BackendHandlerInterface;
 import models.GitHandler;
@@ -166,7 +167,11 @@ public class Application extends Controller {
 		String message = postInput.get(JSONConstants.MESSAGE)[0];
 		String userId = postInput.get(JSONConstants.USER)[0];
 		String backendName = postInput.get(JSONConstants.BACKEND)[0];
-
+		String relativeVersion = postInput.get(JSONConstants.RELATIVE_VERSION)[0];
+		
+		
+		
+		
 		if (postInput.get(JSONConstants.COMMIT_FILE_URL) != null) {
 			String fileurl = postInput.get(JSONConstants.COMMIT_FILE_URL)[0];
 			if (fileurl != null) {
@@ -201,11 +206,23 @@ public class Application extends Controller {
 		String answer = "";
 		long elapsedTime = Long.MAX_VALUE;
 		long start = System.nanoTime();
-		if (backend.commit(url, content, message, user)) {
-			answer = JSONConstants.SUCCESS;
-			elapsedTime = System.nanoTime() - start;
-		} else {
-			answer = JSONConstants.FAIL;
+		
+		
+		if(relativeVersion==null){
+			if (backend.commit(url, content, message, user)) {
+				answer = JSONConstants.SUCCESS;
+				elapsedTime = System.nanoTime() - start;
+			} else {
+				answer = JSONConstants.FAIL;
+			}
+		}else{
+			int relativeVersionInt= Integer.parseInt(relativeVersion);
+			if (backend.commit(url, content, message, user,relativeVersionInt)) {
+				answer = JSONConstants.SUCCESS;
+				elapsedTime = System.nanoTime() - start;
+			} else {
+				answer = JSONConstants.FAIL;
+			}
 		}
 
 		/**
@@ -275,6 +292,31 @@ public class Application extends Controller {
 				"Origin, X-Requested-With, Content-Type, Accept");
 		return ok();
 	}
+	
+	public static Result revert(){
+		final Map<String, String[]> postInput = getPOSTData();
+		BackendHandlerInterface backend = getBackend(postInput
+				.get(JSONConstants.BACKEND)[0]);
+		
+		int relativeVersion=Integer.parseInt(postInput
+				.get(JSONConstants.RELATIVE_VERSION)[0]);
+		backend.revert(relativeVersion);
+		return ok();
+	}
+	public static Result getDiff(){
+		final Map<String, String[]> postInput = getPOSTData();
+		BackendHandlerInterface backend = getBackend(postInput
+				.get(JSONConstants.BACKEND)[0]);
+		
+		int relativeVersion=Integer.parseInt(postInput
+				.get(JSONConstants.RELATIVE_VERSION)[0]);
+		
+		backend.getDiff(relativeVersion);
+		return ok();
+	}
+		
+		
+	
 
 	public static Result testSirix() {
 		

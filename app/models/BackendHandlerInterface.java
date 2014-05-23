@@ -20,6 +20,9 @@ public abstract class BackendHandlerInterface {
 
 	public abstract boolean commit(String url, String content, String message,
 			User user);
+	public abstract boolean commit(String url, String content, String message,
+			User user,int relativeVersion);
+	
 
 	public abstract String commitAFile(TempFile tf);
 
@@ -39,6 +42,8 @@ public abstract class BackendHandlerInterface {
 	public abstract ArrayList<String> getDiff(int relativeRevisionId);
 	
 	public abstract int getVersionId();
+	
+	public abstract boolean revert(int relativeRevision);
 	
 	
 	/**

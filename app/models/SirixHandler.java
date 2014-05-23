@@ -70,6 +70,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	private Map<Long, Integer> mOldKeys = new HashMap<Long, Integer>();
 
+	static boolean  diffDone=false;
 	private SirixHandler() {
 		
 	}
@@ -95,7 +96,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public boolean init() {
-		
+		resetDb();
 		// Prepare sample document.
 		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 		System.out.println("saving temp in :" + tmpDir.getAbsolutePath());
@@ -106,7 +107,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 			//runQuery("delete node doc('" + databaseName + "')/log");
 			final QueryContext ctx = new SirixQueryContext(store);
 			
-			File doc1 = generateSampleDoc(tmpDir, "<a>init file</a>", "sample1");
+			File doc1 = generateSampleDoc(tmpDir, "", "sample1");
 
 			doc1.deleteOnExit();
 
@@ -147,10 +148,10 @@ public class SirixHandler extends BackendHandlerInterface implements
 	public boolean commit(String url, String content, String message, User user) {
 		System.out.println("commit");
 //		runQueryWithCommit("replace node doc('" + databaseName + "')/log/content/"+url+" with "+content);
-		printAllVersions();	
+	//	printAllVersions();	
 		
 		
-		String pathQuery= "for $a in doc('" + databaseName + "')//* "
+		/*String pathQuery= "for $a in doc('" + databaseName + "')//* "
 				//+ "where 5=sdb:getNodeKey($a) "
 				+ "return  sdb:getNodeKey($a) ";
 		String aQuery="let $doc:=doc('" + databaseName + "')/log "
@@ -159,15 +160,18 @@ public class SirixHandler extends BackendHandlerInterface implements
 		String URL=runQuery(aQuery);
 		String insertQuery="insert nodes " + content + " into doc('" + databaseName+ "')"+URL;
 		runQueryWithCommit(insertInto);
-		/*String selectFile=runQuery("doc('" + databaseName + "')/log/content/"+url);
+		*/
+		String selectFile=runQuery("doc('" + databaseName + "')/log/content/"+url);
 		System.out.println("before: |"+selectFile+"|");
+		
 		if(!selectFile.equals("")){
-			System.out.println("replace node");
+			//System.out.println("replace node");
+			//content="<"+url+">"+content+"</"+url+">";	
 			String query="replace node doc('" + databaseName + "')/log/content/"+url+" with "+content;
 			runQueryWithCommit(query);
 		}else{
 			append(content,url);
-			System.out.println("insert node");
+		//	System.out.println("insert node");
 			//content="<"+url+">"+content+"</"+url+">";	
 			//String insertQuery="insert nodes " + content + " into doc('" + databaseName+ "')/log/content";
 			//runQueryWhithCommit(insertQuery);
@@ -180,7 +184,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 //		runQueryWithCommit("delete node doc('" + databaseName + "')/log/content/"+url,
 //				"insert nodes " + content + " into doc('" + databaseName+ "')/log/content");
 //		append(content,url);
-		*/
+		
 		return true;
 	}
 
@@ -230,7 +234,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 				.getSession(new SessionConfiguration.Builder("resource1")
 						.build());
 
-	   generateDiffs(session, 2, 1);
+	   System.out.println( generateDiffs(session, 1, 0));
 
 	}
 	
@@ -302,7 +306,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 				tst, sev));
 		out.print(String.format("<src>%s</src>", src));
 //		out.print(String.format("<msg><bbb>%s</bbb></msg>", msg));
-		out.print(String.format("<content><a.txt></a.txt></content>", msg));
+		out.print(String.format("<content></content>", msg));
 		out.print("</log>");
 		out.close();
 		
@@ -354,7 +358,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 			
 			q.serialize(ctx2, writer);
 			String content = baos.toString("UTF8");
-			System.out.println("*********************\n "+content);
+			//System.out.println("*********************\n "+content);
 			//final Sequence seq = new XQuery(new SirixCompileChain(store), query);
 			
 			return content;
@@ -398,7 +402,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 			}
 			
 			 */
-			printAllVersions();
+			
 			
 		} catch (QueryException e) {
 			e.printStackTrace();
@@ -406,16 +410,21 @@ public class SirixHandler extends BackendHandlerInterface implements
 		
 	}
 
-	private static String GetContentHEAD(String url) {
+	private String GetContentHEAD(String url) {
+		
+	      String content="<a>      <div b=\"bb\" c=\"cc\" a=\"aa\">hej</div>     </a>";
+	      commit("a.txt", content,"asdasd" ,new User("das","email"));
+		
 		return runQuery("doc('" + databaseName + "')/log/content/" + url
 				+ "/*/last::*");
 	}
 
-	private static String GetMsgHEAD() {
+	private String GetMsgHEAD() {
+		getDiff(1);
 		return runQuery("doc('" + databaseName + "')/log/msg/last::*");
 	}
 
-	private static String GetListOfFiles() {
+	private String GetListOfFiles() {
 		System.out.println("filelist");
 		return runQuery("for $a in doc('" + databaseName
 				+ "')/log/content/*/last::* "
@@ -500,19 +509,24 @@ public class SirixHandler extends BackendHandlerInterface implements
 	 */
 	private static ArrayList<String> generateDiffs(final Session session, int newRev, int oldRev)
 			throws SirixException {
+		System.out.println("generateDiffs");
 		DiffFactory.Builder diffc = new DiffFactory.Builder(
 				session, newRev, oldRev, DiffOptimized.NO,
 				ImmutableSet.of((DiffObserver) getInstance()));
 		DiffFactory.invokeFullDiff(diffc);
+		while(!diffDone){
+			System.out.println("wating for diff");
+		}
 		return getDiffs(session);
 	}
 
 	private static ArrayList<String> getDiffs(Session session) throws SirixException {
+		System.out.println("getDiffs");
 		/*
 		 * TODO: if i have the oldversion db and the new version then
 		 * i can search the old node source and show from where the change happened
 		 */
-		//printAllVersions();
+		
 		
 		final NodeReadTrx rtx = session.beginNodeReadTrx();
 		
@@ -594,6 +608,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 	public void diffDone() {
 		System.out.println("detecting moves...");
 		detectMoves();
+		System.out.println("diff done");
+		diffDone=true;
 	}
 	
 	@Override
@@ -603,7 +619,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 				oldNodeKey, depth);
 		mEntries++;
 		mDiffs.put(mEntries, diffCont);
-		System.out.println("mEntries:" + mEntries);
+		//System.out.println("mEntries:" + mEntries);
 
 		switch (diffType) {
 		case INSERTED:
@@ -638,14 +654,86 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public ArrayList<String> getDiff(int relativeRevisionId) {
-		// TODO Auto-generated method stub
+		System.out.println("getDiff");
+		try {
+			return generateDiffs(getSession(), getVersionId()-relativeRevisionId,getVersionId());
+		} catch (SirixException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	
 		return null;
+	}
+	private void resetDb(){
+		final DatabaseConfiguration dbConf = new DatabaseConfiguration(
+				new File(LOCATION, databaseName));
+		Databases.truncateDatabase(dbConf);
+		Databases.createDatabase(dbConf);
+	}
+	
+
+	private Session getSession(){
+		final DatabaseConfiguration dbConf = new DatabaseConfiguration(
+				new File(LOCATION, databaseName));
+		Session session=null;
+		Database database;
+		try {
+			database = Databases.openDatabase(dbConf.getFile());
+			session = database
+				.getSession(new SessionConfiguration.Builder("resource1")
+						.build());
+		} catch (SirixException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return session;
+	}
+	@Override
+	public int getVersionId() {
+		final DatabaseConfiguration dbConf = new DatabaseConfiguration(
+				new File(LOCATION, databaseName));
+
+		Database database;
+		try {
+			database = Databases.openDatabase(dbConf.getFile());
+	
+			final Session session = database
+					.getSession(new SessionConfiguration.Builder("resource1")
+							.build());
+			return session.getMostRecentRevisionNumber();
+			
+		} catch (SirixException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return 0;
+	}
+	public boolean commitXquery(ArrayList<String> xQuerys){
+		for (String query : xQuerys) {
+			runQueryWithCommit(query);
+		}
+		return true;
 	}
 
 	@Override
-	public int getVersionId() {
-		// TODO Auto-generated method stub
-		return 0;
+	public boolean revert(int relativeRevision) {
+		
+		getSession().beginNodeWriteTrx().revertTo(getVersionId()-relativeRevision);
+		return false;
+	}
+
+	@Override
+	public boolean commit(String url, String content, String message,
+			User user, int relativeVersion) {
+		ArrayList<String> pul=getDiff(relativeVersion);
+		
+		revert(relativeVersion);
+		commit(url, content, message, user);
+		commitXquery(pul);
+	//	System.out.println("Nead to code this");
+		
+		return true;
 	}
 
 }

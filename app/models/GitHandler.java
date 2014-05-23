@@ -480,6 +480,19 @@ public class GitHandler extends BackendHandlerInterface {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
+	@Override
+	public boolean revert(int relativeRevision) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean commit(String url, String content, String message,
+			User user, int relativeVersion) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 	
 	
 	
