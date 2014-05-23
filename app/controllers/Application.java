@@ -167,8 +167,10 @@ public class Application extends Controller {
 		String message = postInput.get(JSONConstants.MESSAGE)[0];
 		String userId = postInput.get(JSONConstants.USER)[0];
 		String backendName = postInput.get(JSONConstants.BACKEND)[0];
-		String relativeVersion = postInput.get(JSONConstants.RELATIVE_VERSION)[0];
-		
+		String relativeVersion =null;
+		if(postInput.get(JSONConstants.RELATIVE_VERSION)!=null){
+			relativeVersion = postInput.get(JSONConstants.RELATIVE_VERSION)[0];
+		}
 		
 		
 		
