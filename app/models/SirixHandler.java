@@ -549,14 +549,14 @@ public class SirixHandler extends BackendHandlerInterface implements
 					
 					String xQuery="";
 					if(diffType==DiffType.INSERTED){
-						xQuery+="insert node"; 
+						xQuery+="insert node "; 
 						
 						
 					
 						xQuery+="<"+rtx.getName()+"></"+rtx.getName()+">";
 						
 						
-						xQuery+="into sdb:select-node(doc('mydocs.col')/log ,"+rtx.getNodeKey()+")";
+						xQuery+=" into sdb:select-node(doc('mydocs.col')/log ,"+rtx.getNodeKey()+")";
 						
 					}else if(diffType==DiffType.DELETED){
 						xQuery+="delete node ";
