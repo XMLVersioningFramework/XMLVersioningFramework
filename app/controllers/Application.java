@@ -209,8 +209,10 @@ public class Application extends Controller {
 		long elapsedTime = Long.MAX_VALUE;
 		long start = System.nanoTime();
 		
+		int relativeVersionInt= Integer.parseInt(relativeVersion);
 		
-		if(relativeVersion==null || relativeVersion=="0"){
+		
+		if(relativeVersion==null || relativeVersionInt==0){
 			if (backend.commit(url, content, message, user)) {
 				answer = JSONConstants.SUCCESS;
 				elapsedTime = System.nanoTime() - start;
@@ -218,7 +220,7 @@ public class Application extends Controller {
 				answer = JSONConstants.FAIL;
 			}
 		}else{
-			int relativeVersionInt= Integer.parseInt(relativeVersion);
+			
 			if (backend.commit(url, content, message, user,relativeVersionInt)) {
 				answer = JSONConstants.SUCCESS;
 				elapsedTime = System.nanoTime() - start;

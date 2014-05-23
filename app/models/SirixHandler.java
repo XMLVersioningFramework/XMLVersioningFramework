@@ -590,6 +590,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	 */
 	private static void prettyPrint(final Session session, PrintStream out)
 			throws SirixException {
+	
 		final XMLSerializer serializer = XMLSerializer
 				.newBuilder(session, out).prettyPrint()
 				.build();
@@ -643,14 +644,21 @@ public class SirixHandler extends BackendHandlerInterface implements
 			}
 		}
 	}
-
+	private void printAVersion(int i){
+		System.out.println( runQuery("doc('" + databaseName+ "')/log/all-time::*[1]"));
+	}
+	
+	
 	@Override
 	public ArrayList<String> getDiff(int relativeRevisionId) {
 		System.out.println("getDiff betwine version "+getVersionId()+" : "+(getVersionId()-relativeRevisionId));
+		printAVersion(getVersionId());
+		printAVersion((getVersionId()-relativeRevisionId));
+		
+		
 		try {
 			return generateDiffs(getSession(), getVersionId()-relativeRevisionId,getVersionId());
 		} catch (SirixException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	
@@ -707,7 +715,9 @@ public class SirixHandler extends BackendHandlerInterface implements
 		}
 		return true;
 	}
-
+	
+	
+	
 	@Override
 	public boolean revert(int relativeRevision) {
 		
