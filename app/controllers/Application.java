@@ -208,9 +208,11 @@ public class Application extends Controller {
 		String answer = "";
 		long elapsedTime = Long.MAX_VALUE;
 		long start = System.nanoTime();
-		
-		int relativeVersionInt= Integer.parseInt(relativeVersion);
-		
+		int relativeVersionInt=0;
+		System.out.println("relativeVersion: "+relativeVersion);
+		if(relativeVersion!=null){
+			relativeVersionInt= Integer.parseInt(relativeVersion);
+		}
 		
 		if(relativeVersion==null || relativeVersionInt==0){
 			if (backend.commit(url, content, message, user)) {
