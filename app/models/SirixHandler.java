@@ -41,6 +41,7 @@ import org.sirix.diff.DiffFactory.DiffType;
 import org.sirix.diff.DiffObserver;
 import org.sirix.diff.DiffTuple;
 import org.sirix.exception.SirixException;
+import org.sirix.io.StorageType;
 import org.sirix.service.xml.serialize.XMLSerializer;
 import org.sirix.xquery.SirixCompileChain;
 import org.sirix.xquery.SirixQueryContext;
@@ -51,6 +52,8 @@ import com.google.common.collect.ImmutableSet;
 
 public class SirixHandler extends BackendHandlerInterface implements
 		DiffObserver {
+	private static final String RESOURCE = "shredded";
+
 	private static final String USER_HOME = System.getProperty("user.home");
 
 	/** Storage for databases: Sirix data in home directory. */
@@ -119,7 +122,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 //					"bit:load('mydocs.col', io:ls('%s', '\\.xml$'))",
 //					doc1Uri.toString()); //old versions
 			final String xq1 = String.format(
-					"sdb:load('mydocs.col', 'resource1', '%s')",
+					"sdb:load('mydocs.col', '%s', '%s')", SirixHandler.RESOURCE,
 					doc1Uri.toString());
 
 			System.out.println("xq1" + xq1);
@@ -136,6 +139,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		System.out.println("**************INIT PRINT ALL**********");
+		printAllVersions();
 		return true;
 	}
 
@@ -215,7 +220,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 		final Database database = Databases.openDatabase(dbConf.getFile());
 
 		final Session session = database
-				.getSession(new SessionConfiguration.Builder("resource1")
+				.getSession(new SessionConfiguration.Builder(SirixHandler.RESOURCE)
 						.build());
 
 	   System.out.println( generateDiffs(session, 1, 0));
@@ -433,11 +438,11 @@ public class SirixHandler extends BackendHandlerInterface implements
 			final Database database = Databases.openDatabase(dbConf.getFile());
 
 			database.createResource(ResourceConfiguration
-					.newBuilder("resource1", dbConf).useDeweyIDs(true)
+					.newBuilder(SirixHandler.RESOURCE, dbConf).useDeweyIDs(true)
 					.useTextCompression(true).buildPathSummary(false).build());
 
 			final Session session = database
-					.getSession(new SessionConfiguration.Builder("resource1")
+					.getSession(new SessionConfiguration.Builder(SirixHandler.RESOURCE)
 							.build());
 
 			try (final NodeWriteTrx wtx = session.beginNodeWriteTrx();) {
@@ -672,7 +677,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 		try {
 			database = Databases.openDatabase(dbConf.getFile());
 			session = database
-				.getSession(new SessionConfiguration.Builder("resource1")
+				.getSession(new SessionConfiguration.Builder(SirixHandler.RESOURCE)
 						.build());
 		} catch (SirixException e) {
 			// TODO Auto-generated catch block
@@ -690,7 +695,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 			database = Databases.openDatabase(dbConf.getFile());
 	
 			final Session session = database
-					.getSession(new SessionConfiguration.Builder("resource1")
+					.getSession(new SessionConfiguration.Builder(SirixHandler.RESOURCE)
 							.build());
 			return session.getMostRecentRevisionNumber();
 			
