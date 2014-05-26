@@ -191,8 +191,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 			BufferedWriter bw = new BufferedWriter(new FileWriter(resNewRev));
 			bw.write("<log>"
 					+ " <src>192.168.0.1</src>"
-					+ " <content></content>"
-					+ "<a/>"
+					+ " <new></new>"
 					+ "</log>");
 			bw.close();
 
@@ -600,6 +599,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 					
 					xQuery += "insert node ";
 					xQuery += "<" + rtx.getName() + "></" + rtx.getName()+ ">";
+					rtx.moveToParent();
 					xQuery += " into sdb:select-node(doc('mydocs.col')/log ,"
 							+ rtx.getNodeKey() + ")";
 
@@ -611,6 +611,13 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 				} else if (diffType == DiffType.REPLACEDNEW) {
 					System.out.println("replaceNew ");
+					String content="<" + rtx.getName() + "></" + rtx.getName()+ ">";
+					
+					xQuery +="replace node sdb:select-node(doc('mydocs.col')/log ,"
+							+ diffTuple.getOldNodeKey() + ") with "+content;
+					
+					
+					
 				}else if (diffType == DiffType.UPDATED){
 					System.out.println("pdated ");
 				}
