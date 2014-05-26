@@ -1,6 +1,7 @@
 package models;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Encapsulates the canonicalization of XML through Git
@@ -95,7 +96,7 @@ public class NormalizedXMLGitHandler extends BackendHandlerInterface {
 
 
 	@Override
-	public ArrayList<String> getDiff(int relativeRevisionId) {
+	public HashSet<String> getDiff(int relativeRevisionId) {
 		// TODO Auto-generated method stub
 		return null;
 	}

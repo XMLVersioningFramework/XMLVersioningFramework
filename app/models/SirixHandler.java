@@ -13,6 +13,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -550,7 +551,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	 * @param session
 	 * @throws SirixException
 	 */
-	private static ArrayList<String> generateDiffs(final Session session,
+	private static HashSet<String> generateDiffs(final Session session,
 			int newRev, int oldRev) throws SirixException {
 		System.out.println("generateDiffs");
 		DiffFactory.Builder diffc = new DiffFactory.Builder(session, newRev,
@@ -563,7 +564,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 		return getDiffs(session);
 	}
 
-	private static ArrayList<String> getDiffs(Session session)
+	private static HashSet<String> getDiffs(Session session)
 			throws SirixException {
 		System.out.println("getDiffs");
 		/*
@@ -573,56 +574,59 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 		final NodeReadTrx rtx = session.beginNodeReadTrx();
 
-		ArrayList<String> xQueryList = new ArrayList<String>();
+		HashSet<String> xQueryList = new HashSet<String>();
 		for (Map.Entry<Integer, DiffTuple> diff : mDiffs.entrySet()) {
 			DiffTuple diffTuple = diff.getValue();
 			DiffType diffType = diffTuple.getDiff();
 
 			if (!(diffType == DiffType.SAME || diffType == DiffType.SAMEHASH)) {
-				rtx.moveTo(diffTuple.getOldNodeKey());
-				System.out.println("\n"+diffType+"type");
-				if(rtx.isNameNode()){
-					 System.out.println("old node current name: " +
-							 rtx.getName().toString());
-				}
-				
+			
+//				System.out.println("\n"+diffType+" type");
+//				if(rtx.isNameNode()){
+//					 System.out.println("old node current name: " +
+//							 rtx.getName().toString());
+//				}
+//				
+//				rtx.moveTo(diffTuple.getNewNodeKey());
+//				if(rtx.isNameNode()){
+//					 System.out.println("new node current name: " +
+//							 rtx.getName().toString());
+//				}
+				System.out.println("new key:"+diffTuple.getNewNodeKey());
+				System.out.println("old key:"+diffTuple.getOldNodeKey());
 				rtx.moveTo(diffTuple.getNewNodeKey());
-				if(rtx.isNameNode()){
-					 System.out.println("new node current name: " +
-							 rtx.getName().toString());
+				String xQuery = "";
+				if (diffType == DiffType.INSERTED) {
+					
+					xQuery += "insert node ";
+					xQuery += "<" + rtx.getName() + "></" + rtx.getName()+ ">";
+					xQuery += " into sdb:select-node(doc('mydocs.col')/log ,"
+							+ rtx.getNodeKey() + ")";
+
+				} else if (diffType == DiffType.DELETED) {
+					System.out.println("running DELETED");
+					xQuery += "delete node ";
+					xQuery += "sdb:select-node(doc('mydocs.col')/log ,"
+							+ diffTuple.getOldNodeKey() + ")";
+
+				} else if (diffType == DiffType.REPLACEDNEW) {
+					System.out.println("replaceNew ");
+				}else if (diffType == DiffType.UPDATED){
+					System.out.println("pdated ");
 				}
-				if (rtx.isNameNode()) {
 
-					String xQuery = "";
-					if (diffType == DiffType.INSERTED) {
-						xQuery += "insert node ";
-						xQuery += "<" + rtx.getName() + "></" + rtx.getName()+ ">";
-						xQuery += " into sdb:select-node(doc('mydocs.col')/log ,"
-								+ rtx.getNodeKey() + ")";
+				// System.out.println(xQuery);
+				// rtx.getSession();
+				// session.getDatabase().getDatabaseConfig();
 
-					} else if (diffType == DiffType.DELETED) {
-						xQuery += "delete node ";
-						xQuery += "sdb:select-node(doc('mydocs.col')/log ,"
-								+ rtx.getNodeKey() + ")";
-
-					} else if (diffType == DiffType.REPLACEDNEW) {
-						System.out.println("replaceNew ");
-					}else if (diffType == DiffType.UPDATED){
-						System.out.println("pdated ");
-					}
-
-					// System.out.println(xQuery);
-					// rtx.getSession();
-					// session.getDatabase().getDatabaseConfig();
-
-					// for (int i = 0; i <
-					// rtx.getDeweyID().get().list().length(); i++) {
-					// rtx.getDeweyID().get().list().;
-					// }
-					if (xQuery != "") {
-						xQueryList.add(xQuery);
-					}
+				// for (int i = 0; i <
+				// rtx.getDeweyID().get().list().length(); i++) {
+				// rtx.getDeweyID().get().list().;
+				// }
+				if (xQuery != "") {
+					xQueryList.add(xQuery);
 				}
+			
 
 				// System.out.println("diff type:"+ diffTuple.getDiff());
 			}
@@ -665,16 +669,18 @@ public class SirixHandler extends BackendHandlerInterface implements
 		mEntries++;
 		mDiffs.put(mEntries, diffCont);
 		// System.out.println("mEntries:" + mEntries);
-
-		switch (diffType) {
-		case INSERTED:
-			mNewKeys.put(newNodeKey, mEntries);
-			break;
-		case DELETED:
-			mOldKeys.put(oldNodeKey, mEntries);
-			break;
-		default:
-		}
+		
+		mNewKeys.put(newNodeKey, mEntries);
+		mOldKeys.put(oldNodeKey, mEntries);
+//		switch (diffType) {
+//		case INSERTED:
+//			mNewKeys.put(newNodeKey, mEntries);
+//			break;
+//		case DELETED:
+//			mOldKeys.put(oldNodeKey, mEntries);
+//			break;
+//		default:
+//		}
 	}
 
 	private void detectMoves() {
@@ -703,7 +709,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	}
 
 	@Override
-	public ArrayList<String> getDiff(int relativeRevisionId) {
+	public HashSet<String> getDiff(int relativeRevisionId) {
 		System.out.println("getDiff betwine version " + getVersionId() + " : "
 				+ (getVersionId() - relativeRevisionId));
 		printAVersion(getVersionId());

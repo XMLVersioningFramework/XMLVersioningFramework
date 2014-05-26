@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public abstract class BackendHandlerInterface {
 	public static final String GIT = "git";
@@ -39,7 +40,7 @@ public abstract class BackendHandlerInterface {
 	public abstract RepositoryRevision getRepositoryHEAD();
 
 	
-	public abstract ArrayList<String> getDiff(int relativeRevisionId);
+	public abstract HashSet<String> getDiff(int relativeRevisionId);
 	
 	public abstract int getVersionId();
 	

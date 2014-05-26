@@ -13,6 +13,7 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -673,7 +674,7 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 	}
 
 	@Override
-	public ArrayList<String> getDiff(int relativeRevisionId) {
+	public HashSet<String> getDiff(int relativeRevisionId) {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.AddCommand;
@@ -470,7 +471,7 @@ public class GitHandler extends BackendHandlerInterface {
 
 
 	@Override
-	public ArrayList<String> getDiff(int relativeRevisionId) {
+	public HashSet<String> getDiff(int relativeRevisionId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
