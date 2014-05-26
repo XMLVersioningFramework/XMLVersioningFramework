@@ -1,8 +1,10 @@
 package models;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
@@ -40,6 +42,7 @@ import org.sirix.diff.DiffFactory.DiffOptimized;
 import org.sirix.diff.DiffFactory.DiffType;
 import org.sirix.diff.DiffObserver;
 import org.sirix.diff.DiffTuple;
+import org.sirix.diff.service.FMSEImport;
 import org.sirix.exception.SirixException;
 import org.sirix.io.StorageType;
 import org.sirix.service.xml.serialize.XMLSerializer;
@@ -152,7 +155,64 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
-		System.out.println("commit");
+		
+		
+		
+		System.out.println("shredding");
+		// Old Sirix resource to update.
+		// File resOldRev = File.createTempFile("temp-file-name", ".tmp");
+		// BufferedWriter bw = new BufferedWriter(new FileWriter(resOldRev));
+		// bw.write("<a>asd<b></b></a>");
+		// bw.close();
+
+		// XML document which should be imported as the new revision.
+
+		//	 Initialize query context and store.
+		//printAllVersions();
+		File resNewRev=null;
+		try (DBStore store = DBStore.newBuilder().build();) {
+			CompileChain compileChain = new SirixCompileChain(store);
+
+			// runQuery("delete node doc('" + databaseName + "')/log");
+			final QueryContext ctx = new SirixQueryContext(store);
+
+			resNewRev = File.createTempFile("temp-file-name", ".tmp");
+			BufferedWriter bw = new BufferedWriter(new FileWriter(resNewRev));
+			bw.write("<log tstamp=\"Mon May 26 01:25:32 CEST 2014\" severity=\"high\" foo=\"bar\">"
+					+ " <src>192.168.0.1</src>"
+					+ " <version2/>"
+					+ "</log>");
+			bw.close();
+
+
+		} catch (DocumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (QueryException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		// Determine and import differences between the sirix resource and the
+		// provided XML document.
+		final FMSEImport fmse = new FMSEImport();
+		String[] args=new String[] {
+				LOCATION.getAbsolutePath() + "/" + databaseName
+						,
+						resNewRev.getAbsolutePath()};
+		fmse.main(args);
+		printAllVersions();
+		System.out.println("after.....");
+
+		// fmse.dataImport(resOldRev, resNewRev);
+		
+		
+		
+		
+/*		System.out.println("commit");
 		String selectFile=runQuery("doc('" + databaseName + "')/log/content/"+url);
 		if(!selectFile.equals("")){
 			content="<"+url+">"+content+"</"+url+">";	
@@ -167,7 +227,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 		}
 		System.out.println("end of commit");
-		
+		*/
 //		"replace node doc('" + databaseName + "')/log/content/"+url+" with "+content
 //		,"doc('" + databaseName + "')/log/all-time::*");
 //		runQueryWithCommit("delete node doc('" + databaseName + "')/log/content/"+url,
@@ -317,7 +377,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	public static void printAllVersions(String s){
 		System.out.println("printAllVersions");
 		System.out.println(runQuery("doc('" + s
-				+ "')/log/all-time::*"));
+				+ "')/log"));
 	}
 	
 	private static String runQuery(String query) { 
