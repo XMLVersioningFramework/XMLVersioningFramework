@@ -534,7 +534,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 					prettyPrint(session, System.out);
 
-					generateDiffs(session, 4, 3);
+					//generateDiffs(session, 4, 3);
 
 				}
 				System.out.println(mDiffs.entrySet().toString());
@@ -553,9 +553,13 @@ public class SirixHandler extends BackendHandlerInterface implements
 	 * @param session
 	 * @throws SirixException
 	 */
-	private static HashSet<String> generateDiffs(final Session session,
+	private HashSet<String> generateDiffs(final Session session,
 			int newRev, int oldRev) throws SirixException {
 		System.out.println("generateDiffs");
+		
+		mNewKeys = new HashMap<Long, Integer>();
+		mOldKeys = new HashMap<Long, Integer>();
+		mDiffs = new HashMap<Integer, DiffTuple>();
 		DiffFactory.Builder diffc = new DiffFactory.Builder(session, newRev,
 				oldRev, DiffOptimized.HASHED,
 				ImmutableSet.of((DiffObserver) getInstance()));
@@ -728,6 +732,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 		try {
 			Session session =getSession();
+			
+			
 			
 			HashSet<String> hs= generateDiffs(session, getVersionId()
 					, getVersionId()- relativeRevisionId);
