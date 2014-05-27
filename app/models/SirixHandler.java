@@ -108,6 +108,9 @@ public class SirixHandler extends BackendHandlerInterface implements
 	@Override
 	public boolean init() {
 		resetDb();
+		//File deltiteFolder=new File(LOCATION+"/"+databaseName);
+		//FileUtils.deleteQuietly(deltiteFolder);
+		
 		// Prepare sample document.
 		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 		System.out.println("saving temp in :" + tmpDir.getAbsolutePath());
@@ -561,6 +564,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 			System.out.println("wating for diff");
 		}
 		return getDiffs(session);
+		
 	}
 
 	private static HashSet<String> getDiffs(Session session)
@@ -723,9 +727,13 @@ public class SirixHandler extends BackendHandlerInterface implements
 		printAVersion((getVersionId() - relativeRevisionId));
 
 		try {
-			return generateDiffs(getSession(), getVersionId()
+			Session session =getSession();
+			
+			HashSet<String> hs= generateDiffs(session, getVersionId()
 					, getVersionId()- relativeRevisionId);
-		//	return generateDiffs(getSession(),1,2);
+			session.getDatabase().close();
+			return hs;
+			
 		} catch (SirixException e) {
 			e.printStackTrace();
 		}
@@ -737,16 +745,16 @@ public class SirixHandler extends BackendHandlerInterface implements
 		final DatabaseConfiguration dbConf = new DatabaseConfiguration(
 				new File(LOCATION, databaseName));
 		Databases.truncateDatabase(dbConf);
-		Databases.createDatabase(dbConf);
+		//Databases.createDatabase(dbConf);
 	}
 
 	private Session getSession() {
 		final DatabaseConfiguration dbConf = new DatabaseConfiguration(
 				new File(LOCATION, databaseName));
 		Session session = null;
-		Database database;
+		
 		try {
-			database = Databases.openDatabase(dbConf.getFile());
+			Database database = Databases.openDatabase(dbConf.getFile());
 			session = database
 				.getSession(new SessionConfiguration.Builder(SirixHandler.RESOURCE)
 						.build());
@@ -760,25 +768,12 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public int getVersionId() {
-		final DatabaseConfiguration dbConf = new DatabaseConfiguration(
-				new File(LOCATION, databaseName));
+		
+		final Session session = getSession();
+		return session.getMostRecentRevisionNumber();
 
-		Database database;
-		try {
-			database = Databases.openDatabase(dbConf.getFile());
+	
 
-			final Session session = database
-					.getSession(new SessionConfiguration.Builder(SirixHandler.RESOURCE)
-
-							.build());
-			return session.getMostRecentRevisionNumber();
-
-		} catch (SirixException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return 0;
 	}
 
 	public boolean commitXquery(ArrayList<String> xQuerys) {
@@ -790,9 +785,15 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public boolean revert(int relativeRevision) {
-
-		getSession().beginNodeWriteTrx().revertTo(
+		Session session=getSession();
+		session.beginNodeWriteTrx().revertTo(
 				getVersionId() - relativeRevision);
+		try {
+			session.getDatabase().close();
+		} catch (SirixException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return false;
 	}
 
