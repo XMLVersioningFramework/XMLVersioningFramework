@@ -697,6 +697,10 @@ public class XChroniclerHandler extends BackendHandlerInterface {
 		// TODO Auto-generated method stub
 		return false;
 	}
+	@Override
+	public long getSize() {
+		return 0;
+	}
 }
 
 /*

@@ -119,4 +119,9 @@ public class NormalizedXMLGitHandler extends BackendHandlerInterface {
 		// TODO Auto-generated method stub
 		return false;
 	}
+	@Override
+	public long getSize() {
+		return gitHandler.getSize();
+	}
+
 }

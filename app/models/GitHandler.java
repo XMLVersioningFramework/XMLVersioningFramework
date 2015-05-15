@@ -494,6 +494,11 @@ public class GitHandler extends BackendHandlerInterface {
 		// TODO Auto-generated method stub
 		return false;
 	}
+	@Override
+	public long getSize() {
+		return folderSize(new File(REPOSITORY_URL));
+	}
+
 	
 	
 	

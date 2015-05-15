@@ -1,7 +1,8 @@
 package controllers;
 
-import java.io.File;
-import java.io.IOException;
+//import java.io.File;
+//import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -24,6 +25,8 @@ import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import utils.JSONConstants;
+import java.lang.management.ManagementFactory;
+
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -157,6 +160,23 @@ public class Application extends Controller {
 		/**
 		 * Fetch content
 		 */
+		String pid =ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
+	
+		Process p = null;
+		try{
+			String[] cmd = {
+				"/bin/sh",
+				"-c",
+				"top -b -d 0.5 -n 100 | grep "+pid
+				};
+			p=Runtime.getRuntime().exec(cmd);//;
+			} catch (IOException e) {
+		    System.out.println("exception happened - here's what I know: ");
+		    e.printStackTrace();
+		    System.exit(-1);
+		}
+
+
 		final Map<String, String[]> postInput = getPOSTData();
 
 		String url = postInput.get(JSONConstants.URL)[0];
@@ -178,9 +198,9 @@ public class Application extends Controller {
 			String fileurl = postInput.get(JSONConstants.COMMIT_FILE_URL)[0];
 			if (fileurl != null) {
 				String pathToTest = "../XMLTestFramework/public/userStories/";
-				System.out.println("try to get " + pathToTest + fileurl);
+		//		System.out.println("try to get " + pathToTest + fileurl);
 				File file = new File(pathToTest + fileurl);
-				System.out.println(file.getAbsolutePath());
+	//			System.out.println(file.getAbsolutePath());
 				try {
 					List<String> lines = Files.readAllLines(
 							Paths.get(pathToTest + fileurl),
@@ -209,12 +229,13 @@ public class Application extends Controller {
 		long elapsedTime = Long.MAX_VALUE;
 		long start = System.nanoTime();
 		int relativeVersionInt=0;
-		System.out.println("relativeVersion: "+relativeVersion);
+	//	System.out.println("relativeVersion: "+relativeVersion);
 		if(relativeVersion!=null){
 			relativeVersionInt= Integer.parseInt(relativeVersion);
 		}
 		
 		if(relativeVersion==null || relativeVersionInt==0){
+	//		System.out.println("relativeVersion=null");
 			if (backend.commit(url, content, message, user)) {
 				answer = JSONConstants.SUCCESS;
 				elapsedTime = System.nanoTime() - start;
@@ -222,7 +243,7 @@ public class Application extends Controller {
 				answer = JSONConstants.FAIL;
 			}
 		}else{
-			
+		//	System.out.println("relativeVersion!=null");
 			if (backend.commit(url, content, message, user,relativeVersionInt)) {
 				answer = JSONConstants.SUCCESS;
 				elapsedTime = System.nanoTime() - start;
@@ -230,6 +251,59 @@ public class Application extends Controller {
 				answer = JSONConstants.FAIL;
 			}
 		}
+		String s="";
+		double sumCPU=0;
+		double sumMem=0;
+		int nrSample=0;
+		try {
+			BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			// read the output from the command
+		//	System.out.println("Here is the standard output of the command:");
+			
+			while ((s = stdInput.readLine()) != null) {
+			//	System.out.println("========================================================");
+				int i=0;
+				String[] split=s.split("\\s+");
+				int posOnS=0;
+				for (String row : split) {
+					
+					if(row.equals("S")){
+						posOnS=i;
+					}
+				//	System.out.println(i+" : "+row);
+					
+					i++;
+
+				}
+				try{
+					double newPoint=Double.parseDouble(split[posOnS+1].replace(",","."));
+					
+			//		System.out.println("New point: "+newPoint);
+					sumCPU+=newPoint;
+
+					sumMem+=Double.parseDouble(split[posOnS+2].replace(",","."));
+					nrSample++;
+				}catch(NumberFormatException e){
+					System.out.println("error NumberFormatException:");
+					int j=0;
+					for (String row: split) {
+						System.out.println(j+" : "+row);
+						j++;
+					}
+				}
+				
+			}
+
+		//	System.out.println("Cpu :"+sumCPU/nrSample);
+		//	System.out.println("Memory :"+sumMem/nrSample);
+			   
+
+		}catch (IOException e) {
+            System.out.println("exception happened - here's what I know: ");
+            e.printStackTrace();
+            System.exit(-1);
+        }
+     //   System.out.println("--------");
 
 		/**
 		 * Creates the response
@@ -239,8 +313,12 @@ public class Application extends Controller {
 		response().setHeader("Access-Control-Allow-Origin", "*");
 
 		ObjectNode returnJson = Json.newObject();
+		returnJson.put(JSONConstants.MEMORY, sumMem/nrSample);
+		returnJson.put(JSONConstants.CPU, sumCPU/nrSample);
 		returnJson.put(JSONConstants.TIME, elapsedTime);
 		returnJson.put(JSONConstants.ANSWER, answer);
+		returnJson.put(JSONConstants.HARDDRIVESIZE, backend.getSize());
+
 
 		return ok(returnJson);
 	}

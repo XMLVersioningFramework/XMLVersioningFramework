@@ -48,6 +48,10 @@ public final class JSONConstants {
 	 * caller and in the js
 	 */
 	public static final String TIME = "time";
+	public static final String CPU = "cpu";
+	public static final String MEMORY = "memory";
+	public static final String HARDDRIVESIZE = "hardriveSize";
+	
 
 	// Answer status
 	public static final String ANSWER = "answer";

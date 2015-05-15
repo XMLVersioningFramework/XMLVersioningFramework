@@ -3,6 +3,7 @@ package models;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -43,6 +44,8 @@ public abstract class BackendHandlerInterface {
 	public abstract HashSet<String> getDiff(int relativeRevisionId);
 	
 	public abstract int getVersionId();
+
+	public abstract long getSize();
 	
 	public abstract boolean revert(int relativeRevision);
 	
@@ -82,5 +85,14 @@ public abstract class BackendHandlerInterface {
 		}
 		return returnMsg;
 	}
-
+	public static long folderSize(File directory) {
+	    long length = 0;
+	    for (File file : directory.listFiles()) {
+	        if (file.isFile())
+	            length += file.length();
+	        else
+	            length += folderSize(file);
+	    }
+    	return length;
+	}
 }

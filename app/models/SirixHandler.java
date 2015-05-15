@@ -46,6 +46,7 @@ import org.sirix.diff.DiffTuple;
 import org.sirix.diff.service.FMSEImport;
 import org.sirix.exception.SirixException;
 import org.sirix.io.StorageType;
+import org.sirix.node.Kind;
 import org.sirix.service.xml.serialize.XMLSerializer;
 import org.sirix.xquery.SirixCompileChain;
 import org.sirix.xquery.SirixQueryContext;
@@ -73,8 +74,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 	private static Map<Integer, DiffTuple> mDiffs = new HashMap<Integer, DiffTuple>();
 
 	private Integer mEntries = 0;
-	
-	public String resource="shredded";
+
+	public String resource = "shredded";
 
 	private Map<Long, Integer> mNewKeys = new HashMap<Long, Integer>();
 
@@ -108,9 +109,9 @@ public class SirixHandler extends BackendHandlerInterface implements
 	@Override
 	public boolean init() {
 		resetDb();
-		//File deltiteFolder=new File(LOCATION+"/"+databaseName);
-		//FileUtils.deleteQuietly(deltiteFolder);
-		
+		// File deltiteFolder=new File(LOCATION+"/"+databaseName);
+		// FileUtils.deleteQuietly(deltiteFolder);
+
 		// Prepare sample document.
 		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 		System.out.println("saving temp in :" + tmpDir.getAbsolutePath());
@@ -132,14 +133,13 @@ public class SirixHandler extends BackendHandlerInterface implements
 			// "bit:load('mydocs.col', io:ls('%s', '\\.xml$'))",
 			// doc1Uri.toString()); //old versions
 			final String xq1 = String.format(
-					"sdb:load('mydocs.col', '%s', '%s')", SirixHandler.RESOURCE,
-					doc1Uri.toString());
-
+					"sdb:load('mydocs.col', '%s', '%s')",
+					SirixHandler.RESOURCE, doc1Uri.toString());
 
 			System.out.println("xq1" + xq1);
 			System.out.println("ctx" + ctx);
 			new XQuery(compileChain, xq1).evaluate(ctx);
-			
+
 		} catch (DocumentException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -162,16 +162,15 @@ public class SirixHandler extends BackendHandlerInterface implements
 				+ databaseName);
 		return (FileUtils.deleteQuietly(new File(LOCATION, databaseName)));
 	}
-	
-	//public void loadDocInToRessorce(){
-		
-	//}
-	
+
+	// public void loadDocInToRessorce(){
+
+	// }
 
 	@Override
 	public boolean commit(String url, String content, String message, User user) {
 
-		System.out.println("shredding");
+		//System.out.println("shredding");
 		// Old Sirix resource to update.
 		// File resOldRev = File.createTempFile("temp-file-name", ".tmp");
 		// BufferedWriter bw = new BufferedWriter(new FileWriter(resOldRev));
@@ -180,10 +179,25 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 		// XML document which should be imported as the new revision.
 
-		//	 Initialize query context and store.
+		// Initialize query context and store.
 
-		//printAllVersions();
-		File resNewRev=null;
+		// printAllVersions();
+
+		/*
+		 * content="<log>" +
+		 * "<aaa>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</aaa>"
+		 * + "<content>" + "<file />" + "<asd />" + "<ccc />" // + "<ddd />" //+
+		 * "<eee />" + "</content>" +"</log>";
+		 */
+		File resNewRev = null;
+		//runQueryWithCommit("insert attribute foo {'bar'} into doc('" +databaseName+ "')/a/");
+		// String insertQuery="insert node attribute { 'a' } { 5 } into doc('" +
+		//		 databaseName+
+		//		 "')/a"; 
+		// runQueryWithCommit(insertQuery);
+		//runQueryWithCommit("insert node <d2></d2> into doc('mydocs.col')/a");
+		
+		
 		try (DBStore store = DBStore.newBuilder().build();) {
 			CompileChain compileChain = new SirixCompileChain(store);
 
@@ -192,12 +206,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 			resNewRev = File.createTempFile("temp-file-name", ".tmp");
 			BufferedWriter bw = new BufferedWriter(new FileWriter(resNewRev));
-			bw.write("<log>"
-					+ " <src>192.168.0.1</src>"
-					+ " <new></new>"
-					+ "</log>");
+			bw.write(content);
 			bw.close();
-
 
 		} catch (DocumentException e) {
 			// TODO Auto-generated catch block
@@ -209,34 +219,36 @@ public class SirixHandler extends BackendHandlerInterface implements
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 
 		// Determine and import differences between the sirix resource and the
 		// provided XML document.
 		final FMSEImport fmse = new FMSEImport();
-		String[] args=new String[] {
-				LOCATION.getAbsolutePath() + "/" + databaseName
-						,
-						resNewRev.getAbsolutePath()};
+		String[] args = new String[] {
+				LOCATION.getAbsolutePath() + "/" + databaseName,
+				resNewRev.getAbsolutePath() };
 		fmse.main(args);
 		printAllVersions();
 		System.out.println("after.....");
+		
+		
+		
 
-		
-		
-////		  System.out.println("commit"); 
-////		  String selectFile=runQuery("doc('" +
-////		  databaseName + "')/log/content/"+url); 
-////		  if(!selectFile.equals("")){
-////			  content="<"+url+">"+content+"</"+url+">"; String
-////			  query="replace node doc('" + databaseName +
-////			  "')/log/content/"+url+" with "+content; runQueryWithCommit(query);
-////		  }else{ 
-////			  append(content,url); // System.out.println("insert node");
-////			 // content="<"+url+">"+content+"</"+url+">"; 
-////			 // String  insertQuery="insert nodes " + content + " into doc('" + databaseName+
-////			 // "')/log/content"; //runQueryWhithCommit(insertQuery);
-////		  
-////		  } System.out.println("end of commit");
+		// // System.out.println("commit");
+		// // String selectFile=runQuery("doc('" +
+		// // databaseName + "')/log/content/"+url);
+		// // if(!selectFile.equals("")){
+		// // content="<"+url+">"+content+"</"+url+">"; String
+		// // query="replace node doc('" + databaseName +
+		// // "')/log/content/"+url+" with "+content; runQueryWithCommit(query);
+		// // }else{
+		// // append(content,url); // System.out.println("insert node");
+		// // // content="<"+url+">"+content+"</"+url+">";
+		// // // String insertQuery="insert nodes " + content + " into doc('" +
+		// databaseName+
+		// // // "')/log/content"; //runQueryWhithCommit(insertQuery);
+		// //
+		// // } System.out.println("end of commit");
 
 		return true;
 	}
@@ -272,7 +284,6 @@ public class SirixHandler extends BackendHandlerInterface implements
 		getDiff(1);
 		return new Logs();
 	}
-
 
 	@Override
 	public RepositoryRevision checkout(String revision) {
@@ -338,12 +349,12 @@ public class SirixHandler extends BackendHandlerInterface implements
 		final String src = "192.168.0.1";
 
 		out.print("<?xml version='1.0'?>");
-		out.print(String.format("<log>",
-				tst, sev));
-		out.print(String.format("<src>%s</src>", src));
-		// out.print(String.format("<msg><bbb>%s</bbb></msg>", msg));
-		out.print(String.format("<content></content>", msg));
-		out.print("</log>");
+		out.print(String.format("<a>", tst, sev));
+
+		// out.print(String.format("<aaa>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</aaa>"));
+		// out.print(String.format("<msg><bbb>%s</bbb></msg>"));
+		// out.print(String.format("<content></content>", msg));
+		out.print("</a>");
 		out.close();
 
 		return file;
@@ -364,7 +375,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 	public static void printAllVersions(String s) {
 		System.out.println("printAllVersions");
 
-		System.out.println(runQuery("doc('" + s + "')/log/all-time::*"));
+		System.out.println(runQuery("for $a in doc('" + s + "')/*/all-time::*"
+				+ " return $a"));
 	}
 
 	private static String runQuery(String query) {
@@ -416,22 +428,29 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	private static void runQueryWithCommit(String query) {
 		try (DBStore store = DBStore.newBuilder().build();) {
-			System.out
+			/*System.out
 					.println("-------------------------------------------------");
 			printHead();
 			System.out
 					.println("-------------------------------------------------");
-			CompileChain compileChain = new SirixCompileChain(store);
+			
 
 			System.out.println("runQueryWithCommit:  " + query);
 
-			QueryContext ctx1 = new SirixQueryContext(store);
 			// replace node doc('" + databaseName + "')/log/content with '<hej
 			// />').evaluate(ctx1)
 			System.out.println("runQueryWithCommit mid");
 			// String selectQuery="doc('" + databaseName+ "')/log/all-time::*";
 			// String insertQuery="insert nodes <aa></aa> into doc('" +
 			// databaseName+ "')/log/content";
+			
+			*/
+			QueryContext ctx1 = new SirixQueryContext(store);
+			
+			CompileChain compileChain = new SirixCompileChain(store);
+			// String insertQuery="insert node attribute { 'a' } { 5 } into doc('" +
+			//		 databaseName+
+			//			 "')/a"; 
 			final Sequence seq = new XQuery(compileChain, query).evaluate(ctx1);
 
 			/*
@@ -463,7 +482,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	}
 
 	private String GetMsgHEAD() {
-		
+		getDiff(1);
 		return runQuery("doc('" + databaseName + "')/log/msg/last::*");
 	}
 
@@ -486,12 +505,13 @@ public class SirixHandler extends BackendHandlerInterface implements
 			final Database database = Databases.openDatabase(dbConf.getFile());
 
 			database.createResource(ResourceConfiguration
-					.newBuilder(SirixHandler.RESOURCE, dbConf).useDeweyIDs(true)
-					.useTextCompression(true).buildPathSummary(false).build());
+					.newBuilder(SirixHandler.RESOURCE, dbConf)
+					.useDeweyIDs(true).useTextCompression(true)
+					.buildPathSummary(false).build());
 
 			final Session session = database
-					.getSession(new SessionConfiguration.Builder(SirixHandler.RESOURCE)
-							.build());
+					.getSession(new SessionConfiguration.Builder(
+							SirixHandler.RESOURCE).build());
 
 			try (final NodeWriteTrx wtx = session.beginNodeWriteTrx();) {
 
@@ -516,7 +536,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 					wtx.moveToDocumentRoot();
 					wtx.moveToFirstChild();
 					wtx.moveToFirstChild();
-
+					
 					System.out.println("getDeweyID: " + wtx.getDeweyID());
 
 					prettyPrint(session, System.out);
@@ -534,7 +554,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 					prettyPrint(session, System.out);
 
-					//generateDiffs(session, 4, 3);
+					// generateDiffs(session, 4, 3);
 
 				}
 				System.out.println(mDiffs.entrySet().toString());
@@ -553,10 +573,10 @@ public class SirixHandler extends BackendHandlerInterface implements
 	 * @param session
 	 * @throws SirixException
 	 */
-	private HashSet<String> generateDiffs(final Session session,
-			int newRev, int oldRev) throws SirixException {
+	private HashSet<String> generateDiffs(final Session session, int newRev,
+			int oldRev) throws SirixException {
 		System.out.println("generateDiffs");
-		
+
 		mNewKeys = new HashMap<Long, Integer>();
 		mOldKeys = new HashMap<Long, Integer>();
 		mDiffs = new HashMap<Integer, DiffTuple>();
@@ -568,7 +588,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 			System.out.println("wating for diff");
 		}
 		return getDiffs(session);
-		
+
 	}
 
 	private static HashSet<String> getDiffs(Session session)
@@ -587,26 +607,38 @@ public class SirixHandler extends BackendHandlerInterface implements
 			DiffType diffType = diffTuple.getDiff();
 
 			if (!(diffType == DiffType.SAME || diffType == DiffType.SAMEHASH)) {
-			
-//				System.out.println("\n"+diffType+" type");
-//				if(rtx.isNameNode()){
-//					 System.out.println("old node current name: " +
-//							 rtx.getName().toString());
-//				}
-//				
-//				rtx.moveTo(diffTuple.getNewNodeKey());
-//				if(rtx.isNameNode()){
-//					 System.out.println("new node current name: " +
-//							 rtx.getName().toString());
-//				}
-				System.out.println("new key:"+diffTuple.getNewNodeKey());
-				System.out.println("old key:"+diffTuple.getOldNodeKey());
+
+				// System.out.println("\n"+diffType+" type");
+				// if(rtx.isNameNode()){
+				// System.out.println("old node current name: " +
+				// rtx.getName().toString());
+				// }
+				//
+				// rtx.moveTo(diffTuple.getNewNodeKey());
+				// if(rtx.isNameNode()){
+				// System.out.println("new node current name: " +
+				// rtx.getName().toString());
+				// }
+				System.out.println("new key:" + diffTuple.getNewNodeKey());
+				System.out.println("old key:" + diffTuple.getOldNodeKey());
 				rtx.moveTo(diffTuple.getNewNodeKey());
+				//
+				
+			//	System.out.println("Name: " + rtx.getName());
+				System.out.println("Is element: " +rtx.isElement());
+				System.out.println("Is attr: " +rtx.isAttribute());
+				System.out.println("Is text: " +rtx.isText());
+				 System.out.println("type: "+rtx.getKind());
+				
+				//System.out.println("Name: " + rtx.get);
+				//System.out.println("type: "+rtx.getType());
+				System.out.println("type key: "+rtx.getTypeKey());
+				
 				String xQuery = "";
 				if (diffType == DiffType.INSERTED) {
-					
+
 					xQuery += "insert node ";
-					xQuery += "<" + rtx.getName() + "></" + rtx.getName()+ ">";
+					xQuery += printNode(rtx);
 					rtx.moveToParent();
 					xQuery += " into sdb:select-node(doc('mydocs.col')/log ,"
 							+ rtx.getNodeKey() + ")";
@@ -619,14 +651,12 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 				} else if (diffType == DiffType.REPLACEDNEW) {
 					System.out.println("replaceNew ");
-					String content="<" + rtx.getName() + "></" + rtx.getName()+ ">";
-					
-					xQuery +="replace node sdb:select-node(doc('mydocs.col')/log ,"
-							+ diffTuple.getOldNodeKey() + ") with "+content;
-					
-					
-					
-				}else if (diffType == DiffType.UPDATED){
+					xQuery += "replace node sdb:select-node(doc('mydocs.col')/log ,"
+							+ diffTuple.getOldNodeKey()
+							+ ") with "
+							+ printNode(rtx);
+
+				} else if (diffType == DiffType.UPDATED) {
 					System.out.println("pdated ");
 				}
 
@@ -641,7 +671,6 @@ public class SirixHandler extends BackendHandlerInterface implements
 				if (xQuery != "") {
 					xQueryList.add(xQuery);
 				}
-			
 
 				// System.out.println("diff type:"+ diffTuple.getDiff());
 			}
@@ -653,6 +682,16 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 		}
 		return xQueryList;
+	}
+
+	private static String printNode(NodeReadTrx rtx) {
+		if(rtx.getKind() == Kind.ELEMENT) {
+			return "<" + rtx.getName() + "></" + rtx.getName() + ">";
+		}else if(rtx.getKind()==Kind.ATTRIBUTE){
+			return "attribute { '"+rtx.getName()+"' } { "+rtx.getValue()+" }";
+		}else{
+			return "\""+rtx.getValue()+"\"";
+		}
 	}
 
 	/**
@@ -670,7 +709,7 @@ public class SirixHandler extends BackendHandlerInterface implements
 	@Override
 	public void diffDone() {
 		System.out.println("detecting moves...");
-		//detectMoves();
+		// detectMoves();
 		System.out.println("diff done");
 		diffDone = true;
 	}
@@ -684,18 +723,18 @@ public class SirixHandler extends BackendHandlerInterface implements
 		mEntries++;
 		mDiffs.put(mEntries, diffCont);
 		// System.out.println("mEntries:" + mEntries);
-		
+
 		mNewKeys.put(newNodeKey, mEntries);
 		mOldKeys.put(oldNodeKey, mEntries);
-//		switch (diffType) {
-//		case INSERTED:
-//			mNewKeys.put(newNodeKey, mEntries);
-//			break;
-//		case DELETED:
-//			mOldKeys.put(oldNodeKey, mEntries);
-//			break;
-//		default:
-//		}
+		// switch (diffType) {
+		// case INSERTED:
+		// mNewKeys.put(newNodeKey, mEntries);
+		// break;
+		// case DELETED:
+		// mOldKeys.put(oldNodeKey, mEntries);
+		// break;
+		// default:
+		// }
 	}
 
 	private void detectMoves() {
@@ -731,15 +770,13 @@ public class SirixHandler extends BackendHandlerInterface implements
 		printAVersion((getVersionId() - relativeRevisionId));
 
 		try {
-			Session session =getSession();
-			
-			
-			
-			HashSet<String> hs= generateDiffs(session, getVersionId()
-					, getVersionId()- relativeRevisionId);
+			Session session = getSession();
+
+			HashSet<String> hs = generateDiffs(session, getVersionId(),
+					getVersionId() - relativeRevisionId);
 			session.getDatabase().close();
 			return hs;
-			
+
 		} catch (SirixException e) {
 			e.printStackTrace();
 		}
@@ -751,19 +788,18 @@ public class SirixHandler extends BackendHandlerInterface implements
 		final DatabaseConfiguration dbConf = new DatabaseConfiguration(
 				new File(LOCATION, databaseName));
 		Databases.truncateDatabase(dbConf);
-		//Databases.createDatabase(dbConf);
+		// Databases.createDatabase(dbConf);
 	}
 
 	private Session getSession() {
 		final DatabaseConfiguration dbConf = new DatabaseConfiguration(
 				new File(LOCATION, databaseName));
 		Session session = null;
-		
+
 		try {
 			Database database = Databases.openDatabase(dbConf.getFile());
-			session = database
-				.getSession(new SessionConfiguration.Builder(SirixHandler.RESOURCE)
-						.build());
+			session = database.getSession(new SessionConfiguration.Builder(
+					SirixHandler.RESOURCE).build());
 
 		} catch (SirixException e) {
 			// TODO Auto-generated catch block
@@ -774,15 +810,13 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public int getVersionId() {
-		
+
 		final Session session = getSession();
 		return session.getMostRecentRevisionNumber();
 
-	
-
 	}
 
-	public boolean commitXquery(ArrayList<String> xQuerys) {
+	public boolean commitXquery(HashSet<String> xQuerys) {
 		for (String query : xQuerys) {
 			runQueryWithCommit(query);
 		}
@@ -791,9 +825,8 @@ public class SirixHandler extends BackendHandlerInterface implements
 
 	@Override
 	public boolean revert(int relativeRevision) {
-		Session session=getSession();
-		session.beginNodeWriteTrx().revertTo(
-				getVersionId() - relativeRevision);
+		Session session = getSession();
+		session.beginNodeWriteTrx().revertTo(getVersionId() - relativeRevision);
 		try {
 			session.getDatabase().close();
 		} catch (SirixException e) {
@@ -806,14 +839,23 @@ public class SirixHandler extends BackendHandlerInterface implements
 	@Override
 	public boolean commit(String url, String content, String message,
 			User user, int relativeVersion) {
-		// ArrayList<String> pul=getDiff(relativeVersion);
 
-		// revert(relativeVersion);
+		
+		//System.out.println("commit to version n-" + relativeVersion);
+		HashSet<String> pul = getDiff(relativeVersion);
+
+		revert(relativeVersion);
 		commit(url, content, message, user);
-		// commitXquery(pul);
-		// System.out.println("Nead to code this");
+		commitXquery(pul);
+		System.out.println("Nead to code this");
 
 		return true;
 	}
+	@Override
+	public long getSize() {
+		// TODO Auto-generated method stub
+		return folderSize(LOCATION);
+	}
+
 
 }
